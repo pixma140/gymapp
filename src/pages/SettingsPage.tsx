@@ -1,0 +1,211 @@
+import { Database, Moon, Trash, Dumbbell, Bell, Palette } from 'lucide-react';
+import { db } from '@/db/db';
+import { Link } from 'react-router-dom';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { useLanguage } from '@/i18n/LanguageContext';
+import { useTheme } from '@/context/ThemeContext';
+import { cn } from '@/lib/utils';
+
+export function SettingsPage() {
+    const user = useLiveQuery(() => db.users.orderBy('id').first());
+    const { t, language, setLanguage } = useLanguage();
+    const { theme, setTheme, mainColor, setColor } = useTheme();
+
+    const colors = [
+        { name: 'Blue', value: '#2563eb' },
+        { name: 'Green', value: '#16a34a' },
+        { name: 'Red', value: '#dc2626' },
+        { name: 'Orange', value: '#ea580c' },
+        { name: 'Purple', value: '#9333ea' },
+        { name: 'Pink', value: '#db2777' },
+        { name: 'Cyan', value: '#0891b2' },
+        { name: 'Yellow', value: '#ca8a04' },
+    ];
+
+    const handleClearData = async () => {
+        if (confirm(t('settings.reset.confirm'))) {
+            await db.delete();
+            await db.open();
+            window.location.reload();
+        }
+    };
+
+    const handleFrequencyChange = async (freq: string) => {
+        if (!user) return;
+        await db.users.update(user.id, { reminderFrequency: freq as any });
+    };
+
+    return (
+        <div className="space-y-6 animate-in fade-in duration-500 max-w-md mx-auto pb-20 p-4 transition-colors duration-300">
+            <header>
+                <h1 className="text-3xl font-bold tracking-tight text-[var(--foreground)]">{t('settings.title')}</h1>
+                <p className="text-[var(--muted-foreground)] mt-1">{t('settings.subtitle')}</p>
+            </header>
+
+            <div className="space-y-4">
+                <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
+                    {/* Theme Selector */}
+                    <div className="w-full flex items-center justify-between p-4 border-b border-[var(--border)] border-dashed">
+                        <div className="flex items-center gap-3">
+                            <Moon className="size-5 text-[var(--muted-foreground)]" />
+                            <div className="text-left">
+                                <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.theme')}</h3>
+                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.theme.desc')}</p>
+                            </div>
+                        </div>
+                        <select
+                            value={theme}
+                            onChange={(e) => setTheme(e.target.value as any)}
+                            className="bg-[var(--input)] border border-[var(--border)] rounded-lg text-xs p-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
+                        >
+                            <option value="light">{t('theme.light')}</option>
+                            <option value="dark">{t('theme.dark')}</option>
+                            <option value="oled">{t('theme.oled')}</option>
+                            <option value="system">{t('theme.system')}</option>
+                        </select>
+                    </div>
+
+                    {/* Main Color Selector */}
+                    <div className="w-full flex flex-col p-4 border-b border-[var(--border)] border-dashed gap-4">
+                        <div className="flex items-center gap-3">
+                            <Palette className="size-5 text-[var(--muted-foreground)]" />
+                            <div className="text-left">
+                                <h3 className="text-sm font-medium text-[var(--foreground)]">Accent Color</h3>
+                                <p className="text-xs text-[var(--muted-foreground)]">Customize your main color</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                            {colors.map((c) => (
+                                <button
+                                    key={c.value}
+                                    onClick={() => setColor(c.value)}
+                                    className={cn(
+                                        "size-8 rounded-full transition-all hover:scale-110 active:scale-95 ring-2 ring-offset-2 ring-offset-[var(--background)]",
+                                        mainColor === c.value ? "ring-[var(--foreground)] scale-110" : "ring-transparent opacity-80 hover:opacity-100"
+                                    )}
+                                    style={{ backgroundColor: c.value, boxShadow: mainColor === c.value ? `0 0 10px ${c.value}` : 'none' }}
+                                    title={c.name}
+                                />
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="w-full flex items-center justify-between p-4 border-b border-[var(--border)] border-dashed">
+                        <div className="flex items-center gap-3">
+                            <span className="text-xl">🌍</span>
+                            <div className="text-left">
+                                <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.language')}</h3>
+                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.language.desc')}</p>
+                            </div>
+                        </div>
+                        <select
+                            value={language}
+                            onChange={(e) => setLanguage(e.target.value as any)}
+                            className="bg-[var(--input)] border border-[var(--border)] rounded-lg text-xs p-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
+                        >
+                            <option value="en">English</option>
+                            <option value="de">Deutsch</option>
+                        </select>
+                    </div>
+
+                    <div className="w-full flex items-center justify-between p-4 border-b border-[var(--border)] border-dashed">
+                        <div className="flex items-center gap-3">
+                            <Bell className="size-5 text-[var(--muted-foreground)]" />
+                            <div className="text-left">
+                                <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.reminders')}</h3>
+                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.reminders.desc')}</p>
+                            </div>
+                        </div>
+                        <select
+                            value={user?.reminderFrequency || 'never'}
+                            onChange={(e) => handleFrequencyChange(e.target.value)}
+                            className="bg-[var(--input)] border border-[var(--border)] rounded-lg text-xs p-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
+                        >
+                            <option value="never">Never</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+
+                    <Link to="/settings/gyms" className="w-full flex items-center justify-between p-4 hover:bg-[var(--accent)] transition-colors border-b border-[var(--border)] border-dashed">
+                        <div className="flex items-center gap-3">
+                            <Dumbbell className="size-5 text-[var(--muted-foreground)]" />
+                            <div className="text-left">
+                                <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.manage_gyms')}</h3>
+                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.manage_gyms.desc')}</p>
+                            </div>
+                        </div>
+                    </Link>
+
+                    <Link to="/settings/exercises" className="w-full flex items-center justify-between p-4 hover:bg-[var(--accent)] transition-colors">
+                        <div className="flex items-center gap-3">
+                            <Database className="size-5 text-[var(--muted-foreground)]" />
+                            <div className="text-left">
+                                <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.manage_exercises')}</h3>
+                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.manage_exercises.desc')}</p>
+                            </div>
+                        </div>
+                    </Link>
+                </div>
+
+                <div className="bg-red-500/10 border border-red-500/20 rounded-2xl overflow-hidden">
+                    <button
+                        onClick={handleClearData}
+                        className="w-full flex items-center justify-between p-4 hover:bg-red-500/20 transition-colors text-red-500"
+                    >
+                        <div className="flex items-center gap-3">
+                            <Trash className="size-5" />
+                            <div className="text-left">
+                                <h3 className="text-sm font-bold">{t('settings.reset')}</h3>
+                                <p className="text-xs text-red-500/70">{t('settings.reset.desc')}</p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
+                    <button
+                        onClick={async () => {
+                            const data = {
+                                users: await db.users.toArray(),
+                                gyms: await db.gyms.toArray(),
+                                exercises: await db.exercises.toArray(),
+                                gymEquipments: await db.gymEquipments.toArray(),
+                                workouts: await db.workouts.toArray(),
+                                workoutSets: await db.workoutSets.toArray(),
+                                userMeasurements: await db.userMeasurements.toArray(),
+                                exportDate: new Date().toISOString(),
+                                version: 1
+                            };
+
+                            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `gymapp-export-${new Date().toISOString().split('T')[0]}.json`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                        }}
+                        className="w-full flex items-center justify-between p-4 hover:bg-[var(--accent)] transition-colors text-[var(--foreground)]"
+                    >
+                        <div className="flex items-center gap-3">
+                            <Database className="size-5 text-[var(--muted-foreground)]" />
+                            <div className="text-left">
+                                <h3 className="text-sm font-medium">{t('settings.export')}</h3>
+                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.export.desc')}</p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                <div className="text-center text-xs text-[var(--muted-foreground)] pt-8">
+                    <p className="font-mono">Gym App v0.1.0-alpha</p>
+                    <p>Built with React & Vite</p>
+                </div>
+            </div >
+        </div >
+    );
+}
