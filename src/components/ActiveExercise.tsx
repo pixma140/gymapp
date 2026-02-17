@@ -37,9 +37,8 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
                 {sets.map((set, idx) => (
                     <div key={set.id} className={`flex items-center justify-between p-2 rounded-lg ${set.type === 'warmup' ? 'bg-zinc-950/50 border border-dashed border-zinc-800' : 'bg-zinc-800/50'}`}>
                         <div className="flex gap-4 items-center">
-                            <span className="text-zinc-500 text-xs font-mono w-4">{idx + 1}</span>
-                            <span className={`text-xs font-bold uppercase px-1.5 py-0.5 rounded ${set.type === 'warmup' ? 'text-orange-400 bg-orange-900/20' : 'text-green-400 bg-green-900/20'}`}>
-                                {set.type === 'warmup' ? 'W' : 'WKG'}
+                            <span className={`text-xs font-mono w-6 text-center py-0.5 rounded font-bold ${set.type === 'warmup' ? 'text-orange-400 bg-orange-900/20' : 'text-green-400 bg-green-900/20'}`}>
+                                {set.type === 'warmup' ? 'W' : idx + 1}
                             </span>
                             <div className="text-zinc-200 font-medium">
                                 {set.weight} <span className="text-zinc-500 text-xs">kg</span>

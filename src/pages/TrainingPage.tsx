@@ -2,13 +2,26 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GymList } from '@/components/GymList';
 import { AddGymForm } from '@/components/AddGymForm';
+import { useActiveWorkout } from '@/hooks/useActiveWorkout';
 
 export function TrainingPage() {
     const [view, setView] = useState<'list' | 'add'>('list');
     const navigate = useNavigate();
+    const activeWorkout = useActiveWorkout();
 
     const handleGymSelect = (gymId: number) => {
-        navigate(`/workout/${gymId}`);
+        if (activeWorkout) {
+            if (activeWorkout.gymId === gymId) {
+                navigate(`/workout/${gymId}`);
+            } else {
+                // Prevent starting new workout if one exists
+                if (window.confirm(`You have an active workout at ${activeWorkout.gymName || 'another gym'}. You must finish it before starting a new one. Go to active workout?`)) {
+                    navigate(`/workout/${activeWorkout.gymId}`);
+                }
+            }
+        } else {
+            navigate(`/workout/${gymId}`);
+        }
     };
 
     return (

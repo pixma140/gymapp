@@ -37,6 +37,10 @@ export function WorkoutPage() {
         navigate('/analysis');
     };
 
+    const handleOpenExerciseSelector = () => {
+        setShowExerciseSelector(true);
+    };
+
     if (!gym) return <div className="p-8 text-center text-zinc-500">Initializing workout...</div>;
 
     return (
@@ -55,6 +59,7 @@ export function WorkoutPage() {
                     </div>
                 </div>
                 <button
+                    type="button"
                     onClick={handleFinish}
                     className="bg-green-600 hover:bg-green-500 text-white px-4 py-1.5 rounded-full text-sm font-bold transition-all shadow-lg shadow-green-900/20"
                 >
@@ -74,7 +79,9 @@ export function WorkoutPage() {
                 ))}
 
                 <button
-                    onClick={() => setShowExerciseSelector(true)}
+                    type="button"
+                    onClick={handleOpenExerciseSelector}
+                    onPointerUp={handleOpenExerciseSelector}
                     className="w-full py-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/30 text-zinc-400 hover:text-white hover:border-zinc-500 hover:bg-zinc-800 transition-all flex flex-col items-center justify-center gap-2"
                 >
                     <div className="bg-zinc-800 p-3 rounded-full">

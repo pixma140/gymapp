@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
-import { ArrowLeft, Save, Plus, Calendar } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Calendar, Clock, Timer } from 'lucide-react';
 import { useWorkoutSession } from '@/hooks/useWorkoutSession';
 import { ExerciseSelector } from '@/components/ExerciseSelector';
 import { ActiveExercise } from '@/components/ActiveExercise';
@@ -51,9 +51,32 @@ export function EditWorkoutPage() {
                     </button>
                     <div>
                         <h1 className="text-lg font-bold text-[var(--foreground)] leading-tight truncate max-w-[200px]">{gym.name}</h1>
-                        <div className="flex items-center gap-1.5 text-[var(--muted-foreground)] text-xs font-mono">
-                            <Calendar className="size-3" />
-                            <span>{new Date(workout.startTime).toLocaleDateString()}</span>
+                        <div className="flex flex-col gap-0.5 mt-0.5 text-[var(--muted-foreground)] text-xs font-mono">
+                            <div className="flex items-center gap-1.5">
+                                <Calendar className="size-3" />
+                                <span>{new Date(workout.startTime).toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <Clock className="size-3" />
+                                <span>
+                                    {new Date(workout.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    {workout.endTime && ` - ${new Date(workout.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                </span>
+                                {workout.endTime && (
+                                    <>
+                                        <span className="opacity-50">•</span>
+                                        <Timer className="size-3" />
+                                        <span>
+                                            {(() => {
+                                                const duration = workout.duration || Math.floor((workout.endTime! - workout.startTime) / 1000);
+                                                const h = Math.floor(duration / 3600);
+                                                const m = Math.floor((duration % 3600) / 60);
+                                                return h > 0 ? `${h}h ${m}m` : `${m}m`;
+                                            })()}
+                                        </span>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

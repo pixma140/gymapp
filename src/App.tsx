@@ -4,6 +4,7 @@ import { TrainingPage } from '@/pages/TrainingPage';
 import { AnalysisPage } from '@/pages/AnalysisPage';
 import { WorkoutPage } from '@/pages/WorkoutPage';
 import { EditWorkoutPage } from '@/pages/EditWorkoutPage';
+import { WorkoutDetailsPage } from '@/pages/WorkoutDetailsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { ManageGymsPage } from '@/pages/ManageGymsPage';
@@ -27,6 +28,7 @@ function App() {
               <Route path="/" element={<TrainingPage />} />
               <Route path="/workout/:gymId" element={<WorkoutPage />} />
               <Route path="/workout/:workoutId/edit" element={<EditWorkoutPage />} />
+              <Route path="/workout/:workoutId/view" element={<WorkoutDetailsPage />} />
               <Route path="/analysis" element={<AnalysisPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />

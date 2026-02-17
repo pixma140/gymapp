@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
 import { Link } from 'react-router-dom';
-import { Calendar, Clock, ChevronRight, Edit2 } from 'lucide-react';
+import { Calendar, Clock, ChevronRight, Edit2, Trash2 } from 'lucide-react';
 
 export function WorkoutHistoryList() {
     const workouts = useLiveQuery(async () => {
@@ -45,10 +45,32 @@ export function WorkoutHistoryList() {
                             <Link
                                 to={`/workout/${workout.id}/edit`}
                                 className="p-2 rounded-full hover:bg-[var(--accent)] text-[var(--muted-foreground)] hover:text-[var(--primary)] transition-colors"
+                                title="Edit workout"
                             >
                                 <Edit2 className="size-4" />
                             </Link>
-                            <ChevronRight className="size-5 text-[var(--muted-foreground)]" />
+                            <button
+                                onClick={async (e) => {
+                                    e.preventDefault();
+                                    if (window.confirm('Are you sure you want to delete this workout?')) {
+                                        await db.transaction('rw', db.workouts, db.workoutSets, async () => {
+                                            await db.workoutSets.where('workoutId').equals(workout.id!).delete();
+                                            await db.workouts.delete(workout.id!);
+                                        });
+                                    }
+                                }}
+                                className="p-2 rounded-full hover:bg-red-500/10 text-zinc-500 hover:text-red-500 transition-colors"
+                                title="Delete workout"
+                            >
+                                <Trash2 className="size-4" />
+                            </button>
+                            <Link
+                                to={`/workout/${workout.id}/view`}
+                                className="p-2 rounded-full hover:bg-zinc-800 text-zinc-500 hover:text-white transition-colors"
+                                title="View details"
+                            >
+                                <ChevronRight className="size-5" />
+                            </Link>
                         </div>
                     </div>
                 ))
