@@ -2,7 +2,12 @@
   "name": "gymapp",
   "description": "gymapp",
   "author": {"name": "pixma140", "url": "https://pixma140.com"},
-  "keywords": ["gym","training","exercise"],
+  "keywords": ["gym","training","exercise","workout","tracker","log","progress","fitness"],
+  "homepage": "https://github.com/pixma140/gymapp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pixma140/gymapp.git"
+  },
   "version": "0.1.0-alpha",
   "private": true,
   "type": "module",
