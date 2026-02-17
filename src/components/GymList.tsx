@@ -3,7 +3,32 @@ import { db } from '@/db/db';
 import { MapPin, ChevronRight, Plus } from 'lucide-react';
 
 export function GymList({ onSelect, onAdd }: { onSelect: (gymId: number) => void, onAdd: () => void }) {
-    const gyms = useLiveQuery(() => db.gyms.orderBy('visitCount').reverse().toArray());
+    const gymsWithVisits = useLiveQuery(async () => {
+        const gyms = await db.gyms.toArray();
+
+        // Calculate visit count from completed workouts
+        const gymsWithCounts = await Promise.all(
+            gyms.map(async (gym) => {
+                const completedWorkouts = await db.workouts
+                    .where('gymId')
+                    .equals(gym.id)
+                    .filter(w => w.endTime !== undefined)
+                    .toArray();
+
+                const visitCount = completedWorkouts.length;
+                const lastVisited = completedWorkouts.length > 0
+                    ? Math.max(...completedWorkouts.map(w => w.endTime || 0))
+                    : gym.lastVisited;
+
+                return { ...gym, visitCount, lastVisited };
+            })
+        );
+
+        // Sort by visit count descending
+        return gymsWithCounts.sort((a, b) => b.visitCount - a.visitCount);
+    });
+
+    const gyms = gymsWithVisits;
 
     if (!gyms) return <div className="text-zinc-500 text-center py-8">Loading gyms...</div>;
 
