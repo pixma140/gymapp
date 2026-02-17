@@ -149,8 +149,8 @@ export function OnboardingPage() {
                                 onChange={e => handleLanguageChange(e.target.value as Language)}
                                 className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors mt-auto"
                             >
-                                <option value="en">English</option>
-                                <option value="de">Deutsch</option>
+                                <option value="en">{t('language.english')}</option>
+                                <option value="de">{t('language.german')}</option>
                             </select>
                         </div>
                         <div className="flex flex-col h-full">

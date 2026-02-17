@@ -41,6 +41,10 @@ export const translations = {
         'settings.appVersion': 'Gym App v',
         'settings.madeBy': 'made with ❤ by',
 
+        // Language names
+        'language.english': 'English',
+        'language.german': 'German',
+
         // Colors
         'color.blue': 'Blue',
         'color.green': 'Green',
@@ -227,6 +231,7 @@ export const translations = {
         'common.optional': 'Optional',
         'common.unknownGym': 'Unknown Gym',
         'common.unit.kg': 'kg',
+        'common.unit.cm': 'cm',
         'common.unit.reps': 'reps',
     },
     de: {
@@ -268,6 +273,10 @@ export const translations = {
         'settings.reminders.monthly': 'Monatlich',
         'settings.appVersion': 'Gym App v',
         'settings.madeBy': 'gemacht mit ❤ von',
+
+        // Language names
+        'language.english': 'Englisch',
+        'language.german': 'Deutsch',
 
         // Colors
         'color.blue': 'Blau',
@@ -455,6 +464,7 @@ export const translations = {
         'common.optional': 'Optional',
         'common.unknownGym': 'Unbekanntes Studio',
         'common.unit.kg': 'kg',
+        'common.unit.cm': 'cm',
         'common.unit.reps': 'Wdh.',
     }
 };

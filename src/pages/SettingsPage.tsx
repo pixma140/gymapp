@@ -109,8 +109,8 @@ export function SettingsPage() {
                             onChange={(e) => setLanguage(e.target.value as Language)}
                             className="bg-[var(--input)] border border-[var(--border)] rounded-lg text-xs p-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
                         >
-                            <option value="en">English</option>
-                            <option value="de">Deutsch</option>
+                            <option value="en">{t('language.english')}</option>
+                            <option value="de">{t('language.german')}</option>
                         </select>
                     </div>
 

@@ -114,7 +114,7 @@ export function ProfilePage() {
 
                     {/* Height */}
                     <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
-                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.height')} <span className="text-[var(--muted-foreground)]">(cm)</span></label>
+                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.height')} <span className="text-[var(--muted-foreground)]">({t('common.unit.cm')})</span></label>
                         <input
                             type="number"
                             value={formData.height || ''}
