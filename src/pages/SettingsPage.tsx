@@ -5,6 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { cn } from '@/lib/utils';
+import { APP_VERSION } from '@/lib/constants';
 
 export function SettingsPage() {
     const user = useLiveQuery(() => db.users.orderBy('id').first());
@@ -202,8 +203,8 @@ export function SettingsPage() {
                 </div>
 
                 <div className="text-center text-xs text-[var(--muted-foreground)] pt-8">
-                    <p className="font-mono">Gym App v0.1.0-alpha</p>
-                    <p>Built with React & Vite</p>
+                    <p className="font-mono">Gym App v{APP_VERSION}</p>
+                    <p>made with ❤ by <a href="https://pixma140.com" target="_blank" rel="noopener noreferrer">pixma140</a></p>
                 </div>
             </div >
         </div >
