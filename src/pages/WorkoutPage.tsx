@@ -6,6 +6,7 @@ import { useWorkoutSession } from '@/hooks/useWorkoutSession';
 import { ExerciseSelector } from '@/components/ExerciseSelector';
 import { ActiveExercise } from '@/components/ActiveExercise';
 import { useState } from 'react';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export function WorkoutPage() {
     const { gymId } = useParams();
@@ -13,6 +14,7 @@ export function WorkoutPage() {
     const id = Number(gymId);
     const gym = useLiveQuery(() => db.gyms.get(id), [id]);
     const [showExerciseSelector, setShowExerciseSelector] = useState(false);
+    const { t } = useLanguage();
 
     const {
         workoutSets,
@@ -41,7 +43,7 @@ export function WorkoutPage() {
         setShowExerciseSelector(true);
     };
 
-    if (!gym) return <div className="p-8 text-center text-[var(--muted-foreground)]">Initializing workout...</div>;
+    if (!gym) return <div className="p-8 text-center text-[var(--muted-foreground)]">{t('workout.initializing')}</div>;
 
     return (
         <div className="space-y-6 animate-in slide-in-from-right duration-500 min-h-full flex flex-col pb-20 p-4">
@@ -63,7 +65,7 @@ export function WorkoutPage() {
                     onClick={handleFinish}
                     className="bg-green-600 hover:bg-green-500 text-white px-4 py-1.5 rounded-full text-sm font-bold transition-all shadow-lg shadow-green-900/20"
                 >
-                    Finish
+                    {t('workout.finish')}
                 </button>
             </header>
 
@@ -87,7 +89,7 @@ export function WorkoutPage() {
                     <div className="bg-[var(--accent)] p-3 rounded-full">
                         <Plus className="size-6" />
                     </div>
-                    <span className="font-medium">Add Exercise</span>
+                    <span className="font-medium">{t('workout.addExercise')}</span>
                 </button>
             </div>
 

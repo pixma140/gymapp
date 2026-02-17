@@ -6,11 +6,13 @@ import { useWorkoutSession } from '@/hooks/useWorkoutSession';
 import { ExerciseSelector } from '@/components/ExerciseSelector';
 import { ActiveExercise } from '@/components/ActiveExercise';
 import { useState } from 'react';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export function EditWorkoutPage() {
     const { workoutId } = useParams();
     const navigate = useNavigate();
     const id = Number(workoutId);
+    const { t } = useLanguage();
 
     const workout = useLiveQuery(() => db.workouts.get(id), [id]);
     const gym = useLiveQuery(() => workout ? db.gyms.get(workout.gymId) : undefined, [workout]);
@@ -40,7 +42,7 @@ export function EditWorkoutPage() {
         navigate('/analysis');
     };
 
-    if (!workout || !gym) return <div className="p-8 text-center text-[var(--muted-foreground)]">Loading workout...</div>;
+    if (!workout || !gym) return <div className="p-8 text-center text-[var(--muted-foreground)]">{t('editWorkout.loading')}</div>;
 
     return (
         <div className="space-y-6 animate-in slide-in-from-right duration-500 min-h-full flex flex-col pb-20 p-4 bg-[var(--background)] transition-colors duration-300">
@@ -85,7 +87,7 @@ export function EditWorkoutPage() {
                     className="bg-[var(--primary)] hover:opacity-90 text-[var(--primary-foreground)] px-4 py-1.5 rounded-full text-sm font-bold transition-all shadow-[0_0_15px_var(--primary)]/30 flex items-center gap-1"
                 >
                     <Save className="size-4" />
-                    Save
+                    {t('common.save')}
                 </button>
             </header>
 
@@ -107,7 +109,7 @@ export function EditWorkoutPage() {
                     <div className="bg-[var(--background)] p-3 rounded-full border border-[var(--border)]">
                         <Plus className="size-6" />
                     </div>
-                    <span className="font-medium">Add Exercise</span>
+                    <span className="font-medium">{t('workout.addExercise')}</span>
                 </button>
             </div>
 

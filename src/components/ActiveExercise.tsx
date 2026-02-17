@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Exercise, WorkoutSet } from '@/db/db';
 import { Trash2, Plus, History } from 'lucide-react';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
     exercise: Exercise,
@@ -11,6 +12,7 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
     const [weight, setWeight] = useState('');
     const [reps, setReps] = useState('');
     const [type, setType] = useState<'warmup' | 'working'>('working');
+    const { t } = useLanguage();
 
     const handleAdd = () => {
         const w = parseFloat(weight);
@@ -25,10 +27,10 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
             <div className="flex justify-between items-start">
                 <div>
                     <h3 className="text-xl font-bold text-[var(--foreground)]">{exercise.name}</h3>
-                    <p className="text-[var(--muted-foreground)] text-sm">{exercise.muscleGroup || 'General'}</p>
+                    <p className="text-[var(--muted-foreground)] text-sm">{exercise.muscleGroup || t('manageExercises.general')}</p>
                 </div>
                 <button className="text-[var(--primary)] text-sm flex items-center gap-1">
-                    <History className="size-3" /> History
+                    <History className="size-3" /> {t('exercise.history')}
                 </button>
             </div>
 
@@ -41,9 +43,9 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
                                 {set.type === 'warmup' ? 'W' : idx + 1}
                             </span>
                             <div className="text-[var(--foreground)] font-medium">
-                                {set.weight} <span className="text-[var(--muted-foreground)] text-xs">kg</span>
+                                {set.weight} <span className="text-[var(--muted-foreground)] text-xs">{t('common.unit.kg')}</span>
                                 <span className="text-[var(--muted-foreground)] mx-2">×</span>
-                                {set.reps} <span className="text-[var(--muted-foreground)] text-xs">reps</span>
+                                {set.reps} <span className="text-[var(--muted-foreground)] text-xs">{t('common.unit.reps')}</span>
                             </div>
                         </div>
                         <button onClick={() => onRemoveSet(set.id)} className="text-[var(--muted-foreground)] hover:text-red-500 transition-colors">
@@ -56,7 +58,7 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
             {/* Input Row */}
             <div className="flex gap-2 items-end pt-2 border-t border-[var(--border)]">
                 <div className="flex-1">
-                    <label className="text-[10px] uppercase font-bold text-[var(--muted-foreground)]">Weight</label>
+                    <label className="text-[10px] uppercase font-bold text-[var(--muted-foreground)]">{t('exercise.weight')}</label>
                     <input
                         type="number"
                         value={weight}
@@ -66,7 +68,7 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
                     />
                 </div>
                 <div className="flex-1">
-                    <label className="text-[10px] uppercase font-bold text-[var(--muted-foreground)]">Reps</label>
+                    <label className="text-[10px] uppercase font-bold text-[var(--muted-foreground)]">{t('exercise.reps')}</label>
                     <input
                         type="number"
                         value={reps}
@@ -81,7 +83,7 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
                         onClick={() => setType(type === 'working' ? 'warmup' : 'working')}
                         className={`p-2 rounded-lg text-xs font-bold uppercase border transition-colors ${type === 'warmup' ? 'border-orange-500/50 text-orange-400' : 'border-green-500/50 text-green-400'}`}
                     >
-                        {type === 'warmup' ? 'Warmup' : 'Working'}
+                        {type === 'warmup' ? t('exercise.type.warmup') : t('exercise.type.working')}
                     </button>
                 </div>
 

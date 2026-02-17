@@ -4,9 +4,11 @@ import { db } from '@/db/db';
 import type { Gym } from '@/db/db';
 import { ArrowLeft, Trash2, Edit2, Save, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export function ManageGymsPage() {
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const gyms = useLiveQuery(() => db.gyms.toArray());
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editName, setEditName] = useState('');
@@ -29,7 +31,7 @@ export function ManageGymsPage() {
     };
 
     const deleteGym = async (id: number) => {
-        if (confirm("Delete this gym? This will NOT delete workout history associated with it, but functionality might be affected.")) {
+        if (confirm(t('manageGyms.deleteConfirm'))) {
             await db.gyms.delete(id);
         }
     };
@@ -41,7 +43,7 @@ export function ManageGymsPage() {
                     <ArrowLeft className="size-6" />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">Manage Gyms</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">{t('manageGyms.title')}</h1>
                 </div>
             </header>
 
@@ -63,7 +65,7 @@ export function ManageGymsPage() {
                             <>
                                 <div>
                                     <h3 className="font-bold text-[var(--foreground)]">{gym.name}</h3>
-                                    <p className="text-xs text-[var(--muted-foreground)]">{gym.location || 'No location'}</p>
+                                    <p className="text-xs text-[var(--muted-foreground)]">{gym.location || t('manageGyms.noLocation')}</p>
                                 </div>
                                 <div className="flex gap-2">
                                     <button onClick={() => startEdit(gym)} className="p-2 text-[var(--muted-foreground)] hover:text-[var(--primary)]"><Edit2 className="size-4" /></button>
@@ -73,7 +75,7 @@ export function ManageGymsPage() {
                         )}
                     </div>
                 ))}
-                {gyms?.length === 0 && <p className="text-[var(--muted-foreground)] text-center py-8">No gyms added yet.</p>}
+                {gyms?.length === 0 && <p className="text-[var(--muted-foreground)] text-center py-8">{t('manageGyms.empty')}</p>}
             </div>
         </div>
     );

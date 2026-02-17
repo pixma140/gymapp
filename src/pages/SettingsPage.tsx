@@ -16,14 +16,14 @@ export function SettingsPage() {
     const { theme, setTheme, mainColor, setColor } = useTheme();
 
     const colors = [
-        { name: 'Blue', value: '#2563eb' },
-        { name: 'Green', value: '#16a34a' },
-        { name: 'Red', value: '#dc2626' },
-        { name: 'Orange', value: '#ea580c' },
-        { name: 'Purple', value: '#9333ea' },
-        { name: 'Pink', value: '#db2777' },
-        { name: 'Cyan', value: '#0891b2' },
-        { name: 'Yellow', value: '#ca8a04' },
+        { name: t('color.blue'), value: '#2563eb' },
+        { name: t('color.green'), value: '#16a34a' },
+        { name: t('color.red'), value: '#dc2626' },
+        { name: t('color.orange'), value: '#ea580c' },
+        { name: t('color.purple'), value: '#9333ea' },
+        { name: t('color.pink'), value: '#db2777' },
+        { name: t('color.cyan'), value: '#0891b2' },
+        { name: t('color.yellow'), value: '#ca8a04' },
     ];
 
     const handleClearData = async () => {
@@ -55,8 +55,8 @@ export function SettingsPage() {
                         <div className="flex items-center gap-3">
                             <Palette className="size-5 text-[var(--muted-foreground)]" />
                             <div className="text-left">
-                                <h3 className="text-sm font-medium text-[var(--foreground)]">Accent Color</h3>
-                                <p className="text-xs text-[var(--muted-foreground)]">Customize your main color</p>
+                                <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.accentColor')}</h3>
+                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.accentColor.desc')}</p>
                             </div>
                         </div>
                         <div className="flex flex-wrap gap-3">
@@ -127,10 +127,10 @@ export function SettingsPage() {
                             onChange={(e) => handleFrequencyChange(e.target.value as User['reminderFrequency'])}
                             className="bg-[var(--input)] border border-[var(--border)] rounded-lg text-xs p-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
                         >
-                            <option value="never">Never</option>
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
+                            <option value="never">{t('settings.reminders.never')}</option>
+                            <option value="daily">{t('settings.reminders.daily')}</option>
+                            <option value="weekly">{t('settings.reminders.weekly')}</option>
+                            <option value="monthly">{t('settings.reminders.monthly')}</option>
                         </select>
                     </div>
 
@@ -208,8 +208,8 @@ export function SettingsPage() {
                 </div>
 
                 <div className="text-center text-xs text-[var(--muted-foreground)] pt-8">
-                    <p className="font-mono">Gym App v{APP_VERSION}</p>
-                    <p>made with ❤ by <a href="https://pixma140.com" target="_blank" rel="noopener noreferrer">pixma140</a></p>
+                    <p className="font-mono">{t('settings.appVersion')}{APP_VERSION}</p>
+                    <p>{t('settings.madeBy')} <a href="https://pixma140.com" target="_blank" rel="noopener noreferrer">pixma140</a></p>
                 </div>
             </div >
         </div >

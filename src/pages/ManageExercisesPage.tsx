@@ -4,9 +4,11 @@ import { db } from '@/db/db';
 import type { Exercise } from '@/db/db';
 import { ArrowLeft, Trash2, Edit2, Save, X, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export function ManageExercisesPage() {
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [search, setSearch] = useState('');
     const exercises = useLiveQuery(
         () => db.exercises
@@ -38,7 +40,7 @@ export function ManageExercisesPage() {
     };
 
     const deleteExercise = async (id: number) => {
-        if (confirm("Delete this exercise?")) {
+        if (confirm(t('manageExercises.deleteConfirm'))) {
             await db.exercises.delete(id);
         }
     };
@@ -57,7 +59,7 @@ export function ManageExercisesPage() {
                     <ArrowLeft className="size-6" />
                 </button>
                 <div className="flex-1">
-                    <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">Manage Exercises</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">{t('manageExercises.title')}</h1>
                 </div>
                 <button onClick={() => setIsAdding(!isAdding)} className="bg-blue-600 p-2 rounded-lg text-white">
                     <Plus className="size-5" />
@@ -66,7 +68,7 @@ export function ManageExercisesPage() {
 
             <input
                 type="text"
-                placeholder="Search exercises..."
+                placeholder={t('manageExercises.searchPlaceholder')}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
@@ -76,7 +78,7 @@ export function ManageExercisesPage() {
                 <div className="bg-[var(--card)] border border-[var(--primary)]/50 rounded-xl p-4 flex gap-2 animate-in slide-in-from-top-2">
                     <input
                         autoFocus
-                        placeholder="New exercise name"
+                        placeholder={t('manageExercises.newPlaceholder')}
                         value={newName}
                         onChange={e => setNewName(e.target.value)}
                         className="flex-1 bg-[var(--input)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--foreground)]"
@@ -103,7 +105,7 @@ export function ManageExercisesPage() {
                             <>
                                 <div>
                                     <h3 className="font-bold text-[var(--foreground)]">{ex.name}</h3>
-                                    <p className="text-xs text-[var(--muted-foreground)]">{ex.muscleGroup || 'General'}</p>
+                                    <p className="text-xs text-[var(--muted-foreground)]">{ex.muscleGroup || t('manageExercises.general')}</p>
                                 </div>
                                 <div className="flex gap-2">
                                     <button onClick={() => startEdit(ex)} className="p-2 text-[var(--muted-foreground)] hover:text-[var(--primary)]"><Edit2 className="size-4" /></button>

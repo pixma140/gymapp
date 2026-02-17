@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ExerciseList } from '@/components/ExerciseList';
 import { AddExerciseForm } from '@/components/AddExerciseForm';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export function ExerciseSelector({ onSelect, onCancel }: { onSelect: (exerciseId: number) => void, onCancel: () => void }) {
     const [view, setView] = useState<'list' | 'add'>('list');
+    const { t } = useLanguage();
 
     const content = (
             <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[1000] flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -13,8 +15,8 @@ export function ExerciseSelector({ onSelect, onCancel }: { onSelect: (exerciseId
                 {view === 'list' ? (
                     <>
                         <div className="p-4 border-b border-[var(--border)] flex items-center justify-between bg-[var(--card)]/70">
-                            <h2 className="text-lg font-bold text-[var(--foreground)]">Select Exercise</h2>
-                            <button onClick={onCancel} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] text-sm font-medium">Close</button>
+                            <h2 className="text-lg font-bold text-[var(--foreground)]">{t('exerciseSelector.title')}</h2>
+                            <button onClick={onCancel} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] text-sm font-medium">{t('exerciseSelector.close')}</button>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                             <ExerciseList

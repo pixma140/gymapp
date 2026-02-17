@@ -2,11 +2,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
 import { ArrowLeft, Calendar, Dumbbell, Edit2, Trash2, Clock, Timer } from 'lucide-react';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export function WorkoutDetailsPage() {
     const { workoutId } = useParams();
     const navigate = useNavigate();
     const id = Number(workoutId);
+    const { t } = useLanguage();
 
     const workout = useLiveQuery(() => db.workouts.get(id), [id]);
     const gym = useLiveQuery(() => workout ? db.gyms.get(workout.gymId) : undefined, [workout]);
@@ -20,7 +22,7 @@ export function WorkoutDetailsPage() {
     }, [workoutSets]);
 
     if (!workout || !gym || !workoutSets || !exercises) {
-        return <div className="p-8 text-center text-[var(--muted-foreground)]">Loading details...</div>;
+        return <div className="p-8 text-center text-[var(--muted-foreground)]">{t('workoutDetails.loading')}</div>;
     }
 
     const setsByExercise = workoutSets.reduce((acc, set) => {
@@ -30,7 +32,7 @@ export function WorkoutDetailsPage() {
     }, {} as Record<number, typeof workoutSets>);
 
     const handleDelete = async () => {
-        if (window.confirm('Are you sure you want to delete this workout?')) {
+        if (window.confirm(t('workoutDetails.deleteConfirm'))) {
             await db.transaction('rw', db.workouts, db.workoutSets, async () => {
                 await db.workoutSets.where('workoutId').equals(id).delete();
                 await db.workouts.delete(id);
@@ -92,12 +94,12 @@ export function WorkoutDetailsPage() {
                         className="flex items-center gap-2 px-4 py-1.5 rounded-l-full hover:bg-[var(--background)] text-[var(--foreground)] text-sm font-bold transition-colors border-r border-[var(--border)]"
                     >
                         <Edit2 className="size-3.5" />
-                        Edit
+                        {t('workoutDetails.edit')}
                     </button>
                     <button
                         onClick={handleDelete}
                         className="px-3 py-1.5 rounded-r-full bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
-                        title="Delete workout"
+                        title={t('workoutDetails.delete')}
                     >
                         <Trash2 className="size-3.5" />
                     </button>
@@ -109,7 +111,7 @@ export function WorkoutDetailsPage() {
                 {exercises.length === 0 ? (
                     <div className="text-center py-12 text-[var(--muted-foreground)]">
                         <Dumbbell className="size-12 mx-auto mb-3 opacity-20" />
-                        <p>No exercises recorded.</p>
+                        <p>{t('workoutDetails.noExercises')}</p>
                     </div>
                 ) : (
                     exercises.map(exercise => {
@@ -119,7 +121,7 @@ export function WorkoutDetailsPage() {
                                 <h3 className="text-lg font-semibold text-[var(--foreground)] flex items-center gap-2">
                                     {exercise.name}
                                     <span className="text-xs font-normal text-[var(--muted-foreground)] px-2 py-0.5 rounded-full border border-[var(--border)]">
-                                        {sets.length} sets
+                                        {sets.length} {t('workoutDetails.sets')}
                                     </span>
                                 </h3>
                                 <div className="space-y-2">
@@ -143,12 +145,12 @@ export function WorkoutDetailsPage() {
                                                 </span>
                                                 <div className="font-mono text-sm">
                                                     <span className="font-bold text-lg">{set.weight}</span>
-                                                    <span className="text-xs text-[var(--muted-foreground)] ml-1">kg</span>
+                                                    <span className="text-xs text-[var(--muted-foreground)] ml-1">{t('common.unit.kg')}</span>
                                                 </div>
                                             </div>
                                             <div className="font-mono text-sm">
                                                 <span className="font-bold text-lg">{set.reps}</span>
-                                                <span className="text-xs text-[var(--muted-foreground)] ml-1">reps</span>
+                                                <span className="text-xs text-[var(--muted-foreground)] ml-1">{t('common.unit.reps')}</span>
                                             </div>
                                         </div>
                                     ))}

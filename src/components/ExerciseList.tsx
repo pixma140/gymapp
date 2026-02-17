@@ -2,9 +2,11 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
 import { Search, Plus, Dumbbell, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export function ExerciseList({ onSelect, onAdd }: { onSelect: (exerciseId: number) => void, onAdd: () => void }) {
     const [search, setSearch] = useState('');
+    const { t } = useLanguage();
     const exercises = useLiveQuery(() => {
         const collection = db.exercises.orderBy('name');
         if (search) {
@@ -14,7 +16,7 @@ export function ExerciseList({ onSelect, onAdd }: { onSelect: (exerciseId: numbe
         return collection.toArray();
     }, [search]);
 
-    if (!exercises) return <div className="text-[var(--muted-foreground)] text-center py-8">Loading exercises...</div>;
+    if (!exercises) return <div className="text-[var(--muted-foreground)] text-center py-8">{t('exercises.loading')}</div>;
 
     return (
         <div className="space-y-4">
@@ -23,7 +25,7 @@ export function ExerciseList({ onSelect, onAdd }: { onSelect: (exerciseId: numbe
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[var(--muted-foreground)]" />
                 <input
                     type="text"
-                    placeholder="Search exercises..."
+                    placeholder={t('exercises.searchPlaceholder')}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl py-3 pl-10 pr-4 text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
@@ -36,17 +38,17 @@ export function ExerciseList({ onSelect, onAdd }: { onSelect: (exerciseId: numbe
                         <Dumbbell className="size-6 text-[var(--muted-foreground)]" />
                     </div>
                     <h3 className="text-lg font-medium text-[var(--foreground)] mb-1">
-                        {search ? 'No matches found' : 'No exercises yet'}
+                        {search ? t('exercises.empty.noMatchesTitle') : t('exercises.empty.noneTitle')}
                     </h3>
                     <p className="text-[var(--muted-foreground)] text-sm mb-6">
-                        {search ? 'Try a different search term or add a new one.' : 'Add your favorite exercises to get started.'}
+                        {search ? t('exercises.empty.noMatchesBody') : t('exercises.empty.noneBody')}
                     </p>
                     <button
                         onClick={onAdd}
                         className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-medium transition-colors inline-flex items-center gap-2"
                     >
                         <Plus className="size-4" />
-                        Add "{search || 'New Exercise'}"
+                        {t('exercises.add')} "{search || t('exercises.new')}"
                     </button>
                 </div>
             ) : (
@@ -74,7 +76,7 @@ export function ExerciseList({ onSelect, onAdd }: { onSelect: (exerciseId: numbe
                         className="w-full py-3 rounded-xl border border-dashed border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--accent)] transition-all flex items-center justify-center gap-2 text-sm font-medium mt-2"
                     >
                         <Plus className="size-4" />
-                        Can't find it? Add New
+                        {t('exercises.cantFindAdd')}
                     </button>
                 </div>
             )}

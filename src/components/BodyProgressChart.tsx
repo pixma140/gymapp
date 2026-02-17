@@ -1,8 +1,10 @@
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export function BodyProgressChart() {
+    const { t } = useLanguage();
     const data = useLiveQuery(async () => {
         const measurements = await db.userMeasurements.orderBy('timestamp').toArray();
         return measurements.map(m => ({
@@ -12,12 +14,12 @@ export function BodyProgressChart() {
         }));
     });
 
-    if (!data) return <div className="text-[var(--muted-foreground)]">Loading charts...</div>;
+    if (!data) return <div className="text-[var(--muted-foreground)]">{t('charts.loading')}</div>;
 
     return (
         <div className="space-y-6">
             <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 h-64 w-full">
-                <h3 className="text-sm font-bold text-[var(--muted-foreground)] mb-2 uppercase tracking-wider">Weight History</h3>
+                <h3 className="text-sm font-bold text-[var(--muted-foreground)] mb-2 uppercase tracking-wider">{t('charts.weightHistory')}</h3>
                 {data.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <LineChart data={data}>
@@ -33,13 +35,13 @@ export function BodyProgressChart() {
                     </ResponsiveContainer>
                 ) : (
                     <div className="h-full flex items-center justify-center text-[var(--muted-foreground)] text-sm">
-                        No weight data. Update your profile to track history.
+                        {t('charts.noWeight')}
                     </div>
                 )}
             </div>
 
             <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 h-64 w-full">
-                <h3 className="text-sm font-bold text-[var(--muted-foreground)] mb-2 uppercase tracking-wider">Body Fat History</h3>
+                <h3 className="text-sm font-bold text-[var(--muted-foreground)] mb-2 uppercase tracking-wider">{t('charts.bodyFatHistory')}</h3>
                 {data.length > 0 && data.some(d => d.bodyFat) ? (
                     <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                         <LineChart data={data}>
@@ -55,7 +57,7 @@ export function BodyProgressChart() {
                     </ResponsiveContainer>
                 ) : (
                     <div className="h-full flex items-center justify-center text-[var(--muted-foreground)] text-sm">
-                        No body fat data.
+                        {t('charts.noBodyFat')}
                     </div>
                 )}
             </div>

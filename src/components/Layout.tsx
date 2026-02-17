@@ -49,9 +49,9 @@ export function Layout() {
                             <Timer className="size-4 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-bold text-green-100 truncate">Workout session active</h4>
+                            <h4 className="text-sm font-bold text-green-100 truncate">{t('layout.workoutActiveTitle')}</h4>
                             <p className="text-xs text-green-200/70 truncate">
-                                {activeWorkout.gymName || 'Unknown Gym'} • Tap to resume
+                                {activeWorkout.gymName || t('common.unknownGym')} • {t('layout.tapToResume')}
                             </p>
                         </div>
                     </div>
@@ -61,11 +61,11 @@ export function Layout() {
                     <div className="absolute top-4 left-4 right-4 z-10 bg-blue-500/10 border border-blue-500/50 rounded-xl p-3 flex items-start gap-3 animate-in slide-in-from-top-4 backdrop-blur-md">
                         <AlertCircle className="size-5 text-blue-400 shrink-0 mt-0.5" />
                         <div className="flex-1">
-                            <h4 className="text-sm font-bold text-blue-100">Time to update your stats!</h4>
-                            <p className="text-xs text-blue-200/70 mt-0.5">It's been a while since your last measurement.</p>
+                            <h4 className="text-sm font-bold text-blue-100">{t('reminder.title')}</h4>
+                            <p className="text-xs text-blue-200/70 mt-0.5">{t('reminder.subtitle')}</p>
                         </div>
                         <Link to="/profile" className="text-xs font-bold bg-blue-500 text-white px-3 py-1.5 rounded-lg">
-                            Update
+                            {t('reminder.action')}
                         </Link>
                     </div>
                 )}

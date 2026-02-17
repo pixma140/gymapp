@@ -2,9 +2,11 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
 import { useState } from 'react';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export function ProgressChart() {
     const [exerciseId, setExerciseId] = useState<number | null>(null);
+    const { t } = useLanguage();
 
     const exercises = useLiveQuery(() => db.exercises.toArray());
 
@@ -34,7 +36,7 @@ export function ProgressChart() {
         return Array.from(byDate.values());
     }, [exerciseId]);
 
-    if (!exercises) return <div className="text-[var(--muted-foreground)]">Loading charts...</div>;
+    if (!exercises) return <div className="text-[var(--muted-foreground)]">{t('charts.loading')}</div>;
 
     return (
         <div className="space-y-4">
@@ -70,13 +72,13 @@ export function ProgressChart() {
                         </ResponsiveContainer>
                     ) : (
                         <div className="h-full flex items-center justify-center text-[var(--muted-foreground)] text-sm">
-                            No data for this exercise yet.
+                            {t('charts.noDataExercise')}
                         </div>
                     )}
                 </div>
             ) : (
                 <div className="bg-[var(--card)] border border-dashed border-[var(--border)] rounded-2xl p-8 text-center text-[var(--muted-foreground)]">
-                    Select an exercise to view progress.
+                    {t('charts.selectExercise')}
                 </div>
             )}
         </div>

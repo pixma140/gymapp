@@ -3,6 +3,7 @@ import { db } from '@/db/db';
 import type { User } from '@/db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Save, User as UserIcon } from 'lucide-react';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export function ProfilePage() {
     const user = useLiveQuery(() => db.users.orderBy('id').first());
@@ -10,6 +11,7 @@ export function ProfilePage() {
     const [isSaving, setIsSaving] = useState(false);
     const [saveMessage, setSaveMessage] = useState<string | null>(null);
     const clearMessageTimeout = useRef<number | null>(null);
+    const { t } = useLanguage();
 
     useEffect(() => {
         if (user) {
@@ -45,7 +47,7 @@ export function ProfilePage() {
             } else {
                 await db.users.add(formData as User);
             }
-            setSaveMessage('Profile saved.');
+            setSaveMessage(t('profile.saveSuccess'));
             clearMessageTimeout.current = window.setTimeout(() => {
                 setSaveMessage(null);
             }, 2500);
@@ -59,8 +61,8 @@ export function ProfilePage() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500 max-w-md mx-auto pb-20 p-4">
             <header>
-                <h1 className="text-3xl font-bold tracking-tight text-[var(--foreground)]">Profile</h1>
-                <p className="text-[var(--muted-foreground)] mt-1">Manage your stats.</p>
+                <h1 className="text-3xl font-bold tracking-tight text-[var(--foreground)]">{t('profile.title')}</h1>
+                <p className="text-[var(--muted-foreground)] mt-1">{t('profile.subtitle')}</p>
             </header>
 
             <form onSubmit={handleSave} className="space-y-6">
@@ -71,13 +73,13 @@ export function ProfilePage() {
                     </div>
 
                     <div className="w-full">
-                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2 text-center">Display Name</label>
+                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2 text-center">{t('profile.displayName')}</label>
                         <input
                             type="text"
                             value={formData.name || ''}
                             onChange={e => handleChange('name', e.target.value)}
                             className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-center text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
-                            placeholder="Your Name"
+                            placeholder={t('profile.displayName')}
                         />
                     </div>
                 </div>
@@ -86,7 +88,7 @@ export function ProfilePage() {
                 <div className="grid grid-cols-2 gap-4">
                     {/* Weight */}
                     <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
-                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Weight <span className="text-[var(--muted-foreground)]">(kg)</span></label>
+                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.weight')} <span className="text-[var(--muted-foreground)]">({t('common.unit.kg')})</span></label>
                         <input
                             type="number"
                             value={formData.weight || ''}
@@ -99,7 +101,7 @@ export function ProfilePage() {
 
                     {/* Body Fat */}
                     <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
-                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Body Fat <span className="text-[var(--muted-foreground)]">(%)</span></label>
+                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.bodyFat')} <span className="text-[var(--muted-foreground)]">(%)</span></label>
                         <input
                             type="number"
                             value={formData.bodyFat || ''}
@@ -112,7 +114,7 @@ export function ProfilePage() {
 
                     {/* Height */}
                     <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
-                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Height <span className="text-[var(--muted-foreground)]">(cm)</span></label>
+                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.height')} <span className="text-[var(--muted-foreground)]">(cm)</span></label>
                         <input
                             type="number"
                             value={formData.height || ''}
@@ -124,7 +126,7 @@ export function ProfilePage() {
 
                     {/* Age */}
                     <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
-                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Age</label>
+                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.age')}</label>
                         <input
                             type="number"
                             value={formData.age || ''}
@@ -136,15 +138,15 @@ export function ProfilePage() {
 
                     {/* Gender */}
                     <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
-                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">Gender</label>
+                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.gender')}</label>
                         <select
                             value={formData.gender || 'other'}
                             onChange={e => handleChange('gender', e.target.value)}
                             className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
                         >
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="other">Other</option>
+                            <option value="male">{t('profile.gender.male')}</option>
+                            <option value="female">{t('profile.gender.female')}</option>
+                            <option value="other">{t('profile.gender.other')}</option>
                         </select>
                     </div>
                 </div>
@@ -154,12 +156,12 @@ export function ProfilePage() {
                     disabled={isSaving}
                     className="w-full bg-blue-600 disabled:opacity-50 hover:bg-blue-500 text-white px-6 py-4 rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
                 >
-                    {isSaving ? 'Saving...' : (
+                    {isSaving ? t('profile.saving') : (
                         <>
                             <Save className="size-5" />
-                            Save Profile
+                            {t('profile.save')}
                         </>
-                        )}
+                    )}
                 </button>
                 {saveMessage && (
                     <p className="text-sm text-emerald-400 text-center animate-in fade-in duration-300">

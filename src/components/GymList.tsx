@@ -1,8 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
 import { MapPin, ChevronRight, Plus } from 'lucide-react';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 export function GymList({ onSelect, onAdd }: { onSelect: (gymId: number) => void, onAdd: () => void }) {
+    const { t } = useLanguage();
     const gymsWithVisits = useLiveQuery(async () => {
         const gyms = await db.gyms.toArray();
 
@@ -30,7 +32,7 @@ export function GymList({ onSelect, onAdd }: { onSelect: (gymId: number) => void
 
     const gyms = gymsWithVisits;
 
-    if (!gyms) return <div className="text-[var(--muted-foreground)] text-center py-8">Loading gyms...</div>;
+    if (!gyms) return <div className="text-[var(--muted-foreground)] text-center py-8">{t('gyms.loading')}</div>;
 
     return (
         <div className="space-y-4">
@@ -39,14 +41,14 @@ export function GymList({ onSelect, onAdd }: { onSelect: (gymId: number) => void
                     <div className="size-12 bg-[var(--accent)] rounded-full flex items-center justify-center mx-auto mb-4">
                         <MapPin className="size-6 text-[var(--muted-foreground)]" />
                     </div>
-                    <h3 className="text-lg font-medium text-[var(--foreground)] mb-1">No gyms added</h3>
-                    <p className="text-[var(--muted-foreground)] text-sm mb-6">Add your first gym to start tracking workouts.</p>
+                    <h3 className="text-lg font-medium text-[var(--foreground)] mb-1">{t('gyms.empty.title')}</h3>
+                    <p className="text-[var(--muted-foreground)] text-sm mb-6">{t('gyms.empty.subtitle')}</p>
                     <button
                         onClick={onAdd}
                         className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-medium transition-colors inline-flex items-center gap-2"
                     >
                         <Plus className="size-4" />
-                        Add New Gym
+                        {t('gyms.addNew')}
                     </button>
                 </div>
             ) : (
@@ -67,8 +69,8 @@ export function GymList({ onSelect, onAdd }: { onSelect: (gymId: number) => void
                                 )}
                             </div>
                             <div className="flex items-center gap-3">
-                                <div className="flex flex-col items-end">
-                                    <span className="text-[var(--muted-foreground)] text-xs">Visits</span>
+                                    <div className="flex flex-col items-end">
+                                    <span className="text-[var(--muted-foreground)] text-xs">{t('gyms.visits')}</span>
                                     <span className="text-[var(--foreground)] font-mono font-medium">{gym.visitCount}</span>
                                 </div>
                                 <ChevronRight className="size-5 text-[var(--muted-foreground)] group-hover:text-[var(--primary)]/60 transition-colors" />
@@ -81,7 +83,7 @@ export function GymList({ onSelect, onAdd }: { onSelect: (gymId: number) => void
                         className="w-full py-4 rounded-xl border border-dashed border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--accent)] transition-all flex items-center justify-center gap-2 text-sm font-medium mt-2"
                     >
                         <Plus className="size-4" />
-                        Add Another Gym
+                        {t('gyms.addAnother')}
                     </button>
                 </div>
             )}
