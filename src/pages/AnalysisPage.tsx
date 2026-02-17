@@ -15,8 +15,8 @@ export function AnalysisPage() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500 max-w-md mx-auto pb-20 p-4">
             <header>
-                <h1 className="text-3xl font-bold tracking-tight text-white">Analysis</h1>
-                <p className="text-zinc-400 mt-1">Track your progress.</p>
+                <h1 className="text-3xl font-bold tracking-tight text-[var(--foreground)]">Analysis</h1>
+                <p className="text-[var(--muted-foreground)] mt-1">Track your progress.</p>
             </header>
 
             <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
@@ -24,20 +24,20 @@ export function AnalysisPage() {
             {activeTab === 'workout' ? (
                 <div className="space-y-8">
                     <section className="space-y-3">
-                        <h2 className="text-lg font-bold text-white">Progress</h2>
+                        <h2 className="text-lg font-bold text-[var(--foreground)]">Progress</h2>
                         <ProgressChart />
                     </section>
 
                     <section className="space-y-3">
-                        <h2 className="text-lg font-bold text-white">Recent Workouts</h2>
+                        <h2 className="text-lg font-bold text-[var(--foreground)]">Recent Workouts</h2>
                         <WorkoutHistoryList />
                     </section>
                 </div>
             ) : (
                 <div className="space-y-8">
                     <section className="space-y-3">
-                        <h2 className="text-lg font-bold text-white">Body Metrics</h2>
-                        <p className="text-sm text-zinc-500">Track your weight and body fat over time.</p>
+                        <h2 className="text-lg font-bold text-[var(--foreground)]">Body Metrics</h2>
+                        <p className="text-sm text-[var(--muted-foreground)]">Track your weight and body fat over time.</p>
                         <BodyProgressChart />
                     </section>
                 </div>

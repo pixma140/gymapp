@@ -8,7 +8,7 @@ interface TabsProps {
 
 export function Tabs({ tabs, activeTab, onChange }: TabsProps) {
     return (
-        <div className="flex p-1 bg-zinc-900 rounded-xl border border-zinc-800">
+        <div className="flex p-1 bg-[var(--card)] rounded-xl border border-[var(--border)]">
             {tabs.map(tab => (
                 <button
                     key={tab.id}
@@ -16,8 +16,8 @@ export function Tabs({ tabs, activeTab, onChange }: TabsProps) {
                     className={cn(
                         "flex-1 py-2 text-sm font-medium rounded-lg transition-all",
                         activeTab === tab.id
-                            ? "bg-zinc-800 text-white shadow-sm"
-                            : "text-zinc-500 hover:text-zinc-300"
+                            ? "bg-[var(--accent)] text-[var(--foreground)] shadow-sm"
+                            : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                     )}
                 >
                     {tab.label}

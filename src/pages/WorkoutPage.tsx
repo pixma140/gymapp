@@ -41,18 +41,18 @@ export function WorkoutPage() {
         setShowExerciseSelector(true);
     };
 
-    if (!gym) return <div className="p-8 text-center text-zinc-500">Initializing workout...</div>;
+    if (!gym) return <div className="p-8 text-center text-[var(--muted-foreground)]">Initializing workout...</div>;
 
     return (
         <div className="space-y-6 animate-in slide-in-from-right duration-500 min-h-full flex flex-col pb-20 p-4">
-            <header className="flex items-center justify-between bg-zinc-900/50 backdrop-blur-md p-4 -mx-4 sticky top-0 z-10 border-b border-zinc-800">
+            <header className="flex items-center justify-between bg-[var(--background)]/80 backdrop-blur-md p-4 -mx-4 sticky top-0 z-10 border-b border-[var(--border)]">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors">
+                    <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-[var(--accent)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
                         <ArrowLeft className="size-6" />
                     </button>
                     <div>
-                        <h1 className="text-lg font-bold text-white leading-tight truncate max-w-[200px]">{gym.name}</h1>
-                        <div className="flex items-center gap-1.5 text-zinc-400 text-xs font-mono">
+                        <h1 className="text-lg font-bold text-[var(--foreground)] leading-tight truncate max-w-[200px]">{gym.name}</h1>
+                        <div className="flex items-center gap-1.5 text-[var(--muted-foreground)] text-xs font-mono">
                             <Timer className="size-3" />
                             <span>00:00</span>
                         </div>
@@ -82,9 +82,9 @@ export function WorkoutPage() {
                     type="button"
                     onClick={handleOpenExerciseSelector}
                     onPointerUp={handleOpenExerciseSelector}
-                    className="w-full py-4 rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/30 text-zinc-400 hover:text-white hover:border-zinc-500 hover:bg-zinc-800 transition-all flex flex-col items-center justify-center gap-2"
+                    className="w-full py-4 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--accent)] transition-all flex flex-col items-center justify-center gap-2"
                 >
-                    <div className="bg-zinc-800 p-3 rounded-full">
+                    <div className="bg-[var(--accent)] p-3 rounded-full">
                         <Plus className="size-6" />
                     </div>
                     <span className="font-medium">Add Exercise</span>

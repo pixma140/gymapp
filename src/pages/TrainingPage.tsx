@@ -27,8 +27,8 @@ export function TrainingPage() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500 max-w-md mx-auto">
             <header>
-                <h1 className="text-3xl font-bold tracking-tight text-white">Training</h1>
-                <p className="text-zinc-400 mt-1">
+                <h1 className="text-3xl font-bold tracking-tight text-[var(--foreground)]">Training</h1>
+                <p className="text-[var(--muted-foreground)] mt-1">
                     {view === 'add' ? 'Add a new location' : 'Select a gym to start'}
                 </p>
             </header>

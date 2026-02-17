@@ -34,7 +34,7 @@ export function ProgressChart() {
         return Array.from(byDate.values());
     }, [exerciseId]);
 
-    if (!exercises) return <div className="text-zinc-500">Loading charts...</div>;
+    if (!exercises) return <div className="text-[var(--muted-foreground)]">Loading charts...</div>;
 
     return (
         <div className="space-y-4">
@@ -45,7 +45,7 @@ export function ProgressChart() {
                         onClick={() => setExerciseId(ex.id)}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap transition-colors ${exerciseId === ex.id
                             ? 'bg-blue-600 border-blue-500 text-white'
-                            : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
+                            : 'bg-[var(--card)] border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
                             }`}
                     >
                         {ex.name}
@@ -54,28 +54,28 @@ export function ProgressChart() {
             </div>
 
             {exerciseId ? (
-                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 h-64 w-full">
+                <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 h-64 w-full">
                     {data && data.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                             <LineChart data={data}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-                                <XAxis dataKey="date" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                                <XAxis dataKey="date" stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} />
+                                <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} />
                                 <Tooltip
-                                    contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px' }}
-                                    itemStyle={{ color: '#fff' }}
+                                    contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px' }}
+                                    itemStyle={{ color: 'var(--foreground)' }}
                                 />
                                 <Line type="monotone" dataKey="maxWeight" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6' }} />
                             </LineChart>
                         </ResponsiveContainer>
                     ) : (
-                        <div className="h-full flex items-center justify-center text-zinc-500 text-sm">
+                        <div className="h-full flex items-center justify-center text-[var(--muted-foreground)] text-sm">
                             No data for this exercise yet.
                         </div>
                     )}
                 </div>
             ) : (
-                <div className="bg-zinc-900/50 border border-dashed border-zinc-800 rounded-2xl p-8 text-center text-zinc-500">
+                <div className="bg-[var(--card)] border border-dashed border-[var(--border)] rounded-2xl p-8 text-center text-[var(--muted-foreground)]">
                     Select an exercise to view progress.
                 </div>
             )}

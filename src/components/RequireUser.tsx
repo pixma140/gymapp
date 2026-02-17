@@ -7,7 +7,7 @@ export function RequireUser() {
 
     // Wait for query to resolve
     if (userCount === undefined) {
-        return <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-500">Loading...</div>;
+        return <div className="min-h-screen bg-[var(--background)] flex items-center justify-center text-[var(--muted-foreground)]">Loading...</div>;
     }
 
     if (userCount === 0) {

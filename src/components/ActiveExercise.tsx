@@ -21,13 +21,13 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
     };
 
     return (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 space-y-4">
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 space-y-4">
             <div className="flex justify-between items-start">
                 <div>
-                    <h3 className="text-xl font-bold text-white">{exercise.name}</h3>
-                    <p className="text-zinc-500 text-sm">{exercise.muscleGroup || 'General'}</p>
+                    <h3 className="text-xl font-bold text-[var(--foreground)]">{exercise.name}</h3>
+                    <p className="text-[var(--muted-foreground)] text-sm">{exercise.muscleGroup || 'General'}</p>
                 </div>
-                <button className="text-blue-400 text-sm flex items-center gap-1">
+                <button className="text-[var(--primary)] text-sm flex items-center gap-1">
                     <History className="size-3" /> History
                 </button>
             </div>
@@ -35,18 +35,18 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
             {/* Sets Table */}
             <div className="space-y-2">
                 {sets.map((set, idx) => (
-                    <div key={set.id} className={`flex items-center justify-between p-2 rounded-lg ${set.type === 'warmup' ? 'bg-zinc-950/50 border border-dashed border-zinc-800' : 'bg-zinc-800/50'}`}>
+                    <div key={set.id} className={`flex items-center justify-between p-2 rounded-lg ${set.type === 'warmup' ? 'bg-[var(--background)] border border-dashed border-[var(--border)]' : 'bg-[var(--card)]'}`}>
                         <div className="flex gap-4 items-center">
                             <span className={`text-xs font-mono w-6 text-center py-0.5 rounded font-bold ${set.type === 'warmup' ? 'text-orange-400 bg-orange-900/20' : 'text-green-400 bg-green-900/20'}`}>
                                 {set.type === 'warmup' ? 'W' : idx + 1}
                             </span>
-                            <div className="text-zinc-200 font-medium">
-                                {set.weight} <span className="text-zinc-500 text-xs">kg</span>
-                                <span className="text-zinc-600 mx-2">×</span>
-                                {set.reps} <span className="text-zinc-500 text-xs">reps</span>
+                            <div className="text-[var(--foreground)] font-medium">
+                                {set.weight} <span className="text-[var(--muted-foreground)] text-xs">kg</span>
+                                <span className="text-[var(--muted-foreground)] mx-2">×</span>
+                                {set.reps} <span className="text-[var(--muted-foreground)] text-xs">reps</span>
                             </div>
                         </div>
-                        <button onClick={() => onRemoveSet(set.id)} className="text-zinc-600 hover:text-red-400 transition-colors">
+                        <button onClick={() => onRemoveSet(set.id)} className="text-[var(--muted-foreground)] hover:text-red-500 transition-colors">
                             <Trash2 className="size-4" />
                         </button>
                     </div>
@@ -54,24 +54,24 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
             </div>
 
             {/* Input Row */}
-            <div className="flex gap-2 items-end pt-2 border-t border-zinc-800">
+            <div className="flex gap-2 items-end pt-2 border-t border-[var(--border)]">
                 <div className="flex-1">
-                    <label className="text-[10px] uppercase font-bold text-zinc-500">Weight</label>
+                    <label className="text-[10px] uppercase font-bold text-[var(--muted-foreground)]">Weight</label>
                     <input
                         type="number"
                         value={weight}
                         onChange={e => setWeight(e.target.value)}
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-center text-white font-mono"
+                        className="w-full bg-[var(--input)] border border-[var(--border)] rounded-lg p-2 text-center text-[var(--foreground)] font-mono"
                         placeholder="0"
                     />
                 </div>
                 <div className="flex-1">
-                    <label className="text-[10px] uppercase font-bold text-zinc-500">Reps</label>
+                    <label className="text-[10px] uppercase font-bold text-[var(--muted-foreground)]">Reps</label>
                     <input
                         type="number"
                         value={reps}
                         onChange={e => setReps(e.target.value)}
-                        className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-center text-white font-mono"
+                        className="w-full bg-[var(--input)] border border-[var(--border)] rounded-lg p-2 text-center text-[var(--foreground)] font-mono"
                         placeholder="0"
                     />
                 </div>

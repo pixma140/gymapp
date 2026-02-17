@@ -14,31 +14,31 @@ export function ExerciseList({ onSelect, onAdd }: { onSelect: (exerciseId: numbe
         return collection.toArray();
     }, [search]);
 
-    if (!exercises) return <div className="text-zinc-500 text-center py-8">Loading exercises...</div>;
+    if (!exercises) return <div className="text-[var(--muted-foreground)] text-center py-8">Loading exercises...</div>;
 
     return (
         <div className="space-y-4">
             {/* Search Bar */}
             <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[var(--muted-foreground)]" />
                 <input
                     type="text"
                     placeholder="Search exercises..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 pl-10 pr-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-blue-500/50 transition-colors"
+                    className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl py-3 pl-10 pr-4 text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
                 />
             </div>
 
             {exercises.length === 0 ? (
-                <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/50">
-                    <div className="size-12 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Dumbbell className="size-6 text-zinc-400" />
+                <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--card)]">
+                    <div className="size-12 bg-[var(--accent)] rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Dumbbell className="size-6 text-[var(--muted-foreground)]" />
                     </div>
-                    <h3 className="text-lg font-medium text-white mb-1">
+                    <h3 className="text-lg font-medium text-[var(--foreground)] mb-1">
                         {search ? 'No matches found' : 'No exercises yet'}
                     </h3>
-                    <p className="text-zinc-500 text-sm mb-6">
+                    <p className="text-[var(--muted-foreground)] text-sm mb-6">
                         {search ? 'Try a different search term or add a new one.' : 'Add your favorite exercises to get started.'}
                     </p>
                     <button
@@ -55,23 +55,23 @@ export function ExerciseList({ onSelect, onAdd }: { onSelect: (exerciseId: numbe
                         <button
                             key={exercise.id}
                             onClick={() => onSelect(exercise.id)}
-                            className="group flex items-center justify-between p-4 bg-zinc-900 border border-zinc-800 rounded-xl hover:border-blue-500/50 hover:bg-zinc-800/80 transition-all text-left active:scale-[0.98]"
+                            className="group flex items-center justify-between p-4 bg-[var(--card)] border border-[var(--border)] rounded-xl hover:border-[var(--primary)]/50 hover:bg-[var(--accent)] transition-all text-left active:scale-[0.98]"
                         >
                             <div>
-                                <h3 className="font-semibold text-zinc-100 group-hover:text-blue-400 transition-colors">{exercise.name}</h3>
+                                <h3 className="font-semibold text-[var(--foreground)] group-hover:text-[var(--primary)] transition-colors">{exercise.name}</h3>
                                 {exercise.muscleGroup && (
-                                    <span className="text-xs text-zinc-500 px-2 py-0.5 rounded-full bg-zinc-950 border border-zinc-900 mt-1 inline-block">
+                                    <span className="text-xs text-[var(--muted-foreground)] px-2 py-0.5 rounded-full bg-[var(--background)] border border-[var(--border)] mt-1 inline-block">
                                         {exercise.muscleGroup}
                                     </span>
                                 )}
                             </div>
-                            <ChevronRight className="size-5 text-zinc-600 group-hover:text-blue-500/50 transition-colors" />
+                            <ChevronRight className="size-5 text-[var(--muted-foreground)] group-hover:text-[var(--primary)]/60 transition-colors" />
                         </button>
                     ))}
 
                     <button
                         onClick={onAdd}
-                        className="w-full py-3 rounded-xl border border-dashed border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900/50 transition-all flex items-center justify-center gap-2 text-sm font-medium mt-2"
+                        className="w-full py-3 rounded-xl border border-dashed border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--accent)] transition-all flex items-center justify-center gap-2 text-sm font-medium mt-2"
                     >
                         <Plus className="size-4" />
                         Can't find it? Add New

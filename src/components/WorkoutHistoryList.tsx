@@ -17,20 +17,20 @@ export function WorkoutHistoryList() {
         }));
     });
 
-    if (!workouts) return <div className="text-zinc-500 text-center py-8">Loading ...</div>;
+    if (!workouts) return <div className="text-[var(--muted-foreground)] text-center py-8">Loading ...</div>;
 
     return (
         <div className="space-y-4">
             {workouts.length === 0 ? (
-                <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/50">
-                    <p className="text-zinc-500">No completed workouts yet.</p>
+                <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--card)]">
+                    <p className="text-[var(--muted-foreground)]">No completed workouts yet.</p>
                 </div>
             ) : (
                 workouts.map(workout => (
-                    <div key={workout.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex justify-between items-center group hover:border-blue-500/30 transition-colors">
+                    <div key={workout.id} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 flex justify-between items-center group hover:border-[var(--primary)]/40 transition-colors">
                         <div>
-                            <h3 className="font-semibold text-white">{workout.gymName}</h3>
-                            <div className="flex items-center gap-3 text-sm text-zinc-500 mt-1">
+                            <h3 className="font-semibold text-[var(--foreground)]">{workout.gymName}</h3>
+                            <div className="flex items-center gap-3 text-sm text-[var(--muted-foreground)] mt-1">
                                 <div className="flex items-center gap-1">
                                     <Calendar className="size-3" />
                                     {new Date(workout.startTime).toLocaleDateString()}
@@ -59,14 +59,14 @@ export function WorkoutHistoryList() {
                                         });
                                     }
                                 }}
-                                className="p-2 rounded-full hover:bg-red-500/10 text-zinc-500 hover:text-red-500 transition-colors"
+                                className="p-2 rounded-full hover:bg-red-500/10 text-[var(--muted-foreground)] hover:text-red-500 transition-colors"
                                 title="Delete workout"
                             >
                                 <Trash2 className="size-4" />
                             </button>
                             <Link
                                 to={`/workout/${workout.id}/view`}
-                                className="p-2 rounded-full hover:bg-zinc-800 text-zinc-500 hover:text-white transition-colors"
+                                className="p-2 rounded-full hover:bg-[var(--accent)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
                                 title="View details"
                             >
                                 <ChevronRight className="size-5" />

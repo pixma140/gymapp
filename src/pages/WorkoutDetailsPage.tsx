@@ -20,7 +20,7 @@ export function WorkoutDetailsPage() {
     }, [workoutSets]);
 
     if (!workout || !gym || !workoutSets || !exercises) {
-        return <div className="p-8 text-center text-zinc-500">Loading details...</div>;
+        return <div className="p-8 text-center text-[var(--muted-foreground)]">Loading details...</div>;
     }
 
     const setsByExercise = workoutSets.reduce((acc, set) => {
@@ -40,20 +40,20 @@ export function WorkoutDetailsPage() {
     };
 
     return (
-        <div className="min-h-screen bg-black pb-20 animate-in fade-in duration-300">
+        <div className="min-h-screen bg-[var(--background)] pb-20 animate-in fade-in duration-300">
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-md border-b border-zinc-900 p-4 flex items-center justify-between">
+            <div className="sticky top-0 z-10 bg-[var(--background)]/80 backdrop-blur-md border-b border-[var(--border)] p-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate(-1)}
-                        className="p-2 rounded-full hover:bg-zinc-900 text-zinc-400 transition-colors"
+                        className="p-2 rounded-full hover:bg-[var(--accent)] text-[var(--muted-foreground)] transition-colors"
                     >
                         <ArrowLeft className="size-5" />
                     </button>
                     <div>
-                        <h1 className="text-lg font-bold text-white">{gym.name}</h1>
+                        <h1 className="text-lg font-bold text-[var(--foreground)]">{gym.name}</h1>
                         <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2 text-xs text-zinc-500 font-mono">
+                            <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)] font-mono">
                                 <Calendar className="size-3" />
                                 {new Date(workout.startTime).toLocaleDateString(undefined, {
                                     weekday: 'short',
@@ -62,7 +62,7 @@ export function WorkoutDetailsPage() {
                                     day: 'numeric'
                                 })}
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-zinc-500 font-mono">
+                            <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)] font-mono">
                                 <Clock className="size-3" />
                                 <span>
                                     {new Date(workout.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -70,7 +70,7 @@ export function WorkoutDetailsPage() {
                                 </span>
                                 {workout.endTime && (
                                     <>
-                                        <span className="text-zinc-700">•</span>
+                                        <span className="text-[var(--muted-foreground)]">•</span>
                                         <Timer className="size-3" />
                                         <span>
                                             {(() => {
@@ -86,10 +86,10 @@ export function WorkoutDetailsPage() {
                         </div>
                     </div>
                 </div>
-                <div className="flex items-center bg-zinc-100 rounded-full p-0.5 shadow-sm">
+                <div className="flex items-center bg-[var(--accent)] rounded-full p-0.5 shadow-sm">
                     <button
                         onClick={() => navigate(`/workout/${id}/edit`)}
-                        className="flex items-center gap-2 px-4 py-1.5 rounded-l-full hover:bg-white text-black text-sm font-bold transition-colors border-r border-zinc-200"
+                        className="flex items-center gap-2 px-4 py-1.5 rounded-l-full hover:bg-[var(--background)] text-[var(--foreground)] text-sm font-bold transition-colors border-r border-[var(--border)]"
                     >
                         <Edit2 className="size-3.5" />
                         Edit
@@ -107,7 +107,7 @@ export function WorkoutDetailsPage() {
             {/* Content */}
             <div className="p-4 space-y-6 max-w-xl mx-auto">
                 {exercises.length === 0 ? (
-                    <div className="text-center py-12 text-zinc-500">
+                    <div className="text-center py-12 text-[var(--muted-foreground)]">
                         <Dumbbell className="size-12 mx-auto mb-3 opacity-20" />
                         <p>No exercises recorded.</p>
                     </div>
@@ -116,9 +116,9 @@ export function WorkoutDetailsPage() {
                         const sets = setsByExercise[exercise.id] || [];
                         return (
                             <div key={exercise.id} className="space-y-3">
-                                <h3 className="text-lg font-semibold text-zinc-300 flex items-center gap-2">
+                                <h3 className="text-lg font-semibold text-[var(--foreground)] flex items-center gap-2">
                                     {exercise.name}
-                                    <span className="text-xs font-normal text-zinc-600 px-2 py-0.5 rounded-full border border-zinc-800">
+                                    <span className="text-xs font-normal text-[var(--muted-foreground)] px-2 py-0.5 rounded-full border border-[var(--border)]">
                                         {sets.length} sets
                                     </span>
                                 </h3>
@@ -129,8 +129,8 @@ export function WorkoutDetailsPage() {
                                             className={`
                                                 flex items-center justify-between p-3 rounded-xl border
                                                 ${set.type === 'warmup'
-                                                    ? 'bg-orange-500/5 border-orange-500/10 text-orange-200'
-                                                    : 'bg-zinc-900 border-zinc-800 text-zinc-200'
+                                                    ? 'bg-orange-500/10 border-orange-500/20 text-orange-600'
+                                                    : 'bg-[var(--card)] border-[var(--border)] text-[var(--foreground)]'
                                                 }
                                             `}
                                         >
@@ -143,12 +143,12 @@ export function WorkoutDetailsPage() {
                                                 </span>
                                                 <div className="font-mono text-sm">
                                                     <span className="font-bold text-lg">{set.weight}</span>
-                                                    <span className="text-xs text-zinc-500 ml-1">kg</span>
+                                                    <span className="text-xs text-[var(--muted-foreground)] ml-1">kg</span>
                                                 </div>
                                             </div>
                                             <div className="font-mono text-sm">
                                                 <span className="font-bold text-lg">{set.reps}</span>
-                                                <span className="text-xs text-zinc-500 ml-1">reps</span>
+                                                <span className="text-xs text-[var(--muted-foreground)] ml-1">reps</span>
                                             </div>
                                         </div>
                                     ))}
