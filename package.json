@@ -1,7 +1,10 @@
 {
-  "name": "temp_project",
+  "name": "gymapp",
+  "description": "gymapp",
+  "author": {"name": "pixma140", "url": "https://pixma140.com"},
+  "keywords": ["gym","training","exercise"],
+  "version": "0.1.0-alpha",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
