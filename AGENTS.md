@@ -90,6 +90,7 @@ Keep changes consistent with existing patterns and scripts.
 - Language context at `src/i18n/LanguageContext.tsx`.
 - Theme context at `src/context/ThemeContext.tsx`.
 - Use `useLanguage()` for user-facing text when available.
+- All user-facing text must be wired through the existing i18n keys (no hardcoded strings).
 
 ## Database Schema Notes
 - Entities: User, Gym, Exercise, GymEquipment, Workout, WorkoutSet, UserMeasurement.
