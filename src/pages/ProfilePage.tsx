@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { db } from '@/db/db';
 import type { User } from '@/db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -8,6 +8,8 @@ export function ProfilePage() {
     const user = useLiveQuery(() => db.users.orderBy('id').first());
     const [formData, setFormData] = useState<Partial<User>>({});
     const [isSaving, setIsSaving] = useState(false);
+    const [saveMessage, setSaveMessage] = useState<string | null>(null);
+    const clearMessageTimeout = useRef<number | null>(null);
 
     useEffect(() => {
         if (user) {
@@ -18,6 +20,14 @@ export function ProfilePage() {
         }
     }, [user]);
 
+    useEffect(() => {
+        return () => {
+            if (clearMessageTimeout.current) {
+                window.clearTimeout(clearMessageTimeout.current);
+            }
+        };
+    }, []);
+
     const handleChange = (field: keyof User, value: string | number) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
@@ -25,17 +35,24 @@ export function ProfilePage() {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
+        setSaveMessage(null);
+        if (clearMessageTimeout.current) {
+            window.clearTimeout(clearMessageTimeout.current);
+        }
         try {
             if (user?.id) {
                 await db.users.update(user.id, formData);
             } else {
                 await db.users.add(formData as User);
             }
+            setSaveMessage('Profile saved.');
+            clearMessageTimeout.current = window.setTimeout(() => {
+                setSaveMessage(null);
+            }, 2500);
         } catch (err) {
             console.error("Failed to save profile", err);
         } finally {
             setIsSaving(false);
-            // Optional: show toast
         }
     };
 
@@ -116,6 +133,20 @@ export function ProfilePage() {
                             placeholder="0"
                         />
                     </div>
+
+                    {/* Gender */}
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+                        <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Gender</label>
+                        <select
+                            value={formData.gender || 'other'}
+                            onChange={e => handleChange('gender', e.target.value)}
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                        >
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
                 </div>
 
                 <button
@@ -128,8 +159,13 @@ export function ProfilePage() {
                             <Save className="size-5" />
                             Save Profile
                         </>
-                    )}
+                        )}
                 </button>
+                {saveMessage && (
+                    <p className="text-sm text-emerald-400 text-center animate-in fade-in duration-300">
+                        {saveMessage}
+                    </p>
+                )}
             </form>
         </div>
     );

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { db } from '@/db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 
@@ -8,7 +8,7 @@ export function useWorkoutSession(gymId?: number, existingWorkoutId?: number) {
 
     const initializing = useRef(false);
 
-    const resolveWorkoutId = async (): Promise<number | null> => {
+    const resolveWorkoutId = useCallback(async (): Promise<number | null> => {
         if (workoutId) return workoutId;
 
         if (existingWorkoutId) {
@@ -39,7 +39,7 @@ export function useWorkoutSession(gymId?: number, existingWorkoutId?: number) {
 
         setWorkoutId(newWorkoutId as number);
         return newWorkoutId as number;
-    };
+    }, [workoutId, existingWorkoutId, gymId]);
 
     useEffect(() => {
         let mounted = true;
@@ -67,7 +67,7 @@ export function useWorkoutSession(gymId?: number, existingWorkoutId?: number) {
         return () => {
              mounted = false;
         };
-    }, [gymId, existingWorkoutId]);
+    }, [gymId, existingWorkoutId, resolveWorkoutId, workoutId]);
 
     const workoutSets = useLiveQuery(
         () => workoutId ? db.workoutSets.where('workoutId').equals(workoutId).toArray() : [],

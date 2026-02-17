@@ -6,7 +6,7 @@ import { useState } from 'react';
 export function ExerciseList({ onSelect, onAdd }: { onSelect: (exerciseId: number) => void, onAdd: () => void }) {
     const [search, setSearch] = useState('');
     const exercises = useLiveQuery(() => {
-        let collection = db.exercises.orderBy('name');
+        const collection = db.exercises.orderBy('name');
         if (search) {
             // Simple case-insensitive client-side filtering since Dexie string filtering is limited
             return collection.filter(ex => ex.name.toLowerCase().includes(search.toLowerCase())).toArray();

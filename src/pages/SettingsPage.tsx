@@ -1,5 +1,8 @@
 import { Database, Moon, Trash, Dumbbell, Earth, BicepsFlexed, Bell, Palette } from 'lucide-react';
 import { db } from '@/db/db';
+import type { Theme } from '@/context/ThemeContext';
+import type { Language } from '@/i18n/translations';
+import type { User } from '@/db/db';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -31,9 +34,10 @@ export function SettingsPage() {
         }
     };
 
-    const handleFrequencyChange = async (freq: string) => {
+    const handleFrequencyChange = async (freq: User['reminderFrequency']) => {
         if (!user) return;
-        await db.users.update(user.id, { reminderFrequency: freq as any });
+        if (!freq) return;
+        await db.users.update(user.id, { reminderFrequency: freq });
     };
 
     return (
@@ -82,7 +86,7 @@ export function SettingsPage() {
                         </div>
                         <select
                             value={theme}
-                            onChange={(e) => setTheme(e.target.value as any)}
+                            onChange={(e) => setTheme(e.target.value as Theme)}
                             className="bg-[var(--input)] border border-[var(--border)] rounded-lg text-xs p-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
                         >
                             <option value="light">{t('theme.light')}</option>
@@ -102,7 +106,7 @@ export function SettingsPage() {
                         </div>
                         <select
                             value={language}
-                            onChange={(e) => setLanguage(e.target.value as any)}
+                            onChange={(e) => setLanguage(e.target.value as Language)}
                             className="bg-[var(--input)] border border-[var(--border)] rounded-lg text-xs p-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
                         >
                             <option value="en">English</option>
@@ -120,7 +124,7 @@ export function SettingsPage() {
                         </div>
                         <select
                             value={user?.reminderFrequency || 'never'}
-                            onChange={(e) => handleFrequencyChange(e.target.value)}
+                            onChange={(e) => handleFrequencyChange(e.target.value as User['reminderFrequency'])}
                             className="bg-[var(--input)] border border-[var(--border)] rounded-lg text-xs p-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
                         >
                             <option value="never">Never</option>

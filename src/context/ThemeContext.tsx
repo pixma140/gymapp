@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
@@ -16,17 +17,11 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const user = useLiveQuery(() => db.users.orderBy('id').first());
-    const [theme, setLocalTheme] = useState<Theme>('dark');
-    const [mainColor, setLocalMainColor] = useState<string>('#2563eb'); // Default blue-600
+    const [fallbackTheme, setFallbackTheme] = useState<Theme>('dark');
+    const [fallbackMainColor, setFallbackMainColor] = useState<string>('#2563eb'); // Default blue-600
+    const theme = user?.theme ?? fallbackTheme;
+    const mainColor = user?.mainColor ?? fallbackMainColor;
     const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark' | 'oled'>('dark');
-
-    // Sync state with DB user preference
-    useEffect(() => {
-        if (user) {
-            if (user.theme) setLocalTheme(user.theme as Theme);
-            if (user.mainColor) setLocalMainColor(user.mainColor);
-        }
-    }, [user]);
 
     // specific effect to update the resolved theme based on system perference
     useEffect(() => {
@@ -68,16 +63,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }, [theme, mainColor]);
 
     const setTheme = async (newTheme: Theme) => {
-        setLocalTheme(newTheme);
         if (user) {
             await db.users.update(user.id, { theme: newTheme });
+        } else {
+            setFallbackTheme(newTheme);
         }
     };
 
     const setColor = async (color: string) => {
-        setLocalMainColor(color);
         if (user) {
             await db.users.update(user.id, { mainColor: color });
+        } else {
+            setFallbackMainColor(color);
         }
     };
 

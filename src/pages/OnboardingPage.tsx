@@ -4,6 +4,7 @@ import type { User } from '@/db/db';
 import { useNavigate } from 'react-router-dom';
 import { Rocket, User as UserIcon, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
+import type { Language } from '@/i18n/translations';
 
 export function OnboardingPage() {
     const navigate = useNavigate();
@@ -20,7 +21,7 @@ export function OnboardingPage() {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleLanguageChange = (lang: 'en' | 'de') => {
+    const handleLanguageChange = (lang: Language) => {
         setLanguage(lang);
         handleChange('language', lang);
     };
@@ -116,12 +117,36 @@ export function OnboardingPage() {
                         />
                     </div>
 
+                    <div>
+                        <label className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.age')}</label>
+                        <input
+                            type="number"
+                            value={formData.age || ''}
+                            onChange={e => handleChange('age', parseInt(e.target.value))}
+                            className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors font-mono"
+                            placeholder="-"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.gender')}</label>
+                        <select
+                            value={formData.gender || 'other'}
+                            onChange={e => handleChange('gender', e.target.value)}
+                            className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
+                        >
+                            <option value="male">{t('onboarding.gender.male')}</option>
+                            <option value="female">{t('onboarding.gender.female')}</option>
+                            <option value="other">{t('onboarding.gender.other')}</option>
+                        </select>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col h-full">
                             <label className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.language')}</label>
                             <select
                                 value={formData.language || 'en'}
-                                onChange={e => handleLanguageChange(e.target.value as any)}
+                                onChange={e => handleLanguageChange(e.target.value as Language)}
                                 className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors mt-auto"
                             >
                                 <option value="en">English</option>
