@@ -45,26 +45,6 @@ export function SettingsPage() {
 
             <div className="space-y-4">
                 <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
-                    {/* Theme Selector */}
-                    <div className="w-full flex items-center justify-between p-4 border-b border-[var(--border)] border-dashed">
-                        <div className="flex items-center gap-3">
-                            <Moon className="size-5 text-[var(--muted-foreground)]" />
-                            <div className="text-left">
-                                <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.theme')}</h3>
-                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.theme.desc')}</p>
-                            </div>
-                        </div>
-                        <select
-                            value={theme}
-                            onChange={(e) => setTheme(e.target.value as any)}
-                            className="bg-[var(--input)] border border-[var(--border)] rounded-lg text-xs p-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
-                        >
-                            <option value="light">{t('theme.light')}</option>
-                            <option value="dark">{t('theme.dark')}</option>
-                            <option value="oled">{t('theme.oled')}</option>
-                            <option value="system">{t('theme.system')}</option>
-                        </select>
-                    </div>
 
                     {/* Main Color Selector */}
                     <div className="w-full flex flex-col p-4 border-b border-[var(--border)] border-dashed gap-4">
@@ -89,6 +69,27 @@ export function SettingsPage() {
                                 />
                             ))}
                         </div>
+                    </div>
+
+                    {/* Theme Selector */}
+                    <div className="w-full flex items-center justify-between p-4 border-b border-[var(--border)] border-dashed">
+                        <div className="flex items-center gap-3">
+                            <Moon className="size-5 text-[var(--muted-foreground)]" />
+                            <div className="text-left">
+                                <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.theme')}</h3>
+                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.theme.desc')}</p>
+                            </div>
+                        </div>
+                        <select
+                            value={theme}
+                            onChange={(e) => setTheme(e.target.value as any)}
+                            className="bg-[var(--input)] border border-[var(--border)] rounded-lg text-xs p-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
+                        >
+                            <option value="light">{t('theme.light')}</option>
+                            <option value="dark">{t('theme.dark')}</option>
+                            <option value="oled">{t('theme.oled')}</option>
+                            <option value="system">{t('theme.system')}</option>
+                        </select>
                     </div>
 
                     <div className="w-full flex items-center justify-between p-4 border-b border-[var(--border)] border-dashed">
@@ -150,21 +151,6 @@ export function SettingsPage() {
                     </Link>
                 </div>
 
-                <div className="bg-red-500/10 border border-red-500/20 rounded-2xl overflow-hidden">
-                    <button
-                        onClick={handleClearData}
-                        className="w-full flex items-center justify-between p-4 hover:bg-red-500/20 transition-colors text-red-500"
-                    >
-                        <div className="flex items-center gap-3">
-                            <Trash className="size-5" />
-                            <div className="text-left">
-                                <h3 className="text-sm font-bold">{t('settings.reset')}</h3>
-                                <p className="text-xs text-red-500/70">{t('settings.reset.desc')}</p>
-                            </div>
-                        </div>
-                    </button>
-                </div>
-
                 <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
                     <button
                         onClick={async () => {
@@ -197,6 +183,21 @@ export function SettingsPage() {
                             <div className="text-left">
                                 <h3 className="text-sm font-medium">{t('settings.export')}</h3>
                                 <p className="text-xs text-[var(--muted-foreground)]">{t('settings.export.desc')}</p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                <div className="bg-red-500/10 border border-red-500/20 rounded-2xl overflow-hidden">
+                    <button
+                        onClick={handleClearData}
+                        className="w-full flex items-center justify-between p-4 hover:bg-red-500/20 transition-colors text-red-500"
+                    >
+                        <div className="flex items-center gap-3">
+                            <Trash className="size-5" />
+                            <div className="text-left">
+                                <h3 className="text-sm font-bold">{t('settings.reset')}</h3>
+                                <p className="text-xs text-red-500/70">{t('settings.reset.desc')}</p>
                             </div>
                         </div>
                     </button>
