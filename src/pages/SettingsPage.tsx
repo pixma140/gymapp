@@ -1,4 +1,4 @@
-import { Database, Moon, Trash, Dumbbell, Bell, Palette } from 'lucide-react';
+import { Database, Moon, Trash, Dumbbell, Earth, BicepsFlexed, Bell, Palette } from 'lucide-react';
 import { db } from '@/db/db';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -94,7 +94,7 @@ export function SettingsPage() {
 
                     <div className="w-full flex items-center justify-between p-4 border-b border-[var(--border)] border-dashed">
                         <div className="flex items-center gap-3">
-                            <span className="text-xl">🌍</span>
+                            <Earth className="size-5 text-[var(--muted-foreground)]" />
                             <div className="text-left">
                                 <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.language')}</h3>
                                 <p className="text-xs text-[var(--muted-foreground)]">{t('settings.language.desc')}</p>
@@ -130,22 +130,22 @@ export function SettingsPage() {
                         </select>
                     </div>
 
+                    <Link to="/settings/exercises" className="w-full flex items-center justify-between p-4 hover:bg-[var(--accent)] transition-colors">
+                        <div className="flex items-center gap-3">
+                            <BicepsFlexed className="size-5 text-[var(--muted-foreground)]" />
+                            <div className="text-left">
+                                <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.manage_exercises')}</h3>
+                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.manage_exercises.desc')}</p>
+                            </div>
+                        </div>
+                    </Link>
+
                     <Link to="/settings/gyms" className="w-full flex items-center justify-between p-4 hover:bg-[var(--accent)] transition-colors border-b border-[var(--border)] border-dashed">
                         <div className="flex items-center gap-3">
                             <Dumbbell className="size-5 text-[var(--muted-foreground)]" />
                             <div className="text-left">
                                 <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.manage_gyms')}</h3>
                                 <p className="text-xs text-[var(--muted-foreground)]">{t('settings.manage_gyms.desc')}</p>
-                            </div>
-                        </div>
-                    </Link>
-
-                    <Link to="/settings/exercises" className="w-full flex items-center justify-between p-4 hover:bg-[var(--accent)] transition-colors">
-                        <div className="flex items-center gap-3">
-                            <Database className="size-5 text-[var(--muted-foreground)]" />
-                            <div className="text-left">
-                                <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.manage_exercises')}</h3>
-                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.manage_exercises.desc')}</p>
                             </div>
                         </div>
                     </Link>

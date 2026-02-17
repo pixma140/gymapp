@@ -10,7 +10,7 @@ export const translations = {
 
         // Settings
         'settings.title': 'Settings',
-        'settings.subtitle': 'App configuration.',
+        'settings.subtitle': 'App configuration',
         'settings.appearance': 'Appearance',
         'settings.appearance.desc': 'Dark mode enabled',
         'settings.language': 'Language',
@@ -77,7 +77,7 @@ export const translations = {
 
         // Settings
         'settings.title': 'Einstellungen',
-        'settings.subtitle': 'App Konfiguration.',
+        'settings.subtitle': 'App Konfiguration',
         'settings.appearance': 'Erscheinungsbild',
         'settings.appearance.desc': 'Dunkelmodus aktiviert',
         'settings.language': 'Sprache',
