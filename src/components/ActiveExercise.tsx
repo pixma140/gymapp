@@ -63,7 +63,7 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
                         type="number"
                         value={weight}
                         onChange={e => setWeight(e.target.value)}
-                        className="w-full bg-[var(--input)] border border-[var(--border)] rounded-lg p-2 text-center text-[var(--foreground)] font-mono"
+                        className="w-full h-11 bg-[var(--input)] border border-[var(--border)] rounded-lg p-2 text-center text-[var(--foreground)] font-mono"
                         placeholder="0"
                     />
                 </div>
@@ -73,7 +73,7 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
                         type="number"
                         value={reps}
                         onChange={e => setReps(e.target.value)}
-                        className="w-full bg-[var(--input)] border border-[var(--border)] rounded-lg p-2 text-center text-[var(--foreground)] font-mono"
+                        className="w-full h-11 bg-[var(--input)] border border-[var(--border)] rounded-lg p-2 text-center text-[var(--foreground)] font-mono"
                         placeholder="0"
                     />
                 </div>
@@ -81,7 +81,7 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
                 <div className="flex flex-col gap-1">
                     <button
                         onClick={() => setType(type === 'working' ? 'warmup' : 'working')}
-                        className={`p-2 rounded-lg text-xs font-bold uppercase border transition-colors ${type === 'warmup' ? 'border-orange-500/50 text-orange-400' : 'border-green-500/50 text-green-400'}`}
+                        className={`h-11 w-20 rounded-lg text-[10px] font-bold uppercase border transition-colors ${type === 'warmup' ? 'border-orange-500/50 text-orange-400' : 'border-green-500/50 text-green-400'}`}
                     >
                         {type === 'warmup' ? t('exercise.type.warmup') : t('exercise.type.working')}
                     </button>
@@ -90,7 +90,7 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
                 <button
                     onClick={handleAdd}
                     disabled={!weight || !reps}
-                    className="bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-500 text-white p-3 rounded-lg flex items-center justify-center transition-all active:scale-95"
+                    className="bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-500 text-white h-11 w-11 rounded-lg flex items-center justify-center transition-all active:scale-95"
                 >
                     <Plus className="size-5" />
                 </button>
