@@ -47,9 +47,9 @@ export function ProgressChart({ rangeDays }: { rangeDays: number }) {
                     <button
                         key={ex.id}
                         onClick={() => setExerciseId(prev => (prev === ex.id ? null : ex.id))}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap transition-colors ${exerciseId === ex.id
-                            ? 'bg-blue-600 border-blue-500 text-white'
-                            : 'bg-[var(--card)] border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap transition-colors active:scale-[0.98] ${exerciseId === ex.id
+                            ? 'bg-[var(--primary)] border-[var(--primary)] text-[var(--primary-foreground)]'
+                            : 'bg-[var(--card)] border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:border-[var(--primary)]/50 hover:bg-[var(--accent)]'
                             }`}
                     >
                         {ex.name}
@@ -69,7 +69,7 @@ export function ProgressChart({ rangeDays }: { rangeDays: number }) {
                                     contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px' }}
                                     itemStyle={{ color: 'var(--foreground)' }}
                                 />
-                                <Line type="monotone" dataKey="maxWeight" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6' }} />
+                                <Line type="monotone" dataKey="maxWeight" stroke="var(--primary)" strokeWidth={2} dot={{ fill: 'var(--primary)' }} />
                             </LineChart>
                         </ResponsiveContainer>
                     ) : (

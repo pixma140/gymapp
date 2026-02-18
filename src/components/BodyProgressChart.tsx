@@ -34,7 +34,7 @@ export function BodyProgressChart({ rangeDays }: { rangeDays: number }) {
                                 contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px' }}
                                 itemStyle={{ color: 'var(--foreground)' }}
                             />
-                            <Line type="monotone" dataKey="weight" stroke="#3b82f6" strokeWidth={2} dot={{ fill: '#3b82f6' }} name="Weight (kg)" />
+                            <Line type="monotone" dataKey="weight" stroke="var(--primary)" strokeWidth={2} dot={{ fill: 'var(--primary)' }} name="Weight (kg)" />
                         </LineChart>
                     </ResponsiveContainer>
                 ) : (
@@ -56,7 +56,7 @@ export function BodyProgressChart({ rangeDays }: { rangeDays: number }) {
                                 contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px' }}
                                 itemStyle={{ color: 'var(--foreground)' }}
                             />
-                            <Line type="monotone" dataKey="bodyFat" stroke="#10b981" strokeWidth={2} dot={{ fill: '#10b981' }} name="Body Fat (%)" />
+                            <Line type="monotone" dataKey="bodyFat" stroke="var(--primary)" strokeWidth={2} dot={{ fill: 'var(--primary)' }} name="Body Fat (%)" />
                         </LineChart>
                     </ResponsiveContainer>
                 ) : (
