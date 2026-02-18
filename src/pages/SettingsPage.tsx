@@ -1,4 +1,4 @@
-import { Database, Moon, Trash, Dumbbell, Earth, BicepsFlexed, Bell, Palette } from 'lucide-react';
+import { Database, Moon, Trash, Dumbbell, Earth, BicepsFlexed, Bell, Palette, Github } from 'lucide-react';
 import { db } from '@/db/db';
 import type { Theme } from '@/context/ThemeContext';
 import type { Language } from '@/i18n/translations';
@@ -208,7 +208,7 @@ export function SettingsPage() {
                 </div>
 
                 <div className="text-center text-xs text-[var(--muted-foreground)] pt-8">
-                    <p className="font-mono">{t('settings.appVersion')}{APP_VERSION}</p>
+                    <p className="font-mono">{t('settings.appVersion')} <Github className="size-3 inline-block mb-1" /> <a href="https://github.com/pixma140/gymapp" target="_blank" rel="noopener noreferrer">v{APP_VERSION}</a></p>
                     <p>{t('settings.madeBy')} <a href="https://pixma140.com" target="_blank" rel="noopener noreferrer">pixma140</a></p>
                 </div>
             </div >

@@ -38,7 +38,7 @@ export const translations = {
         'settings.reminders.daily': 'Daily',
         'settings.reminders.weekly': 'Weekly',
         'settings.reminders.monthly': 'Monthly',
-        'settings.appVersion': 'Gym App v',
+        'settings.appVersion': 'Gym App',
         'settings.madeBy': 'made with ❤ by',
 
         // Language names
@@ -279,7 +279,7 @@ export const translations = {
         'settings.reminders.daily': 'Täglich',
         'settings.reminders.weekly': 'Wöchentlich',
         'settings.reminders.monthly': 'Monatlich',
-        'settings.appVersion': 'Gym App v',
+        'settings.appVersion': 'Gym App',
         'settings.madeBy': 'gemacht mit ❤ von',
 
         // Language names
