@@ -64,7 +64,7 @@ export const translations = {
 
         // Analysis
         'analysis.title': 'Analysis',
-        'analysis.subtitle': 'Track your progress.',
+        'analysis.subtitle': 'Track your progress',
         'analysis.tab.workout': 'Workout Analysis',
         'analysis.tab.body': 'Body Analysis',
         'analysis.section.progress': 'Progress',
@@ -74,7 +74,7 @@ export const translations = {
 
         // Onboarding
         'onboarding.welcome': 'Welcome',
-        'onboarding.subtitle': 'Let\'s set up your profile to start tracking your progress.',
+        'onboarding.subtitle': 'Let\'s set up your profile to start tracking your progress',
         'onboarding.name': 'My Name is',
         'onboarding.weight': 'Weight (kg)',
         'onboarding.height': 'Height (cm)',
@@ -96,7 +96,7 @@ export const translations = {
 
         // Profile
         'profile.title': 'Profile',
-        'profile.subtitle': 'Manage your stats.',
+        'profile.subtitle': 'Manage your stats',
         'profile.save': 'Save Profile',
         'profile.saving': 'Saving...',
 
@@ -303,7 +303,7 @@ export const translations = {
 
         // Analysis
         'analysis.title': 'Analyse',
-        'analysis.subtitle': 'Verfolge deinen Fortschritt.',
+        'analysis.subtitle': 'Verfolge deinen Fortschritt',
         'analysis.tab.workout': 'Workout Analyse',
         'analysis.tab.body': 'Körperanalyse',
         'analysis.section.progress': 'Fortschritt',
@@ -313,7 +313,7 @@ export const translations = {
 
         // Onboarding
         'onboarding.welcome': 'Willkommen',
-        'onboarding.subtitle': 'Lass uns dein Profil einrichten, um deinen Fortschritt zu verfolgen.',
+        'onboarding.subtitle': 'Lass uns dein Profil einrichten, um deinen Fortschritt zu verfolgen',
         'onboarding.name': 'Mein Name ist',
         'onboarding.weight': 'Gewicht (kg)',
         'onboarding.height': 'Größe (cm)',
@@ -335,7 +335,7 @@ export const translations = {
 
         // Profile
         'profile.title': 'Profil',
-        'profile.subtitle': 'Verwalte deine Statistiken.',
+        'profile.subtitle': 'Verwalte deine Statistiken',
         'profile.save': 'Profil speichern',
         'profile.saving': 'Speichert...',
 
@@ -371,7 +371,7 @@ export const translations = {
         // Gyms
         'gyms.loading': 'Studios werden geladen...',
         'gyms.empty.title': 'Keine Studios hinzugefügt',
-        'gyms.empty.subtitle': 'Füge dein erstes Studio hinzu, um Workouts zu tracken.',
+        'gyms.empty.subtitle': 'Füge dein erstes Studio hinzu, um Workouts zu tracken',
         'gyms.addNew': 'Neues Studio hinzufügen',
         'gyms.addAnother': 'Weiteres Studio hinzufügen',
         'gyms.visits': 'Besuche',
@@ -464,7 +464,7 @@ export const translations = {
 
         // Reminders
         'reminder.title': 'Zeit deine Statistiken zu aktualisieren!',
-        'reminder.subtitle': 'Deine letzte Messung ist schon eine Weile her.',
+        'reminder.subtitle': 'Deine letzte Messung ist schon eine Weile her',
         'reminder.action': 'Aktualisieren',
 
         // Generic
