@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
 import type { Gym } from '@/db/db';
-import { ArrowLeft, Trash2, Edit2, Save, X } from 'lucide-react';
+import { ArrowLeft, Trash2, Edit2, Save, X, Plus, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 
@@ -13,6 +13,9 @@ export function ManageGymsPage() {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editName, setEditName] = useState('');
     const [editLocation, setEditLocation] = useState('');
+    const [isAdding, setIsAdding] = useState(false);
+    const [newName, setNewName] = useState('');
+    const [newLocation, setNewLocation] = useState('');
 
     const startEdit = (gym: Gym) => {
         setEditingId(gym.id);
@@ -42,18 +45,58 @@ export function ManageGymsPage() {
         }
     };
 
+    const addGym = async () => {
+        if (!newName.trim()) return;
+
+        await db.gyms.add({
+            name: newName.trim(),
+            location: newLocation.trim() || undefined,
+            lastVisited: Date.now(),
+            visitCount: 0
+        });
+        setNewName('');
+        setNewLocation('');
+        setIsAdding(false);
+    };
+
     return (
         <div className="space-y-6 animate-in fade-in duration-500 max-w-md mx-auto pb-20 p-4">
             <header className="flex items-center gap-4">
                 <button onClick={() => navigate('/settings')} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
                     <ArrowLeft className="size-6" />
                 </button>
-                <div>
+                <div className="flex-1">
                     <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">{t('manageGyms.title')}</h1>
                 </div>
+                <button onClick={() => setIsAdding(!isAdding)} className="bg-blue-600 p-2 rounded-lg text-white">
+                    <Plus className="size-5" />
+                </button>
             </header>
 
             <div className="space-y-3">
+                {isAdding && (
+                    <div className="bg-[var(--card)] border border-[var(--primary)]/50 rounded-xl p-4 flex items-start gap-2 animate-in slide-in-from-top-2">
+                        <div className="flex-1 space-y-2">
+                            <input
+                                autoFocus
+                                placeholder={t('addGym.namePlaceholder')}
+                                value={newName}
+                                onChange={e => setNewName(e.target.value)}
+                                className="w-full bg-[var(--input)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--foreground)]"
+                            />
+                            <div className="relative">
+                                <input
+                                    placeholder={t('addGym.locationPlaceholder')}
+                                    value={newLocation}
+                                    onChange={e => setNewLocation(e.target.value)}
+                                    className="w-full bg-[var(--input)] border border-[var(--border)] rounded-lg px-3 py-2 pl-9 text-[var(--foreground)]"
+                                />
+                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[var(--muted-foreground)]" />
+                            </div>
+                        </div>
+                        <button onClick={addGym} className="p-2 bg-blue-600 text-white rounded-lg"><Save className="size-4" /></button>
+                    </div>
+                )}
                 {gyms?.map(gym => (
                     <div key={gym.id} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 flex items-center justify-between">
                         {editingId === gym.id ? (
