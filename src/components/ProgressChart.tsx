@@ -44,7 +44,7 @@ export function ProgressChart() {
                 {exercises.map(ex => (
                     <button
                         key={ex.id}
-                        onClick={() => setExerciseId(ex.id)}
+                        onClick={() => setExerciseId(prev => (prev === ex.id ? null : ex.id))}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap transition-colors ${exerciseId === ex.id
                             ? 'bg-blue-600 border-blue-500 text-white'
                             : 'bg-[var(--card)] border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
