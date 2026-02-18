@@ -149,6 +149,8 @@ export const translations = {
         // Workout
         'workout.initializing': 'Initializing workout...',
         'workout.finish': 'Finish',
+        'workout.cancel': 'Cancel',
+        'workout.cancelConfirm': 'Cancel this workout? All sets will be deleted.',
         'workout.addExercise': 'Add Exercise',
         'editWorkout.loading': 'Loading workout...',
 
@@ -388,6 +390,8 @@ export const translations = {
         // Workout
         'workout.initializing': 'Workout wird gestartet...',
         'workout.finish': 'Beenden',
+        'workout.cancel': 'Abbrechen',
+        'workout.cancelConfirm': 'Workout abbrechen? Alle Saetze werden geloescht.',
         'workout.addExercise': 'Übung hinzufügen',
         'editWorkout.loading': 'Workout wird geladen...',
 

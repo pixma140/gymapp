@@ -7,8 +7,9 @@ export function useWorkoutSession(gymId?: number, existingWorkoutId?: number) {
     const [activeExerciseId, setActiveExerciseId] = useState<number | null>(null);
 
     const initializing = useRef(false);
+    const suppressAutoCreate = useRef(false);
 
-    const resolveWorkoutId = useCallback(async (): Promise<number | null> => {
+    const findActiveWorkoutId = useCallback(async (allowFallback = true): Promise<number | null> => {
         if (workoutId) return workoutId;
 
         if (existingWorkoutId) {
@@ -25,11 +26,25 @@ export function useWorkoutSession(gymId?: number, existingWorkoutId?: number) {
 
         if (activeWorkouts.length > 0) {
             const activeForGym = activeWorkouts.find(w => w.gymId === gymId);
-            const fallbackActive = [...activeWorkouts].sort((a, b) => b.startTime - a.startTime)[0];
+            const fallbackActive = allowFallback
+                ? [...activeWorkouts].sort((a, b) => b.startTime - a.startTime)[0]
+                : null;
             const selectedWorkout = activeForGym || fallbackActive;
-            setWorkoutId(selectedWorkout.id);
-            return selectedWorkout.id;
+
+            if (selectedWorkout) {
+                setWorkoutId(selectedWorkout.id);
+                return selectedWorkout.id;
+            }
         }
+
+        return null;
+    }, [workoutId, existingWorkoutId, gymId]);
+
+    const resolveWorkoutId = useCallback(async (): Promise<number | null> => {
+        const existingActive = await findActiveWorkoutId(true);
+        if (existingActive) return existingActive;
+
+        if (!gymId) return null;
 
         const newWorkoutId = await db.workouts.add({
             userId: 1,
@@ -39,7 +54,7 @@ export function useWorkoutSession(gymId?: number, existingWorkoutId?: number) {
 
         setWorkoutId(newWorkoutId as number);
         return newWorkoutId as number;
-    }, [workoutId, existingWorkoutId, gymId]);
+    }, [findActiveWorkoutId, gymId]);
 
     useEffect(() => {
         let mounted = true;
@@ -50,7 +65,7 @@ export function useWorkoutSession(gymId?: number, existingWorkoutId?: number) {
                 return;
             }
 
-            if (gymId && !workoutId && !initializing.current) {
+            if (gymId && !workoutId && !initializing.current && !suppressAutoCreate.current) {
                 initializing.current = true;
                 try {
                     const resolvedId = await resolveWorkoutId();
@@ -94,7 +109,7 @@ export function useWorkoutSession(gymId?: number, existingWorkoutId?: number) {
     };
 
     const finishWorkout = async () => {
-        const targetWorkoutId = await resolveWorkoutId();
+        const targetWorkoutId = await findActiveWorkoutId(false);
         if (!targetWorkoutId) return;
 
         // Only update end time if it wasn't already set (i.e. strictly new workout)
@@ -110,6 +125,19 @@ export function useWorkoutSession(gymId?: number, existingWorkoutId?: number) {
         }
     };
 
+    const cancelWorkout = async () => {
+        const targetWorkoutId = await findActiveWorkoutId(false);
+        if (!targetWorkoutId) return;
+
+        await db.transaction('rw', db.workouts, db.workoutSets, async () => {
+            await db.workoutSets.where('workoutId').equals(targetWorkoutId).delete();
+            await db.workouts.delete(targetWorkoutId);
+        });
+
+        suppressAutoCreate.current = true;
+        setWorkoutId(null);
+    };
+
     return {
         workoutId,
         workoutSets,
@@ -117,6 +145,7 @@ export function useWorkoutSession(gymId?: number, existingWorkoutId?: number) {
         setActiveExerciseId,
         addSet,
         removeSet,
-        finishWorkout
+        finishWorkout,
+        cancelWorkout
     };
 }

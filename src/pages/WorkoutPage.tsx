@@ -20,7 +20,8 @@ export function WorkoutPage() {
         workoutSets,
         addSet,
         removeSet,
-        finishWorkout
+        finishWorkout,
+        cancelWorkout
     } = useWorkoutSession(id);
 
     // Group sets by exercise
@@ -37,6 +38,13 @@ export function WorkoutPage() {
     const handleFinish = async () => {
         await finishWorkout();
         navigate('/analysis');
+    };
+
+    const handleCancel = async () => {
+        if (!confirm(t('workout.cancelConfirm'))) return;
+
+        await cancelWorkout();
+        navigate('/');
     };
 
     const handleOpenExerciseSelector = () => {
@@ -60,13 +68,22 @@ export function WorkoutPage() {
                         </div>
                     </div>
                 </div>
-                <button
-                    type="button"
-                    onClick={handleFinish}
-                    className="bg-green-600 hover:bg-green-500 text-white px-4 py-1.5 rounded-full text-sm font-bold transition-all shadow-lg shadow-green-900/20"
-                >
-                    {t('workout.finish')}
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={handleCancel}
+                        className="border border-red-500/40 text-red-400 hover:text-red-300 hover:border-red-400/60 px-3 py-1.5 rounded-full text-sm font-bold transition-all"
+                    >
+                        {t('workout.cancel')}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleFinish}
+                        className="bg-green-600 hover:bg-green-500 text-white px-4 py-1.5 rounded-full text-sm font-bold transition-all shadow-lg shadow-green-900/20"
+                    >
+                        {t('workout.finish')}
+                    </button>
+                </div>
             </header>
 
             <div className="flex-1 space-y-6">
