@@ -15,9 +15,9 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
     const { t } = useLanguage();
 
     const handleAdd = () => {
-        const w = parseFloat(weight);
+        const w = weight.trim() === '' ? 0 : parseFloat(weight);
         const r = parseInt(reps);
-        if (!isNaN(w) && !isNaN(r)) {
+        if (!isNaN(w) && !isNaN(r) && r > 0) {
             onAddSet(type, w, r);
         }
     };
@@ -89,7 +89,7 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
 
                 <button
                     onClick={handleAdd}
-                    disabled={!weight || !reps}
+                    disabled={!reps || Number(reps) <= 0}
                     className="bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-500 text-white h-11 w-11 rounded-lg flex items-center justify-center transition-all active:scale-95"
                 >
                     <Plus className="size-5" />
