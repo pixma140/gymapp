@@ -212,6 +212,12 @@ export const translations = {
         'charts.bodyFatHistory': 'Body Fat History',
         'charts.noWeight': 'No weight data. Update your profile to track history.',
         'charts.noBodyFat': 'No body fat data.',
+        'charts.rangeLabel': 'Range',
+        'charts.range.7': 'Last 7 days',
+        'charts.range.30': 'Last 30 days',
+        'charts.range.90': 'Last 90 days',
+        'charts.range.180': 'Last 180 days',
+        'charts.range.365': 'Last 365 days',
 
         // Layout
         'layout.workoutActiveTitle': 'Workout session active',
@@ -445,6 +451,12 @@ export const translations = {
         'charts.bodyFatHistory': 'Körperfettverlauf',
         'charts.noWeight': 'Keine Gewichtsdaten. Aktualisiere dein Profil, um den Verlauf zu sehen.',
         'charts.noBodyFat': 'Keine Körperfettdaten.',
+        'charts.rangeLabel': 'Zeitraum',
+        'charts.range.7': 'Letzte 7 Tage',
+        'charts.range.30': 'Letzte 30 Tage',
+        'charts.range.90': 'Letzte 90 Tage',
+        'charts.range.180': 'Letzte 180 Tage',
+        'charts.range.365': 'Letzte 365 Tage',
 
         // Layout
         'layout.workoutActiveTitle': 'Workout läuft',

@@ -4,7 +4,7 @@ import { db } from '@/db/db';
 import { useState } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
 
-export function ProgressChart() {
+export function ProgressChart({ rangeDays }: { rangeDays: number }) {
     const [exerciseId, setExerciseId] = useState<number | null>(null);
     const { t } = useLanguage();
 
@@ -13,10 +13,12 @@ export function ProgressChart() {
     const data = useLiveQuery(async () => {
         if (!exerciseId) return [];
 
+        const cutoff = Date.now() - (rangeDays * 24 * 60 * 60 * 1000);
+
         // Get all sets for this exercise
         const sets = await db.workoutSets
             .where('exerciseId').equals(exerciseId)
-            .filter(s => s.type === 'working')
+            .filter(s => s.type === 'working' && s.timestamp >= cutoff)
             .sortBy('timestamp');
 
         // Aggregate by workout/date - simplified: just plotting all sets for now or max per day?
@@ -34,7 +36,7 @@ export function ProgressChart() {
         });
 
         return Array.from(byDate.values());
-    }, [exerciseId]);
+    }, [exerciseId, rangeDays]);
 
     if (!exercises) return <div className="text-[var(--muted-foreground)]">{t('charts.loading')}</div>;
 
