@@ -12,20 +12,26 @@ export function ManageGymsPage() {
     const gyms = useLiveQuery(() => db.gyms.toArray());
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editName, setEditName] = useState('');
+    const [editLocation, setEditLocation] = useState('');
 
     const startEdit = (gym: Gym) => {
         setEditingId(gym.id);
         setEditName(gym.name);
+        setEditLocation(gym.location || '');
     };
 
     const cancelEdit = () => {
         setEditingId(null);
         setEditName('');
+        setEditLocation('');
     };
 
     const saveEdit = async () => {
         if (editingId && editName.trim()) {
-            await db.gyms.update(editingId, { name: editName });
+            await db.gyms.update(editingId, {
+                name: editName.trim(),
+                location: editLocation.trim() || undefined
+            });
             cancelEdit();
         }
     };
@@ -51,15 +57,26 @@ export function ManageGymsPage() {
                 {gyms?.map(gym => (
                     <div key={gym.id} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 flex items-center justify-between">
                         {editingId === gym.id ? (
-                            <div className="flex-1 flex gap-2">
-                                <input
-                                    autoFocus
-                                    value={editName}
-                                    onChange={e => setEditName(e.target.value)}
-                                    className="flex-1 bg-[var(--input)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--foreground)]"
-                                />
-                                <button onClick={saveEdit} className="p-2 bg-green-900/40 text-green-400 rounded-lg"><Save className="size-4" /></button>
-                                <button onClick={cancelEdit} className="p-2 bg-[var(--accent)] text-[var(--muted-foreground)] rounded-lg"><X className="size-4" /></button>
+                            <div className="flex-1 flex items-start gap-2">
+                                <div className="flex-1 space-y-2">
+                                    <input
+                                        autoFocus
+                                        value={editName}
+                                        onChange={e => setEditName(e.target.value)}
+                                        className="w-full bg-[var(--input)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--foreground)]"
+                                        placeholder={t('addGym.namePlaceholder')}
+                                    />
+                                    <input
+                                        value={editLocation}
+                                        onChange={e => setEditLocation(e.target.value)}
+                                        className="w-full bg-[var(--input)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--foreground)]"
+                                        placeholder={t('addGym.locationPlaceholder')}
+                                    />
+                                </div>
+                                <div className="flex gap-2">
+                                    <button onClick={saveEdit} className="p-2 bg-green-900/40 text-green-400 rounded-lg"><Save className="size-4" /></button>
+                                    <button onClick={cancelEdit} className="p-2 bg-[var(--accent)] text-[var(--muted-foreground)] rounded-lg"><X className="size-4" /></button>
+                                </div>
                             </div>
                         ) : (
                             <>
