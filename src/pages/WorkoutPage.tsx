@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, Timer } from 'lucide-react';
 import { useWorkoutSession } from '@/hooks/useWorkoutSession';
 import { ExerciseSelector } from '@/components/ExerciseSelector';
 import { ActiveExercise } from '@/components/ActiveExercise';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 export function WorkoutPage() {
@@ -17,12 +17,16 @@ export function WorkoutPage() {
     const { t } = useLanguage();
 
     const {
+        workoutId,
         workoutSets,
         addSet,
         removeSet,
         finishWorkout,
         cancelWorkout
     } = useWorkoutSession(id);
+
+    const workout = useLiveQuery(() => workoutId ? db.workouts.get(workoutId) : undefined, [workoutId]);
+    const [now, setNow] = useState(Date.now());
 
     // Group sets by exercise
     const exerciseIds = [...new Set(workoutSets?.map(s => s.exerciseId))];
@@ -51,6 +55,26 @@ export function WorkoutPage() {
         setShowExerciseSelector(true);
     };
 
+    useEffect(() => {
+        const interval = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const formatDuration = (totalSeconds: number) => {
+        const safeSeconds = Math.max(0, totalSeconds);
+        const h = Math.floor(safeSeconds / 3600);
+        const m = Math.floor((safeSeconds % 3600) / 60);
+        const s = safeSeconds % 60;
+
+        if (h > 0) {
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
+
+    const elapsedSeconds = workout?.startTime ? Math.floor((now - workout.startTime) / 1000) : 0;
+
     if (!gym) return <div className="p-8 text-center text-[var(--muted-foreground)]">{t('workout.initializing')}</div>;
 
     return (
@@ -64,7 +88,7 @@ export function WorkoutPage() {
                         <h1 className="text-lg font-bold text-[var(--foreground)] leading-tight truncate max-w-[200px]">{gym.name}</h1>
                         <div className="flex items-center gap-1.5 text-[var(--muted-foreground)] text-xs font-mono">
                             <Timer className="size-3" />
-                            <span>00:00</span>
+                            <span>{formatDuration(elapsedSeconds)}</span>
                         </div>
                     </div>
                 </div>
