@@ -24,7 +24,7 @@ dist-ssr
 *.sw?
 
 # database
-db/
+/db/
 
 # my files
 tbd.md
