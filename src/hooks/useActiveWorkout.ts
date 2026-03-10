@@ -3,8 +3,11 @@ import { db } from '@/db/db';
 
 export function useActiveWorkout() {
     return useLiveQuery(async () => {
+        const user = await db.users.orderBy('id').first();
+        if (!user) return null;
+
         const activeWorkouts = await db.workouts
-            .where('userId').equals(1)
+            .where('userId').equals(user.id)
             .filter(w => !w.endTime)
             .toArray();
 

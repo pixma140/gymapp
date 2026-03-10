@@ -32,6 +32,8 @@ export const translations = {
         'settings.reset.confirm': 'Are you sure? This will delete ALL workouts, stats, and gyms. This cannot be undone.',
         'settings.export': 'Export Data',
         'settings.export.desc': 'Download all data as JSON',
+        'settings.logout': 'Log out',
+        'settings.logout.desc': 'Sign out from this device',
         'settings.accentColor': 'Accent Color',
         'settings.accentColor.desc': 'Customize your main color',
         'settings.reminders.never': 'Never',
@@ -230,6 +232,23 @@ export const translations = {
         'reminder.subtitle': 'It\'s been a while since your last measurement.',
         'reminder.action': 'Update',
 
+        // Authentication
+        'auth.title.login': 'Sign in',
+        'auth.title.register': 'Register',
+        'auth.subtitle.login': 'Use your username to access your personal data',
+        'auth.subtitle.register': 'Create an account with username and password',
+        'auth.username': 'Username',
+        'auth.password': 'Password',
+        'auth.login': 'Log in',
+        'auth.register': 'Create account',
+        'auth.submitting': 'Please wait...',
+        'auth.switchToRegister': 'Need an account? Register',
+        'auth.switchToLogin': 'Already have an account? Log in',
+        'auth.switchToRegister.prompt': 'Need an account?',
+        'auth.switchToLogin.prompt': 'Already have an account?',
+        'auth.error.invalidCredentials': 'Invalid username or password.',
+        'auth.error.generic': 'Request failed. Please try again.',
+
         // Generic
         'common.save': 'Save',
         'common.cancel': 'Cancel',
@@ -273,6 +292,8 @@ export const translations = {
         'settings.reset.confirm': 'Bist du sicher? Dies löscht ALLE Workouts, Statistiken und Studios. Dies kann nicht rückgängig gemacht werden.',
         'settings.export': 'Daten exportieren',
         'settings.export.desc': 'Alle Daten als JSON herunterladen',
+        'settings.logout': 'Abmelden',
+        'settings.logout.desc': 'Auf diesem Geraet ausloggen',
         'settings.accentColor': 'Akzentfarbe',
         'settings.accentColor.desc': 'Hauptfarbe anpassen',
         'settings.reminders.never': 'Nie',
@@ -471,6 +492,23 @@ export const translations = {
         'reminder.subtitle': 'Deine letzte Messung ist schon eine Weile her',
         'reminder.action': 'Aktualisieren',
 
+        // Authentication
+        'auth.title.login': 'Anmelden',
+        'auth.title.register': 'Registrieren',
+        'auth.subtitle.login': 'Nutze deinen Benutzernamen fuer deine persoenlichen Daten',
+        'auth.subtitle.register': 'Erstelle ein Konto mit Benutzername und Passwort',
+        'auth.username': 'Benutzername',
+        'auth.password': 'Passwort',
+        'auth.login': 'Einloggen',
+        'auth.register': 'Konto erstellen',
+        'auth.submitting': 'Bitte warten...',
+        'auth.switchToRegister': 'Noch kein Konto? Registrieren',
+        'auth.switchToLogin': 'Schon registriert? Einloggen',
+        'auth.switchToRegister.prompt': 'Noch kein Konto?',
+        'auth.switchToLogin.prompt': 'Schon registriert?',
+        'auth.error.invalidCredentials': 'Benutzername oder Passwort ist ungueltig.',
+        'auth.error.generic': 'Anfrage fehlgeschlagen. Bitte erneut versuchen.',
+
         // Generic
         'common.save': 'Speichern',
         'common.cancel': 'Abbrechen',
@@ -484,3 +522,5 @@ export const translations = {
         'common.unit.reps': 'Wdh.',
     }
 };
+
+export type TranslationKey = keyof typeof translations.en;

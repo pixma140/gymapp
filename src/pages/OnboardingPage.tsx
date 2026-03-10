@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Rocket, User as UserIcon, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Language } from '@/i18n/translations';
+import { getSessionUser } from '@/auth/session';
 
 export function OnboardingPage() {
     const navigate = useNavigate();
@@ -32,13 +33,23 @@ export function OnboardingPage() {
 
         setIsSubmitting(true);
         try {
-            // Create user
-            const userId = await db.users.add(formData as User);
+            const sessionUser = await getSessionUser();
+            if (!sessionUser) {
+                navigate('/auth', { replace: true });
+                return;
+            }
+
+            const userId = sessionUser.id;
+            await db.users.put({
+                ...(formData as User),
+                id: userId,
+                name: formData.name || sessionUser.username
+            });
 
             // Log initial measurements if provided
             if (formData.weight || formData.bodyFat) {
                 await db.userMeasurements.add({
-                    userId: userId as number,
+                    userId,
                     weight: formData.weight,
                     bodyFat: formData.bodyFat,
                     timestamp: Date.now()

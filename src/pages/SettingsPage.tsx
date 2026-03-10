@@ -1,17 +1,19 @@
-import { Database, Moon, Trash, Dumbbell, Earth, BicepsFlexed, Bell, Palette, Github } from 'lucide-react';
+import { Database, Moon, Trash, Dumbbell, Earth, BicepsFlexed, Bell, Palette, Github, LogOut } from 'lucide-react';
 import { db } from '@/db/db';
 import type { Theme } from '@/context/ThemeContext';
 import type { Language } from '@/i18n/translations';
 import type { User } from '@/db/db';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { cn } from '@/lib/utils';
 import { APP_COMMIT, APP_RELEASE_URL, APP_VERSION } from '@/lib/constants';
+import { logoutSession } from '@/auth/session';
 
 export function SettingsPage() {
     const user = useLiveQuery(() => db.users.orderBy('id').first());
+    const navigate = useNavigate();
     const { t, language, setLanguage } = useLanguage();
     const { theme, setTheme, mainColor, setColor } = useTheme();
 
@@ -38,6 +40,13 @@ export function SettingsPage() {
         if (!user) return;
         if (!freq) return;
         await db.users.update(user.id, { reminderFrequency: freq });
+    };
+
+    const handleLogout = async () => {
+        await logoutSession();
+        await db.delete();
+        await db.open();
+        navigate('/auth', { replace: true });
     };
 
     return (
@@ -187,6 +196,19 @@ export function SettingsPage() {
                             <div className="text-left">
                                 <h3 className="text-sm font-medium">{t('settings.export')}</h3>
                                 <p className="text-xs text-[var(--muted-foreground)]">{t('settings.export.desc')}</p>
+                            </div>
+                        </div>
+                    </button>
+
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center justify-between p-4 hover:bg-[var(--accent)] transition-colors text-[var(--foreground)] border-t border-[var(--border)] border-dashed"
+                    >
+                        <div className="flex items-center gap-3">
+                            <LogOut className="size-5 text-[var(--muted-foreground)]" />
+                            <div className="text-left">
+                                <h3 className="text-sm font-medium">{t('settings.logout')}</h3>
+                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.logout.desc')}</p>
                             </div>
                         </div>
                     </button>

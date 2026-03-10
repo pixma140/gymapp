@@ -4,11 +4,12 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
 import { translations } from './translations';
 import type { Language } from './translations';
+import type { TranslationKey } from './translations';
 
 type LanguageContextType = {
     language: Language;
     setLanguage: (lang: Language) => Promise<void>;
-    t: (key: keyof typeof translations.en) => string;
+    t: (key: TranslationKey) => string;
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -26,7 +27,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const t = (key: keyof typeof translations.en) => {
+    const t = (key: TranslationKey) => {
         return translations[language][key] || key;
     };
 

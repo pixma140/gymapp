@@ -1,14 +1,26 @@
 {
   "name": "gymapp",
   "description": "gymapp",
-  "author": {"name": "pixma140", "url": "https://pixma140.com"},
-  "keywords": ["gym","training","exercise","workout","tracker","log","progress","fitness"],
+  "author": {
+    "name": "pixma140",
+    "url": "https://pixma140.com"
+  },
+  "keywords": [
+    "gym",
+    "training",
+    "exercise",
+    "workout",
+    "tracker",
+    "log",
+    "progress",
+    "fitness"
+  ],
   "homepage": "https://github.com/pixma140/gymapp",
   "repository": {
     "type": "git",
     "url": "https://github.com/pixma140/gymapp.git"
   },
-  "version": "0.1.4-alpha",
+  "version": "0.1.5-alpha",
   "private": true,
   "type": "module",
   "scripts": {
@@ -21,11 +33,13 @@
     "clsx": "^2.1.1",
     "dexie": "^4.3.0",
     "dexie-react-hooks": "^4.2.0",
+    "express": "^5.2.1",
     "lucide-react": "^0.564.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.0",
     "recharts": "^3.7.0",
+    "sqlite3": "^5.1.7",
     "tailwind-merge": "^3.4.1"
   },
   "devDependencies": {

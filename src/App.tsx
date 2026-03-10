@@ -9,8 +9,10 @@ import { ProfilePage } from '@/pages/ProfilePage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { ManageGymsPage } from '@/pages/ManageGymsPage';
 import { ManageExercisesPage } from '@/pages/ManageExercisesPage';
+import { AuthPage } from '@/pages/AuthPage';
 
 import { RequireUser } from '@/components/RequireUser';
+import { RequireAuth } from '@/components/RequireAuth';
 import { OnboardingPage } from '@/pages/OnboardingPage';
 
 import { LanguageProvider } from '@/i18n/LanguageContext';
@@ -21,6 +23,9 @@ function App() {
     <LanguageProvider>
       <ThemeProvider>
         <Routes>
+          <Route path="/auth" element={<AuthPage />} />
+
+          <Route element={<RequireAuth />}>
           <Route path="/onboarding" element={<OnboardingPage />} />
 
           <Route element={<RequireUser />}>
@@ -35,6 +40,7 @@ function App() {
               <Route path="/settings/gyms" element={<ManageGymsPage />} />
               <Route path="/settings/exercises" element={<ManageExercisesPage />} />
             </Route>
+          </Route>
           </Route>
         </Routes>
       </ThemeProvider>

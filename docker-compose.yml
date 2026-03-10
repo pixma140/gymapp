@@ -7,4 +7,6 @@ services:
       - NODE_ENV=production
     ports:
       - "8080:80"
+    volumes:
+      - ./db:/app/data
     restart: unless-stopped

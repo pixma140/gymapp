@@ -8,6 +8,8 @@ export function useWorkoutSession(gymId?: number, existingWorkoutId?: number) {
 
     const initializing = useRef(false);
     const suppressAutoCreate = useRef(false);
+    const user = useLiveQuery(() => db.users.orderBy('id').first());
+    const userId = user?.id;
 
     const findActiveWorkoutId = useCallback(async (allowFallback = true): Promise<number | null> => {
         if (workoutId) return workoutId;
@@ -19,8 +21,10 @@ export function useWorkoutSession(gymId?: number, existingWorkoutId?: number) {
 
         if (!gymId) return null;
 
+        if (!userId) return null;
+
         const activeWorkouts = await db.workouts
-            .where('userId').equals(1)
+            .where('userId').equals(userId)
             .filter(w => !w.endTime)
             .toArray();
 
@@ -38,23 +42,23 @@ export function useWorkoutSession(gymId?: number, existingWorkoutId?: number) {
         }
 
         return null;
-    }, [workoutId, existingWorkoutId, gymId]);
+    }, [workoutId, existingWorkoutId, gymId, userId]);
 
     const resolveWorkoutId = useCallback(async (): Promise<number | null> => {
         const existingActive = await findActiveWorkoutId(true);
         if (existingActive) return existingActive;
 
-        if (!gymId) return null;
+        if (!gymId || !userId) return null;
 
         const newWorkoutId = await db.workouts.add({
-            userId: 1,
+            userId,
             gymId,
             startTime: Date.now(),
         });
 
         setWorkoutId(newWorkoutId as number);
         return newWorkoutId as number;
-    }, [findActiveWorkoutId, gymId]);
+    }, [findActiveWorkoutId, gymId, userId]);
 
     useEffect(() => {
         let mounted = true;
