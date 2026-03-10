@@ -1,0 +1,2 @@
+- change version slug (6a81962)
+- add github url to footer (262d72e)
