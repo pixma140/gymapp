@@ -1,2 +1,3 @@
+- add sqlite-backed multi-user auth and scoped sync persistence (bf8add3)
 - change version slug (6a81962)
 - add github url to footer (262d72e)
