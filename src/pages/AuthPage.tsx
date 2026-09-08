@@ -76,7 +76,7 @@ export function AuthPage() {
     if (status === 'ready' && !isSubmitting) return <Navigate to="/" replace />;
 
     return (
-        <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex flex-col p-6">
+        <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex flex-col safe-area-screen">
             <div className="w-full max-w-md mx-auto flex justify-end mb-4">
                 <select
                     value={language}

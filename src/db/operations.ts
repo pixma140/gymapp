@@ -1,4 +1,4 @@
-import type { Command, CommandPayloads, Operation } from '@shared/commands';
+import type { Command, CommandPayloads, Operation, ProfileFields } from '@shared/commands';
 import { validateCommand } from '@shared/commands';
 import type { AccountDatabase, MutationIntent } from './db';
 
@@ -7,6 +7,25 @@ export async function applyOperation<K extends Operation>(db: AccountDatabase, o
     const id = domain === 'profile' ? null : targetId ?? crypto.randomUUID();
     const intent = Object.freeze({ mutationId: crypto.randomUUID(), operation, targetId: id, payload: Object.freeze({ ...payload }) }) as MutationIntent;
     return applyIntent(db, intent);
+}
+
+export async function updateProfileWithMeasurement(db: AccountDatabase, payload: Partial<ProfileFields>, measuredAt = Date.now()): Promise<void> {
+    await db.transaction('rw', [db.users, db.gyms, db.workouts, db.userMeasurements, db.outbox], async () => {
+        await applyOperation(db, 'profile.update', null, payload);
+        const profileIntent = await db.outbox.filter(entry => entry.intent.operation === 'profile.update').last();
+        if (!profileIntent) throw new Error('missing_profile_intent');
+        if ((payload.weight !== null && payload.weight !== undefined)
+            || (payload.bodyFat !== null && payload.bodyFat !== undefined)) {
+            const measurementId = await applyOperation(db, 'measurement.create', null, {
+                weight: payload.weight ?? null,
+                bodyFat: payload.bodyFat ?? null,
+                timestamp: measuredAt,
+            });
+            const measurementIntent = await db.outbox.filter(entry => entry.intent.targetId === measurementId).last();
+            if (!measurementIntent) throw new Error('missing_measurement_intent');
+            await db.outbox.update(measurementIntent.sequence, { dependency: profileIntent.sequence });
+        }
+    });
 }
 
 export async function applyIntent(db: AccountDatabase, intent: MutationIntent): Promise<string | null> {

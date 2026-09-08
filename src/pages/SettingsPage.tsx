@@ -96,7 +96,9 @@ export function SettingsPage() {
                                 <p className="text-xs text-[var(--muted-foreground)]">{t('settings.theme.desc')}</p>
                             </div>
                         </div>
+                        <label htmlFor="settings-theme" className="sr-only">{t('settings.theme')}</label>
                         <select
+                            id="settings-theme"
                             value={theme}
                             onChange={(e) => setTheme(e.target.value as Theme)}
                             className="bg-[var(--input)] border border-[var(--border)] rounded-lg text-xs p-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
@@ -116,7 +118,9 @@ export function SettingsPage() {
                                 <p className="text-xs text-[var(--muted-foreground)]">{t('settings.language.desc')}</p>
                             </div>
                         </div>
+                        <label htmlFor="settings-language" className="sr-only">{t('settings.language')}</label>
                         <select
+                            id="settings-language"
                             value={language}
                             onChange={(e) => setLanguage(e.target.value as Language)}
                             className="bg-[var(--input)] border border-[var(--border)] rounded-lg text-xs p-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
@@ -134,7 +138,9 @@ export function SettingsPage() {
                                 <p className="text-xs text-[var(--muted-foreground)]">{t('settings.reminders.desc')}</p>
                             </div>
                         </div>
+                        <label htmlFor="settings-reminders" className="sr-only">{t('settings.reminders')}</label>
                         <select
+                            id="settings-reminders"
                             value={user?.reminderFrequency || 'never'}
                             onChange={(e) => handleFrequencyChange(e.target.value as User['reminderFrequency'])}
                             className="bg-[var(--input)] border border-[var(--border)] rounded-lg text-xs p-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"

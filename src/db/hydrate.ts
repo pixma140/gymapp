@@ -114,9 +114,19 @@ export async function resolvePendingConflict(db: AccountDatabase, snapshot: Snap
         const reviewed = resolution === 'reapply' ? entries : entries.filter(entry => !discarded.has(entry.sequence));
         await db.outbox.clear();
         await replaceAccountData(db, snapshot);
+        const reappliedSequences = new Map<number, number>();
         for (const entry of reviewed) {
-            await applyIntent(db, Object.freeze({ ...entry.intent, mutationId: crypto.randomUUID(),
-                payload: Object.freeze({ ...entry.intent.payload }) }) as MutationIntent);
+            const intent = Object.freeze({ ...entry.intent, mutationId: crypto.randomUUID(),
+                payload: Object.freeze({ ...entry.intent.payload }) }) as MutationIntent;
+            await applyIntent(db, intent);
+            const reapplied = await db.outbox.filter(candidate => candidate.intent.mutationId === intent.mutationId).first();
+            if (!reapplied) throw new Error('missing_reapplied_intent');
+            reappliedSequences.set(entry.sequence, reapplied.sequence);
+            if (entry.dependency !== undefined) {
+                const dependency = reappliedSequences.get(entry.dependency);
+                if (dependency === undefined) throw new Error('missing_reapplied_dependency');
+                await db.outbox.update(reapplied.sequence, { dependency });
+            }
         }
     });
 }

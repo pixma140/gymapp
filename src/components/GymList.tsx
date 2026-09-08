@@ -1,9 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useDatabase } from '@/context/SessionContext';
+import { Link } from 'react-router-dom';
 import { MapPin, ChevronRight } from 'lucide-react';
+
+import { useDatabase } from '@/context/SessionContext';
 import { useLanguage } from '@/i18n/LanguageContext';
 
-export function GymList({ onSelect }: { onSelect: (gymId: string) => void }) {
+export function GymList({ activeGymId }: { activeGymId?: string }) {
     const db = useDatabase();
     const { t } = useLanguage();
     const gymsWithVisits = useLiveQuery(async () => {
@@ -47,12 +49,8 @@ export function GymList({ onSelect }: { onSelect: (gymId: string) => void }) {
                 </div>
             ) : (
                 <div className="grid gap-3">
-                    {gyms.map(gym => (
-                        <button
-                            key={gym.id}
-                            onClick={() => onSelect(gym.id)}
-                            className="group flex items-center justify-between p-4 bg-[var(--card)] border border-[var(--border)] rounded-xl hover:border-[var(--primary)]/50 hover:bg-[var(--accent)] transition-all text-left active:scale-[0.98]"
-                        >
+                    {gyms.map(gym => {
+                        const content = <>
                             <div className="flex-1 min-w-0 mr-4">
                                 <h3 className="font-semibold text-lg text-[var(--foreground)] truncate group-hover:text-[var(--primary)] transition-colors">{gym.name}</h3>
                                 {gym.location && (
@@ -69,8 +67,18 @@ export function GymList({ onSelect }: { onSelect: (gymId: string) => void }) {
                                 </div>
                                 <ChevronRight className="size-5 text-[var(--muted-foreground)] group-hover:text-[var(--primary)]/60 transition-colors" />
                             </div>
-                        </button>
-                    ))}
+                        </>;
+                        const className = "group flex items-center justify-between p-4 bg-[var(--card)] border border-[var(--border)] rounded-xl transition-all text-left";
+                        return activeGymId && activeGymId !== gym.id ? (
+                            <div key={gym.id} aria-disabled="true" className={`${className} opacity-50`}>
+                                {content}
+                            </div>
+                        ) : (
+                            <Link key={gym.id} to={`/workout/${gym.id}`} className={`${className} hover:border-[var(--primary)]/50 hover:bg-[var(--accent)] active:scale-[0.98]`}>
+                                {content}
+                            </Link>
+                        );
+                    })}
                 </div>
             )}
         </div>

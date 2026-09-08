@@ -54,7 +54,7 @@ export function SetupPage() {
         }
     };
 
-    if (status === 'failed') return <div className="p-6"><p>{t('sync.loadFailed')}</p><button onClick={() => void refresh()}>{t('sync.retry')}</button></div>;
+    if (status === 'failed') return <div className="safe-area-screen"><p>{t('sync.loadFailed')}</p><button onClick={() => void refresh()}>{t('sync.retry')}</button></div>;
     if (status === 'loading' || status === 'preparing') return <p>{t('common.loading')}</p>;
     if (status !== 'setup') return <Navigate to={status === 'ready' ? '/' : '/auth'} replace />;
 
@@ -62,7 +62,7 @@ export function SetupPage() {
     const inputClass = 'w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]';
 
     return (
-        <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex flex-col p-6">
+        <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex flex-col safe-area-screen">
             <div className="w-full max-w-md mx-auto flex justify-end mb-4">
                 <select
                     value={language}

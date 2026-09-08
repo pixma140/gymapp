@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useDatabase } from '@/context/SessionContext';
-import { applyOperation } from '@/db/operations';
+import { updateProfileWithMeasurement } from '@/db/operations';
 import type { User } from '@/db/db';
 import { useNavigate } from 'react-router-dom';
 import { Rocket, User as UserIcon, ArrowRight } from 'lucide-react';
@@ -34,12 +34,7 @@ export function OnboardingPage() {
 
         setIsSubmitting(true);
         try {
-            await db.transaction('rw', [db.users, db.userMeasurements, db.gyms, db.workouts, db.outbox], async () => {
-                await applyOperation(db, 'profile.update', null, formData);
-                if (formData.weight != null || formData.bodyFat != null) {
-                    await applyOperation(db, 'measurement.create', null, { weight: formData.weight ?? null, bodyFat: formData.bodyFat ?? null, timestamp: Date.now() });
-                }
-            });
+            await updateProfileWithMeasurement(db, formData);
 
             navigate('/', { replace: true });
         } catch (error) {
@@ -50,7 +45,7 @@ export function OnboardingPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex flex-col p-6 animate-in fade-in duration-700 transition-colors duration-300">
+        <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex flex-col safe-area-screen animate-in fade-in duration-700 transition-colors duration-300">
             <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full space-y-8">
                 <div className="text-center space-y-4">
                     <div className="size-16 bg-[var(--primary)]/20 text-[var(--primary)] rounded-2xl flex items-center justify-center mx-auto ring-1 ring-[var(--primary)]/50 shadow-[0_0_15px_var(--primary)]/30">
@@ -63,10 +58,11 @@ export function OnboardingPage() {
                 <form onSubmit={handleSubmit} autoComplete="off" className="space-y-6 bg-[var(--card)] border border-[var(--border)] p-6 rounded-3xl backdrop-blur-sm shadow-xl">
 
                     <div>
-                        <label className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.name')}</label>
+                        <label htmlFor="onboarding-name" className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.name')}</label>
                         <div className="relative">
                             <UserIcon className="absolute left-3 top-3.5 size-5 text-[var(--muted-foreground)]" />
                             <input
+                                id="onboarding-name"
                                 required
                                 type="text"
                                 value={formData.name || ''}
@@ -79,8 +75,9 @@ export function OnboardingPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.weight')}</label>
+                            <label htmlFor="onboarding-weight" className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.weight')}</label>
                             <input
+                                id="onboarding-weight"
                                 type="number"
                                 step="0.1"
                                 value={formData.weight || ''}
@@ -90,8 +87,9 @@ export function OnboardingPage() {
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.height')}</label>
+                            <label htmlFor="onboarding-height" className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.height')}</label>
                             <input
+                                id="onboarding-height"
                                 type="number"
                                 value={formData.height || ''}
                                 onChange={e => handleChange('height', parseFloat(e.target.value))}
@@ -102,8 +100,9 @@ export function OnboardingPage() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.bodyFat')}</label>
+                        <label htmlFor="onboarding-body-fat" className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.bodyFat')}</label>
                         <input
+                            id="onboarding-body-fat"
                             type="number"
                             step="0.1"
                             value={formData.bodyFat || ''}
@@ -114,8 +113,9 @@ export function OnboardingPage() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.age')}</label>
+                        <label htmlFor="onboarding-age" className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.age')}</label>
                         <input
+                            id="onboarding-age"
                             type="number"
                             value={formData.age || ''}
                             onChange={e => handleChange('age', parseInt(e.target.value))}
@@ -125,8 +125,9 @@ export function OnboardingPage() {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.gender')}</label>
+                        <label htmlFor="onboarding-gender" className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.gender')}</label>
                         <select
+                            id="onboarding-gender"
                             value={formData.gender || 'other'}
                             onChange={e => handleChange('gender', e.target.value)}
                             className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
@@ -139,8 +140,9 @@ export function OnboardingPage() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col h-full">
-                            <label className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.language')}</label>
+                            <label htmlFor="onboarding-language" className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.language')}</label>
                             <select
+                                id="onboarding-language"
                                 value={formData.language || 'en'}
                                 onChange={e => handleLanguageChange(e.target.value as Language)}
                                 className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors mt-auto"
@@ -150,8 +152,9 @@ export function OnboardingPage() {
                             </select>
                         </div>
                         <div className="flex flex-col h-full">
-                            <label className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.reminders')}</label>
+                            <label htmlFor="onboarding-reminders" className="block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('onboarding.reminders')}</label>
                             <select
+                                id="onboarding-reminders"
                                 value={formData.reminderFrequency || 'never'}
                                 onChange={e => handleChange('reminderFrequency', e.target.value)}
                                 className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors mt-auto"

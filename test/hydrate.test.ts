@@ -3,7 +3,7 @@ import Dexie from 'dexie';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountDatabase, clearLegacyCacheOnce } from '@/db/db';
 import { discardPendingChanges, hydrateFromServer, prepareAccountCache, resolvePendingConflict } from '@/db/hydrate';
-import { applyOperation } from '@/db/operations';
+import { applyOperation, updateProfileWithMeasurement } from '@/db/operations';
 import { flushPendingMutations } from '@/db/sqliteSync';
 import type { Snapshot } from '@shared/commands';
 
@@ -100,6 +100,49 @@ describe('account caches and transactional intent', () => {
         })).rejects.toThrow('abort');
         expect((await db.users.get(1))?.name).toBe('Test');
         expect(await db.outbox.count()).toBe(0);
+    });
+    it('records profile measurements and both intents in one transaction', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await updateProfileWithMeasurement(db, { name: 'Measured', weight: 80, bodyFat: 20 }, 10);
+        expect(await db.users.get(1)).toMatchObject({ name: 'Measured', weight: 80, bodyFat: 20 });
+        expect(await db.userMeasurements.toArray()).toEqual([
+            expect.objectContaining({ weight: 80, bodyFat: 20, timestamp: 10, revision: 0 }),
+        ]);
+        const intents = await db.outbox.orderBy('sequence').toArray();
+        expect(intents.map(entry => entry.intent.operation)).toEqual(['profile.update', 'measurement.create']);
+        expect(intents[1].dependency).toBe(intents[0].sequence);
+    });
+    it('rolls back a profile edit when its measurement intent is invalid', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await expect(updateProfileWithMeasurement(db, { name: 'Must roll back', weight: 80 }, Number.NaN))
+            .rejects.toThrow('invalid_payload');
+        expect(await db.users.get(1)).toEqual(snapshot.profile);
+        expect(await db.userMeasurements.count()).toBe(0);
+        expect(await db.outbox.count()).toBe(0);
+    });
+    it('discards the measurement intent with its rejected profile edit', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await updateProfileWithMeasurement(db, { weight: 80 }, 10);
+        const pending = await db.outbox.orderBy('sequence').toArray();
+        await db.outbox.update(pending[0].sequence, { state: 'conflict', error: 'revision_conflict' });
+        await resolvePendingConflict(db, snapshot, pending.map(entry => entry.intent.mutationId), 'discard');
+        expect(await db.users.get(1)).toEqual(snapshot.profile);
+        expect(await db.userMeasurements.count()).toBe(0);
+        expect(await db.outbox.count()).toBe(0);
+    });
+    it('preserves the profile-to-measurement dependency when reapplying', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await updateProfileWithMeasurement(db, { weight: 80 }, 10);
+        const pending = await db.outbox.orderBy('sequence').toArray();
+        await db.outbox.update(pending[0].sequence, { state: 'conflict', error: 'revision_conflict' });
+        await resolvePendingConflict(db, snapshot, pending.map(entry => entry.intent.mutationId), 'reapply');
+        const reapplied = await db.outbox.orderBy('sequence').toArray();
+        expect(reapplied.map(entry => entry.intent.operation)).toEqual(['profile.update', 'measurement.create']);
+        expect(reapplied[1].dependency).toBe(reapplied[0].sequence);
     });
     it('clears only the known legacy cache once, preserving unrelated browser storage', async () => {
         await Dexie.delete('GymAppCacheControl');

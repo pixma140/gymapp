@@ -1,6 +1,6 @@
 # Implementation plan
 
-Status: Phase E is implemented and verified. Durable intent and immutable prepared envelopes, ordered retry/backoff, generation preflight, failure-atomic snapshot replacement, explicit discard/reapply conflict resolution, and translated sync state are complete. Resume with the unchecked Phase F surviving profile/measurement and native-activation work or Phase G verification/CI tasks. The development database was last explicitly reset and seeded during Phase B on 2026-09-08; Phases D.5 and E required no development reset. See `docs/implementation-baseline.md` for checkpoint details.
+Status: Phase F is implemented and verified. The exercise-free timed workflow, transactional profile measurements, body-progress analysis, and native touch/keyboard navigation are complete. Resume with the unchecked Phase G verification/CI tasks. The development database was last explicitly reset and seeded during Phase B on 2026-09-08; Phases D.5 through F required no development reset. See `docs/implementation-baseline.md` for checkpoint details.
 
 Sources: [SUGGESTIONS.md](SUGGESTIONS.md), [ARCHITECTURE.md](ARCHITECTURE.md), and the user's appendix. The appendix takes precedence: this is a work-in-progress reset, default test users and shared gyms are required, and the existing exercise implementation must be removed. External exercise integration belongs to a later task.
 
@@ -164,9 +164,9 @@ The 2026-09-08 repository audit re-ran all Vitest tests, lint, and the productio
 - [x] Simplify `useWorkoutSession` to timed session lifecycle only. Use string UUID route params throughout training, active-workout lookup, details, and history.
 - [x] Remove automatic session creation on mere page render if it can duplicate sessions; create through an explicit Start Workout action with idempotent operation semantics. Resume an existing active session instead of silently starting another.
 - [x] Rewrite workout details/history around gym, start/end, duration, and deletion. Remove set counts, volume, exercise selection, and set-edit routes/links. Keep the old edit URL redirect only as navigation compatibility, not old storage compatibility.
-- [ ] Preserve profile and measurement forms using transactional operations, measurement history, and body-progress analysis. Remove the exercise-progress analysis tab.
+- [x] Preserve profile and measurement forms using transactional operations, measurement history, and body-progress analysis. Remove the exercise-progress analysis tab.
 - [x] Keep cancellation on-screen with translated error feedback when it fails. Ensure cancel/delete cannot trigger automatic recreation.
-- [ ] Use native links/buttons and one activation path; verify the old touch-navigation issue rather than retaining paired pointer/click workarounds. Keep scroll reset, safe areas, and keyboard-accessible labels.
+- [x] Use native links/buttons and one activation path; verify the old touch-navigation issue rather than retaining paired pointer/click workarounds. Keep scroll reset, safe areas, and keyboard-accessible labels.
 - [x] Hide the empty General admin tab, lazy-load surviving admin/analysis screens, and remove dead imports/helpers/styles without a broad visual redesign.
 
 **Exit:** both users can select shared gyms and run timed sessions; exercise routes/components/tables are gone; no request reaches an external exercise provider.

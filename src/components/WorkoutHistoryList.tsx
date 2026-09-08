@@ -48,8 +48,9 @@ export function WorkoutHistoryList() {
                         </div>
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={async (e) => {
-                                    e.preventDefault();
+                                type="button"
+                                aria-label={t('history.delete')}
+                                onClick={async () => {
                                     if (window.confirm(t('history.deleteConfirm'))) {
                                         await applyOperation(db, 'workout.delete', workout.id, {});
                                     }
@@ -61,6 +62,7 @@ export function WorkoutHistoryList() {
                             </button>
                             <Link
                                 to={`/workout/${workout.id}/view`}
+                                aria-label={t('history.view')}
                                 className="p-2 rounded-full hover:bg-[var(--accent)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
                                 title={t('history.view')}
                             >

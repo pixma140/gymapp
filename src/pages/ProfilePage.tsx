@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useDatabase } from '@/context/SessionContext';
-import { applyOperation } from '@/db/operations';
+import { updateProfileWithMeasurement } from '@/db/operations';
 import { PROFILE_COLUMNS, type ProfileFields } from '@shared/commands';
 import type { User } from '@/db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -46,12 +46,7 @@ export function ProfilePage() {
         }
         try {
             const payload = Object.fromEntries(PROFILE_COLUMNS.filter(key => formData[key] !== undefined).map(key => [key, formData[key]])) as Partial<ProfileFields>;
-            await db.transaction('rw', [db.users, db.userMeasurements, db.gyms, db.workouts, db.outbox], async () => {
-                await applyOperation(db, 'profile.update', null, payload);
-                if (formData.weight != null || formData.bodyFat != null) {
-                    await applyOperation(db, 'measurement.create', null, { weight: formData.weight ?? null, bodyFat: formData.bodyFat ?? null, timestamp: Date.now() });
-                }
-            });
+            await updateProfileWithMeasurement(db, payload);
             setSaveMessage(t('profile.saveSuccess'));
             clearMessageTimeout.current = window.setTimeout(() => {
                 setSaveMessage(null);
@@ -79,8 +74,9 @@ export function ProfilePage() {
                     </div>
 
                     <div className="w-full">
-                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2 text-center">{t('profile.displayName')}</label>
+                        <label htmlFor="profile-name" className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2 text-center">{t('profile.displayName')}</label>
                         <input
+                            id="profile-name"
                             type="text"
                             value={formData.name || ''}
                             onChange={e => handleChange('name', e.target.value)}
@@ -94,8 +90,9 @@ export function ProfilePage() {
                 <div className="grid grid-cols-2 gap-4">
                     {/* Weight */}
                     <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
-                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.weight')} <span className="text-[var(--muted-foreground)]">({t('common.unit.kg')})</span></label>
+                        <label htmlFor="profile-weight" className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.weight')} <span className="text-[var(--muted-foreground)]">({t('common.unit.kg')})</span></label>
                         <input
+                            id="profile-weight"
                             type="number"
                             value={formData.weight || ''}
                             onChange={e => handleChange('weight', e.target.value ? parseFloat(e.target.value) : null)}
@@ -107,8 +104,9 @@ export function ProfilePage() {
 
                     {/* Body Fat */}
                     <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
-                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.bodyFat')} <span className="text-[var(--muted-foreground)]">(%)</span></label>
+                        <label htmlFor="profile-body-fat" className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.bodyFat')} <span className="text-[var(--muted-foreground)]">(%)</span></label>
                         <input
+                            id="profile-body-fat"
                             type="number"
                             value={formData.bodyFat || ''}
                             onChange={e => handleChange('bodyFat', e.target.value ? parseFloat(e.target.value) : null)}
@@ -120,8 +118,9 @@ export function ProfilePage() {
 
                     {/* Height */}
                     <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
-                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.height')} <span className="text-[var(--muted-foreground)]">({t('common.unit.cm')})</span></label>
+                        <label htmlFor="profile-height" className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.height')} <span className="text-[var(--muted-foreground)]">({t('common.unit.cm')})</span></label>
                         <input
+                            id="profile-height"
                             type="number"
                             value={formData.height || ''}
                             onChange={e => handleChange('height', e.target.value ? parseFloat(e.target.value) : null)}
@@ -132,8 +131,9 @@ export function ProfilePage() {
 
                     {/* Age */}
                     <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
-                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.age')}</label>
+                        <label htmlFor="profile-age" className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.age')}</label>
                         <input
+                            id="profile-age"
                             type="number"
                             value={formData.age || ''}
                             onChange={e => handleChange('age', e.target.value ? parseInt(e.target.value) : null)}
@@ -144,8 +144,9 @@ export function ProfilePage() {
 
                     {/* Gender */}
                     <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
-                        <label className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.gender')}</label>
+                        <label htmlFor="profile-gender" className="block text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider mb-2">{t('profile.gender')}</label>
                         <select
+                            id="profile-gender"
                             value={formData.gender || 'other'}
                             onChange={e => handleChange('gender', e.target.value)}
                             className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"

@@ -4,12 +4,11 @@ import { useDatabase } from '@/context/SessionContext';
 import { applyOperation } from '@/db/operations';
 import type { Gym } from '@/db/db';
 import { ArrowLeft, Trash2, Edit2, Save, X, Plus, MapPin } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 export function ManageGymsPage() {
     const db = useDatabase();
-    const navigate = useNavigate();
     const { t } = useLanguage();
     const gyms = useLiveQuery(() => db.gyms.filter(gym => !gym.archived).toArray());
     const [failed, setFailed] = useState(false);
@@ -68,9 +67,9 @@ export function ManageGymsPage() {
         <div className="space-y-6 animate-in fade-in duration-500 max-w-md mx-auto pb-20 p-4">
             {failed && <p role="alert">{t('sync.operationFailed')}</p>}
             <header className="flex items-center gap-4">
-                <button aria-label={t('common.back')} onClick={() => navigate('/settings')} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+                <Link aria-label={t('common.back')} to="/settings" className="text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
                     <ArrowLeft className="size-6" />
-                </button>
+                </Link>
                 <div className="flex-1">
                     <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">{t('manageGyms.title')}</h1>
                 </div>

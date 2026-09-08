@@ -12,37 +12,63 @@ test('fixture users share gyms and retain private timed workouts through logout 
         await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     };
     await login('user');
-    await expect(page.getByRole('button', { name: /Iron Odyssey/ })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Moonshot Barbell Club/ })).toBeVisible();
-    await page.getByRole('button', { name: /Iron Odyssey/ }).tap();
+    const analysisLink = page.getByRole('link', { name: 'Analysis', exact: true });
+    await analysisLink.focus();
+    await analysisLink.press('Enter');
+    await expect(page.getByRole('heading', { name: 'Analysis', exact: true })).toBeVisible();
+    const trainingLink = page.getByRole('link', { name: 'Training', exact: true });
+    await trainingLink.focus();
+    await trainingLink.press('Enter');
+    await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+    await page.getByRole('link', { name: 'Profile', exact: true }).click();
+    expect(await page.locator('main').evaluate(element => {
+        element.scrollTop = element.scrollHeight;
+        return element.scrollTop;
+    })).toBeGreaterThan(0);
+    await page.getByRole('link', { name: 'Training', exact: true }).click();
+    await expect.poll(() => page.locator('main').evaluate(element => element.scrollTop)).toBe(0);
+    await expect(page.getByRole('link', { name: /Iron Odyssey/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Moonshot Barbell Club/ })).toBeVisible();
+    await page.getByRole('link', { name: /Iron Odyssey/ }).tap();
     await expect(page.getByRole('button', { name: 'Start workout', exact: true })).toBeVisible();
     await page.reload();
     await expect(page.getByRole('button', { name: 'Start workout', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Start workout', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Finish workout', exact: true })).toBeVisible();
     await expect(page.getByText('Pending changes: 0', { exact: true })).toBeVisible();
+    await page.getByRole('link', { name: 'Training', exact: true }).click();
+    await expect(page.getByRole('link', { name: /Moonshot Barbell Club/ })).toHaveCount(0);
+    await expect(page.getByText('Moonshot Barbell Club', { exact: true })).toBeVisible();
+    await page.getByRole('link', { name: 'Resume workout', exact: true }).click();
     await page.getByRole('button', { name: 'Finish workout', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     await expect(page.getByText('Pending changes: 0', { exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Analysis', exact: true }).click();
+    await page.getByRole('link', { name: 'Analysis', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Iron Odyssey', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    await page.getByRole('link', { name: 'Settings', exact: true }).click();
     await expect(page.locator('a[href="/admin"]')).toHaveCount(0);
     await expect(page.locator('a[href="/settings/gyms"]')).toHaveCount(0);
+    await page.getByLabel('Theme').selectOption('oled');
+    await expect(page.locator('html')).toHaveClass(/oled/);
+    await page.getByLabel('Theme').selectOption('dark');
+    await page.getByLabel('Language').selectOption('de');
+    await expect(page.getByRole('link', { name: 'Analyse', exact: true })).toBeVisible();
+    await page.locator('#settings-language').selectOption('en');
+    await expect(page.getByText('Pending changes: 0', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: /Log out|Logout/i }).click();
     await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
     await login('admin');
-    await page.getByRole('button', { name: 'Analysis', exact: true }).click();
+    await page.getByRole('link', { name: 'Analysis', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Iron Odyssey', exact: true })).toHaveCount(0);
-    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    await page.getByRole('link', { name: 'Settings', exact: true }).click();
     await expect(page.locator('a[href="/admin"]')).toBeVisible();
     await page.locator('a[href="/admin"]').click();
     await expect(page.getByRole('button', { name: 'Users', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    await page.getByRole('link', { name: 'Settings', exact: true }).click();
     await page.getByRole('button', { name: /Log out|Logout/i }).click();
     await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
     await login('user');
-    await page.getByRole('button', { name: 'Analysis', exact: true }).click();
+    await page.getByRole('link', { name: 'Analysis', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Iron Odyssey', exact: true })).toBeVisible();
     await page.getByRole('link', { name: /view/i }).click();
     page.once('dialog', dialog => dialog.accept());
@@ -56,7 +82,7 @@ test('offline timed intent, cancellation, profile measurements, and catalog edit
     await page.locator('input[autocomplete=username]').fill('admin');
     await page.locator('input[autocomplete=current-password]').fill('123geheim');
     await page.getByRole('button', { name: 'Log in', exact: true }).click();
-    await page.getByRole('button', { name: /Moonshot Barbell Club/ }).click();
+    await page.getByRole('link', { name: /Moonshot Barbell Club/ }).click();
     await context.setOffline(true);
     await page.getByRole('button', { name: 'Start workout', exact: true }).click();
     await expect(page.getByText('Pending changes: 1', { exact: true })).toBeVisible();
@@ -76,9 +102,9 @@ test('offline timed intent, cancellation, profile measurements, and catalog edit
     await context.setOffline(false);
     await expect(page.getByText('Pending changes: 0', { exact: true })).toBeVisible();
     await page.reload();
-    await expect(page.getByRole('button', { name: 'Resume workout', exact: true })).toHaveCount(0);
-    await page.getByRole('button', { name: 'Profile', exact: true }).click();
-    await page.locator('input[type=number]').first().fill('80');
+    await expect(page.getByRole('link', { name: 'Resume workout', exact: true })).toHaveCount(0);
+    await page.getByRole('link', { name: 'Profile', exact: true }).click();
+    await page.getByLabel('Weight (kg)').fill('80');
     await page.getByRole('button', { name: 'Save Profile', exact: true }).click();
     await expect(page.getByText('Profile saved.', { exact: true })).toBeVisible();
     await expect(page.getByText('Pending changes: 0', { exact: true })).toBeVisible();
@@ -86,7 +112,12 @@ test('offline timed intent, cancellation, profile measurements, and catalog edit
     expect(data.profile.weight).toBe(80);
     expect(data.measurements).toHaveLength(1);
     expect(data.workouts).toEqual([]);
-    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    await page.getByRole('link', { name: 'Analysis', exact: true }).click();
+    await page.getByRole('button', { name: 'Body Analysis', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Weight History', exact: true })).toBeVisible();
+    await expect(page.locator('.recharts-line-dots circle')).toHaveCount(1);
+    await expect(page.getByRole('heading', { name: 'Body Fat History', exact: true })).toBeVisible();
+    await page.getByRole('link', { name: 'Settings', exact: true }).click();
     await page.locator('a[href="/settings/gyms"]').click();
     await page.getByRole('button', { name: 'Edit', exact: true }).first().click();
     await page.locator('input').first().fill('Iron Odyssey Updated');
@@ -112,10 +143,10 @@ test('authorization failure refreshes a demoted administrator role', async ({ pa
         await page.getByRole('button', { name: 'Log in', exact: true }).click();
         await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
         expect((await admin.patch(`/api/admin/users/${id}`, { data: { isAdmin: false } })).ok()).toBe(true);
-        await page.getByRole('button', { name: 'Settings', exact: true }).click();
+        await page.getByRole('link', { name: 'Settings', exact: true }).click();
         await page.locator('a[href="/admin"]').click();
         await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
-        await page.getByRole('button', { name: 'Settings', exact: true }).click();
+        await page.getByRole('link', { name: 'Settings', exact: true }).click();
         await expect(page.locator('a[href="/admin"]')).toHaveCount(0);
         expect((await admin.delete(`/api/admin/users/${id}`)).ok()).toBe(true);
     } finally {
@@ -130,7 +161,7 @@ test('failed bootstrap preserves pending intent and retries without onboarding',
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     await context.route('**/api/sync', route => route.abort());
-    await page.getByRole('button', { name: /Foundry District/ }).click();
+    await page.getByRole('link', { name: /Foundry District/ }).click();
     await page.getByRole('button', { name: 'Start workout', exact: true }).click();
     await expect(page.getByText('Pending changes: 1', { exact: true })).toBeVisible();
     await page.route('**/api/bootstrap', route => route.fulfill({ status: 500, body: 'unavailable' }));
@@ -156,7 +187,7 @@ test('discard is confirmed, failure-atomic, exportable, and scoped to the curren
         await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     };
     const queueWorkout = async () => {
-        await page.getByRole('button', { name: /Foundry District/ }).click();
+        await page.getByRole('link', { name: /Foundry District/ }).click();
         await page.getByRole('button', { name: 'Start workout', exact: true }).click();
         await expect(page.getByText('Pending changes: 1', { exact: true })).toBeVisible();
     };
@@ -164,12 +195,12 @@ test('discard is confirmed, failure-atomic, exportable, and scoped to the curren
     await context.route('**/api/sync', route => route.abort());
     await register('discard-account-a');
     await queueWorkout();
-    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    await page.getByRole('link', { name: 'Settings', exact: true }).click();
     await page.getByRole('button', { name: /Log out|Logout/i }).click();
 
     await register('discard-account-b');
     await queueWorkout();
-    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    await page.getByRole('link', { name: 'Settings', exact: true }).click();
     const discard = page.getByRole('button', { name: /Discard pending changes/ });
     page.once('dialog', dialog => dialog.dismiss());
     await discard.click();
@@ -204,10 +235,10 @@ test('discard is confirmed, failure-atomic, exportable, and scoped to the curren
         data: { username: 'discard-account-a', password: '123geheim' },
     })).ok()).toBe(true);
     await page.goto('/');
-    await expect(page.getByRole('button', { name: 'Resume workout', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Resume workout', exact: true })).toBeVisible();
     await expect(page.getByText('Pending changes: 1', { exact: true })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    await page.getByRole('link', { name: 'Settings', exact: true }).click();
     page.once('dialog', dialog => dialog.accept());
     await page.getByRole('button', { name: /Discard pending changes/ }).click();
     await context.unroute('**/api/sync');
@@ -263,7 +294,7 @@ test('an external cookie switch pauses stale intent and rebinds the visible tab'
         await route.continue();
     });
     const mismatch = page.waitForResponse(response => response.url().endsWith('/api/sync') && response.status() === 409);
-    await page.getByRole('button', { name: /Foundry District/ }).click();
+    await page.getByRole('link', { name: /Foundry District/ }).click();
     await page.getByRole('button', { name: 'Start workout', exact: true }).click();
     await expect.poll(() => sending).toBe(true);
     expect((await page.request.post('/api/auth/login', {
@@ -286,7 +317,7 @@ test('an external cookie switch pauses stale intent and rebinds the visible tab'
     });
     await expect(page.getByRole('button', { name: 'Finish workout', exact: true })).toBeVisible();
     await expect(page.getByText('Pending changes: 1', { exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    await page.getByRole('link', { name: 'Settings', exact: true }).click();
     page.once('dialog', dialog => dialog.accept());
     await page.getByRole('button', { name: /Discard pending changes/ }).click();
     await page.unroute('**/api/sync');
@@ -312,14 +343,14 @@ test('two tabs serialize senders and propagate logout and account switches', asy
     let logoutRequests = 0;
     await context.route('**/api/auth/logout', async route => { logoutRequests++; await route.continue(); });
     try {
-        await page.getByRole('button', { name: /Foundry District/ }).click();
+        await page.getByRole('link', { name: /Foundry District/ }).click();
         await page.getByRole('button', { name: 'Start workout', exact: true }).click();
         await expect.poll(() => sends).toBe(1);
         // A second sender's timer fires while the first still holds the browser lock.
         await expect.poll(() => second.evaluate(async () =>
             (await navigator.locks.query()).pending?.some(lock => lock.name?.startsWith('sync:')) ?? false)).toBe(true);
         expect(sends).toBe(1);
-        await second.getByRole('button', { name: 'Settings', exact: true }).click();
+        await second.getByRole('link', { name: 'Settings', exact: true }).click();
         await second.getByRole('button', { name: /Log out|Logout/i }).click();
         await expect.poll(() => logoutRequests).toBe(0);
     } finally { release(); }
@@ -332,16 +363,16 @@ test('two tabs serialize senders and propagate logout and account switches', asy
     await expect(second.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     await expect(page.getByText('Pending changes: 0', { exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Resume workout', exact: true })).toHaveCount(0);
-    await second.getByRole('button', { name: 'Settings', exact: true }).click();
+    await expect(page.getByRole('link', { name: 'Resume workout', exact: true })).toHaveCount(0);
+    await second.getByRole('link', { name: 'Settings', exact: true }).click();
     await second.getByRole('button', { name: /Log out|Logout/i }).click();
     await second.locator('input[autocomplete=username]').fill('browser-tabs');
     await second.locator('input[autocomplete=current-password]').fill('123geheim');
     await second.getByRole('button', { name: 'Log in', exact: true }).click();
     await expect(second.getByText('Pending changes: 0', { exact: true })).toBeVisible();
-    await expect(second.getByRole('button', { name: 'Resume workout', exact: true })).toBeVisible();
+    await expect(second.getByRole('link', { name: 'Resume workout', exact: true })).toBeVisible();
     second.once('dialog', dialog => dialog.accept());
-    await second.getByRole('button', { name: 'Resume workout', exact: true }).click();
+    await second.getByRole('link', { name: 'Resume workout', exact: true }).click();
     await second.getByRole('button', { name: 'Cancel workout', exact: true }).click();
     await expect.poll(async () => (await (await second.request.get('/api/sync/snapshot')).json()).workouts).toEqual([]);
     await second.close();

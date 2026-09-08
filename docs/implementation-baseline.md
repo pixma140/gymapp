@@ -111,6 +111,23 @@ verification remain, as does the future external exercise integration.
   state. Final validation: 107 Vitest tests in nine files, lint, production build,
   and all eight Chromium workflows pass.
 
+## Phase F checkpoint — 2026-09-08
+
+- Profile and onboarding saves now use one domain operation that atomically writes
+  the profile update, optional measurement row, and both durable intents. Focused
+  fake-IndexedDB tests prove successful measurement history and full rollback when
+  the measurement command is invalid.
+- Gym selection, workout resume, reminder, settings-back, and bottom navigation
+  use native React Router links. Mutation controls remain native buttons; the old
+  paired pointer/click workaround is absent. Profile fields and history icon
+  controls have accessible labels.
+- Mobile Chromium coverage uses touch to open a gym, keyboard activation to move
+  between bottom-navigation links, and verifies a saved measurement appears in
+  the surviving body-analysis view. Scroll reset and safe-area layout remain.
+- Final validation: 111 Vitest tests in nine files, lint, production build, and all
+  eight Chromium workflows pass. Initial JS is 461.83 kB / gzip 141.62 kB; admin
+  and analysis remain separate chunks.
+
 ## Phase C checkpoint — 2026-09-08
 
 - Setup and password-account creation share one insert operation. Registration
