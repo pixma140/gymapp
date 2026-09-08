@@ -1,7 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/db/db';
+import { useSession } from '@/context/SessionContext';
+import { applyOperation } from '@/db/operations';
 import { translations } from './translations';
 import type { Language } from './translations';
 import type { TranslationKey } from './translations';
@@ -15,13 +16,14 @@ type LanguageContextType = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-    const user = useLiveQuery(() => db.users.orderBy('id').first());
+    const { database: db } = useSession();
+    const user = useLiveQuery(() => db?.users.get(db.binding.accountId), [db]);
     const [fallbackLanguage, setFallbackLanguage] = useState<Language>('en');
     const language = user?.language ?? fallbackLanguage;
 
     const setLanguage = async (lang: Language) => {
-        if (user) {
-            await db.users.update(user.id, { language: lang });
+        if (user && db) {
+            await applyOperation(db, 'profile.update', null, { language: lang });
         } else {
             setFallbackLanguage(lang);
         }

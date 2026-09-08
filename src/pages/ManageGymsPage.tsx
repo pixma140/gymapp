@@ -1,16 +1,23 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/db/db';
+import { useDatabase } from '@/context/SessionContext';
+import { applyOperation } from '@/db/operations';
 import type { Gym } from '@/db/db';
 import { ArrowLeft, Trash2, Edit2, Save, X, Plus, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 export function ManageGymsPage() {
+    const db = useDatabase();
     const navigate = useNavigate();
     const { t } = useLanguage();
-    const gyms = useLiveQuery(() => db.gyms.toArray());
-    const [editingId, setEditingId] = useState<number | null>(null);
+    const gyms = useLiveQuery(() => db.gyms.filter(gym => !gym.archived).toArray());
+    const [failed, setFailed] = useState(false);
+    const perform = async (operation: () => Promise<unknown>) => {
+        setFailed(false);
+        try { await operation(); } catch { setFailed(true); }
+    };
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
     const [editLocation, setEditLocation] = useState('');
     const [isAdding, setIsAdding] = useState(false);
@@ -31,28 +38,26 @@ export function ManageGymsPage() {
 
     const saveEdit = async () => {
         if (editingId && editName.trim()) {
-            await db.gyms.update(editingId, {
+            await applyOperation(db, 'gym.update', editingId, {
                 name: editName.trim(),
-                location: editLocation.trim() || undefined
+                location: editLocation.trim()
             });
             cancelEdit();
         }
     };
 
-    const deleteGym = async (id: number) => {
-        if (confirm(t('manageGyms.deleteConfirm'))) {
-            await db.gyms.delete(id);
+    const deleteGym = async (id: string) => {
+        if (confirm(t('gyms.archiveConfirm'))) {
+            await applyOperation(db, 'gym.archive', id, { archived: true });
         }
     };
 
     const addGym = async () => {
         if (!newName.trim()) return;
 
-        await db.gyms.add({
+        await applyOperation(db, 'gym.create', null, {
             name: newName.trim(),
-            location: newLocation.trim() || undefined,
-            lastVisited: Date.now(),
-            visitCount: 0
+            location: newLocation.trim()
         });
         setNewName('');
         setNewLocation('');
@@ -61,14 +66,15 @@ export function ManageGymsPage() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 max-w-md mx-auto pb-20 p-4">
+            {failed && <p role="alert">{t('sync.operationFailed')}</p>}
             <header className="flex items-center gap-4">
-                <button onClick={() => navigate('/settings')} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
+                <button aria-label={t('common.back')} onClick={() => navigate('/settings')} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
                     <ArrowLeft className="size-6" />
                 </button>
                 <div className="flex-1">
                     <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">{t('manageGyms.title')}</h1>
                 </div>
-                <button onClick={() => setIsAdding(!isAdding)} className="bg-blue-600 p-2 rounded-lg text-white">
+                <button aria-label={t('gyms.addNew')} onClick={() => setIsAdding(!isAdding)} className="bg-blue-600 p-2 rounded-lg text-white">
                     <Plus className="size-5" />
                 </button>
             </header>
@@ -94,7 +100,7 @@ export function ManageGymsPage() {
                                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[var(--muted-foreground)]" />
                             </div>
                         </div>
-                        <button onClick={addGym} className="p-2 bg-blue-600 text-white rounded-lg"><Save className="size-4" /></button>
+                        <button aria-label={t('common.save')} onClick={() => void perform(addGym)} className="p-2 bg-blue-600 text-white rounded-lg"><Save className="size-4" /></button>
                     </div>
                 )}
                 {gyms?.map(gym => (
@@ -117,8 +123,8 @@ export function ManageGymsPage() {
                                     />
                                 </div>
                                 <div className="flex gap-2">
-                                    <button onClick={saveEdit} className="p-2 bg-green-900/40 text-green-400 rounded-lg"><Save className="size-4" /></button>
-                                    <button onClick={cancelEdit} className="p-2 bg-[var(--accent)] text-[var(--muted-foreground)] rounded-lg"><X className="size-4" /></button>
+                                    <button aria-label={t('common.save')} onClick={() => void perform(saveEdit)} className="p-2 bg-green-900/40 text-green-400 rounded-lg"><Save className="size-4" /></button>
+                                    <button aria-label={t('common.cancel')} onClick={cancelEdit} className="p-2 bg-[var(--accent)] text-[var(--muted-foreground)] rounded-lg"><X className="size-4" /></button>
                                 </div>
                             </div>
                         ) : (
@@ -128,8 +134,8 @@ export function ManageGymsPage() {
                                     <p className="text-xs text-[var(--muted-foreground)]">{gym.location || t('manageGyms.noLocation')}</p>
                                 </div>
                                 <div className="flex gap-2">
-                                    <button onClick={() => startEdit(gym)} className="p-2 text-[var(--muted-foreground)] hover:text-[var(--primary)]"><Edit2 className="size-4" /></button>
-                                    <button onClick={() => deleteGym(gym.id)} className="p-2 text-[var(--muted-foreground)] hover:text-red-500"><Trash2 className="size-4" /></button>
+                                    <button aria-label={t('common.edit')} onClick={() => startEdit(gym)} className="p-2 text-[var(--muted-foreground)] hover:text-[var(--primary)]"><Edit2 className="size-4" /></button>
+                                    <button aria-label={t('gyms.archive')} onClick={() => void perform(() => deleteGym(gym.id))} className="p-2 text-[var(--muted-foreground)] hover:text-red-500"><Trash2 className="size-4" /></button>
                                 </div>
                             </>
                         )}

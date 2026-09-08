@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
-import { db } from '@/db/db';
 import { getSetupStatus, setupInitialAdmin } from '@/auth/session';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useSession } from '@/context/SessionContext';
@@ -59,8 +58,6 @@ export function SetupPage() {
                 return;
             }
 
-            await db.delete();
-            await db.open();
             await refresh();
 
             navigate('/onboarding', { replace: true });

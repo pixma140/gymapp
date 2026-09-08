@@ -46,7 +46,7 @@ describe('replacement sync contract', () => {
     });
     it('authenticates before dispatch and rejects legacy/inherited commands', async () => {
         expect((await request('POST', '/api/sync', { body: {} })).status).toBe(401);
-        for (const body of [{ table: 'users', operation: 'delete', id: userId }, { operation: 'constructor' }, { operation: '__proto__' }, { operation: 'exercise.create' }]) {
+        for (const body of [{ table: 'users', operation: 'delete', id: userId }, { operation: { toString: 'invalid' } }, { operation: 'constructor' }, { operation: '__proto__' }, { operation: 'exercise.create' }]) {
             expect((await send(body)).status).toBe(400);
         }
         expect((await request('GET', '/api/auth/me', { cookie: userCookie })).status).toBe(200);

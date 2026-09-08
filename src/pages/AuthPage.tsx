@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getOidcStatus, getSessionUser, loginWithUsername, registerWithUsername, startOidcLogin } from '@/auth/session';
+import { getOidcStatus, loginWithUsername, registerWithUsername, startOidcLogin } from '@/auth/session';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useSession } from '@/context/SessionContext';
 import type { TranslationKey } from '@/i18n/translations';
@@ -40,24 +40,6 @@ export function AuthPage() {
         };
     }, []);
 
-    useEffect(() => {
-        let mounted = true;
-
-        const checkSession = async () => {
-            const sessionUser = await getSessionUser();
-
-            if (sessionUser && mounted) {
-                navigate('/', { replace: true });
-            }
-        };
-
-        void checkSession();
-
-        return () => {
-            mounted = false;
-        };
-    }, [navigate]);
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorKey(null);
@@ -83,9 +65,8 @@ export function AuthPage() {
             // reconcile/hydrate the local database for this account.
             await refresh();
 
-            if (result.user.language) {
-                await setLanguage(result.user.language);
-            }
+            const channel = new BroadcastChannel('gymapp-session');
+            channel.postMessage('changed'); channel.close();
 
             navigate(mode === 'register' ? '/onboarding' : '/', { replace: true });
         } catch {

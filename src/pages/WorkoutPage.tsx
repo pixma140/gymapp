@@ -1,152 +1,34 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/db/db';
-import { ArrowLeft, Plus, Timer } from 'lucide-react';
-import { useWorkoutSession } from '@/hooks/useWorkoutSession';
-import { ExerciseSelector } from '@/components/ExerciseSelector';
-import { ActiveExercise } from '@/components/ActiveExercise';
 import { useEffect, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useDatabase } from '@/context/SessionContext';
+import { useWorkoutSession } from '@/hooks/useWorkoutSession';
 import { useLanguage } from '@/i18n/LanguageContext';
-
 export function WorkoutPage() {
-    const { gymId } = useParams();
-    const navigate = useNavigate();
-    const id = Number(gymId);
-    const gym = useLiveQuery(() => db.gyms.get(id), [id]);
-    const [showExerciseSelector, setShowExerciseSelector] = useState(false);
+    const { gymId = '' } = useParams();
+    const db = useDatabase();
     const { t } = useLanguage();
-
-    const {
-        workoutId,
-        workoutSets,
-        addSet,
-        removeSet,
-        finishWorkout,
-        cancelWorkout
-    } = useWorkoutSession(id);
-
-    const workout = useLiveQuery(() => workoutId ? db.workouts.get(workoutId) : undefined, [workoutId]);
-    const [now, setNow] = useState(() => Date.now());
-
-    // Group sets by exercise
-    const exerciseIds = [...new Set(workoutSets?.map(s => s.exerciseId))];
-
-    const [sessionExercises, setSessionExercises] = useState<number[]>([]);
-
-    const displayedExercises = useLiveQuery(async () => {
-        const setExIds = exerciseIds || [];
-        const allIds = [...new Set([...setExIds, ...sessionExercises])];
-        return allIds.length > 0 ? await db.exercises.where('id').anyOf(allIds).toArray() : [];
-    }, [exerciseIds, sessionExercises]);
-
-    const handleFinish = async () => {
-        await finishWorkout();
-        navigate('/analysis');
+    const navigate = useNavigate();
+    const gym = useLiveQuery(() => db.gyms.get(gymId), [db, gymId]);
+    const { workout, startWorkout, finishWorkout, cancelWorkout } = useWorkoutSession(gymId);
+    const [now, setNow] = useState(Date.now());
+    const [busy, setBusy] = useState(false);
+    const [failed, setFailed] = useState(false);
+    useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, []);
+    const act = async (action: () => Promise<unknown>, leave = false) => {
+        setBusy(true); setFailed(false);
+        try { await action(); if (leave) navigate('/'); } catch { setFailed(true); } finally { setBusy(false); }
     };
-
-    const handleCancel = async () => {
-        if (!confirm(t('workout.cancelConfirm'))) return;
-
-        try {
-            await cancelWorkout();
-        } catch (err) {
-            console.error('Failed to cancel workout:', err);
-        }
-        navigate('/');
-    };
-
-    const handleOpenExerciseSelector = () => {
-        setShowExerciseSelector(true);
-    };
-
-    useEffect(() => {
-        const interval = setInterval(() => setNow(Date.now()), 1000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const formatDuration = (totalSeconds: number) => {
-        const safeSeconds = Math.max(0, totalSeconds);
-        const h = Math.floor(safeSeconds / 3600);
-        const m = Math.floor((safeSeconds % 3600) / 60);
-        const s = safeSeconds % 60;
-
-        if (h > 0) {
-            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        }
-
-        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    };
-
-    const elapsedSeconds = workout?.startTime ? Math.floor((now - workout.startTime) / 1000) : 0;
-
-    if (!gym) return <div className="p-8 text-center text-[var(--muted-foreground)]">{t('workout.initializing')}</div>;
-
-    return (
-        <div className="space-y-6 animate-in slide-in-from-right duration-500 min-h-full flex flex-col pb-20 p-4">
-            <header className="flex items-center justify-between bg-[var(--background)]/80 backdrop-blur-md p-4 -mx-4 sticky top-0 z-10 border-b border-[var(--border)]">
-                <div className="flex items-center gap-3">
-                    <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-[var(--accent)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
-                        <ArrowLeft className="size-6" />
-                    </button>
-                    <div>
-                        <h1 className="text-lg font-bold text-[var(--foreground)] leading-tight truncate max-w-[200px]">{gym.name}</h1>
-                        <div className="flex items-center gap-1.5 text-[var(--muted-foreground)] text-xs font-mono">
-                            <Timer className="size-3" />
-                            <span>{formatDuration(elapsedSeconds)}</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={handleCancel}
-                        className="border border-red-500/40 text-red-400 hover:text-red-300 hover:border-red-400/60 px-3 py-1.5 rounded-full text-sm font-bold transition-all"
-                    >
-                        {t('workout.cancel')}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleFinish}
-                        className="bg-green-600 hover:bg-green-500 text-white px-4 py-1.5 rounded-full text-sm font-bold transition-all shadow-lg shadow-green-900/20"
-                    >
-                        {t('workout.finish')}
-                    </button>
-                </div>
-            </header>
-
-            <div className="flex-1 space-y-6">
-                {displayedExercises?.map(exercise => (
-                    <ActiveExercise
-                        key={exercise.id}
-                        exercise={exercise}
-                        sets={workoutSets?.filter(s => s.exerciseId === exercise.id) || []}
-                        onAddSet={(type, w, r) => addSet(exercise.id, type, w, r)}
-                        onRemoveSet={removeSet}
-                    />
-                ))}
-
-                <button
-                    type="button"
-                    onClick={handleOpenExerciseSelector}
-                    onPointerUp={handleOpenExerciseSelector}
-                    className="w-full py-4 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--card)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--accent)] transition-all flex flex-col items-center justify-center gap-2"
-                >
-                    <div className="bg-[var(--accent)] p-3 rounded-full">
-                        <Plus className="size-6" />
-                    </div>
-                    <span className="font-medium">{t('workout.addExercise')}</span>
-                </button>
-            </div>
-
-            {showExerciseSelector && (
-                <ExerciseSelector
-                    onCancel={() => setShowExerciseSelector(false)}
-                    onSelect={(id) => {
-                        setSessionExercises(prev => [...prev, id]);
-                        setShowExerciseSelector(false);
-                    }}
-                />
-            )}
-        </div>
-    );
+    return <div className="space-y-6 max-w-md mx-auto">
+        <Link to="/">{t('common.back')}</Link>
+        <h1 className="text-2xl font-bold">{gym?.name ?? t('common.unknownGym')}</h1>
+        <p className="text-[var(--muted-foreground)]">{t('timed.notice')}</p>
+        {failed && <p role="alert">{t('sync.operationFailed')}</p>}
+        {workout ? <>
+            <p className="text-4xl font-mono">{Math.max(0, Math.floor((now - workout.startTime) / 1000))} {t('timed.seconds')}</p>
+            {workout.gymId !== gymId && <Link to={`/workout/${workout.gymId}`}>{t('timed.resume')}</Link>}
+            <button disabled={busy} className="p-4 bg-[var(--primary)] rounded-xl" onClick={() => void act(finishWorkout, true)}>{t('timed.finish')}</button>
+            <button disabled={busy} className="p-4" onClick={() => { if (window.confirm(t('history.deleteConfirm'))) void act(cancelWorkout, true); }}>{t('timed.cancel')}</button>
+        </> : <button disabled={busy || !gym || gym.archived} className="p-4 bg-[var(--primary)] rounded-xl disabled:opacity-50" onClick={() => void act(startWorkout)}>{t('timed.start')}</button>}
+    </div>;
 }

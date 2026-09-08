@@ -25,6 +25,7 @@ async function sendAuthRequest(path: string, body?: Record<string, unknown>): Pr
 
     const payload = (await response.json()) as AuthResponse;
 
+    if (response.status >= 500) throw new Error('server_unavailable');
     if (!response.ok || !payload.ok) {
         return { ok: false, error: payload.error ?? 'unknown_error' };
     }
@@ -54,13 +55,10 @@ export interface SetupInput {
 }
 
 export async function getSetupStatus(): Promise<boolean> {
-    try {
-        const response = await fetch('/api/setup/status', { credentials: 'include' });
-        const payload = (await response.json()) as { ok: boolean; needsSetup?: boolean };
-        return Boolean(payload.ok && payload.needsSetup);
-    } catch {
-        return false;
-    }
+    const response = await fetch('/api/setup/status', { credentials: 'include' });
+    const payload = await response.json();
+    if (!response.ok || !payload.ok || typeof payload.needsSetup !== 'boolean') throw new Error('setup_status_failed');
+    return payload.needsSetup;
 }
 
 export async function setupInitialAdmin(input: SetupInput): Promise<AuthResponse> {

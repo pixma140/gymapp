@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+db
+history.csv
+exercises.txt
+extract_exercises.sh
+playwright-report
+test-results
+*.log

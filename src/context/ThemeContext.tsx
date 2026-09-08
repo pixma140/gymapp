@@ -1,7 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/db/db';
+import { useSession } from '@/context/SessionContext';
+import { applyOperation } from '@/db/operations';
 
 export type Theme = 'light' | 'dark' | 'oled' | 'system';
 
@@ -16,7 +17,8 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const user = useLiveQuery(() => db.users.orderBy('id').first());
+    const { database: db } = useSession();
+    const user = useLiveQuery(() => db?.users.get(db.binding.accountId), [db]);
     const [fallbackTheme, setFallbackTheme] = useState<Theme>('dark');
     const [fallbackMainColor, setFallbackMainColor] = useState<string>('#2563eb'); // Default blue-600
     const theme = user?.theme ?? fallbackTheme;
@@ -63,16 +65,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }, [theme, mainColor]);
 
     const setTheme = async (newTheme: Theme) => {
-        if (user) {
-            await db.users.update(user.id, { theme: newTheme });
+        if (user && db) {
+            await applyOperation(db, 'profile.update', null, { theme: newTheme });
         } else {
             setFallbackTheme(newTheme);
         }
     };
 
     const setColor = async (color: string) => {
-        if (user) {
-            await db.users.update(user.id, { mainColor: color });
+        if (user && db) {
+            await applyOperation(db, 'profile.update', null, { mainColor: color });
         } else {
             setFallbackMainColor(color);
         }

@@ -12,7 +12,8 @@ Keep changes consistent with existing patterns and scripts.
 
 ## Commands (npm)
 - Install: `npm install`
-- Dev server: `npm run dev`
+- Dev frontend: `npm run dev`; API with fixture defaults: `npm run dev:server`.
+- Explicit app database reset: stop the API, then `npm run db:reset:seed` (or `db:reset` without fixtures).
 - Build: `npm run build` (runs `tsc -b` then `vite build`)
 - Lint: `npm run lint` (eslint)
 - Preview build: `npm run preview`
@@ -28,9 +29,10 @@ Keep changes consistent with existing patterns and scripts.
   - `server/lib/*.test.js`: pure server helpers (password hashing, cookies, OIDC verify).
   - `server/sync.test.js`: HTTP integration test of `/api/sync` authz/scoping (boots the Express app on an ephemeral port against a temp SQLite DB).
   - `server/adminUsers.test.js`: HTTP integration test of `/api/admin/users` routes (list/create/promote/demote/password-reset/delete authz and guards).
-  - `test/*.test.ts`: client-side logic (Dexie hydration via `fake-indexeddb`).
+  - `test/*.test.ts`: client-side logic (account-cache isolation, hydration, transactional outbox, and dependent acknowledgements via `fake-indexeddb`).
 - `server/app.js` exports `createApp({ database, ...config })` without opening a database or binding a port. Tests explicitly initialize and close handles from `server/db.js`; `server/index.js` owns process startup.
-- `server/seed.test.js`: fixture HTTP authentication, restart preservation, schema invariants, and reset/lease scoping.
+- `server/seed.test.js`: fixture authentication/restart behavior, fresh-schema invariants, and scoped reset/lease guards.
+- `test/browser/workflows.spec.ts`: Playwright mobile-width account and timed-workout smoke test; `test/browser/server.mjs` owns its temporary database. Run `npm run build`, `npm run test:browser:install` once, then `npm run test:browser`.
 - `server/db.test.js`: database isolation, transaction serialization, rollback isolation, and closed-handle guards.
 
 ## Cursor/Copilot Rules
@@ -71,7 +73,8 @@ Keep changes consistent with existing patterns and scripts.
 - IndexedDB via Dexie; see `src/db/db.ts` for schema.
 - `useLiveQuery` is used for reactive queries.
 - Use Dexie transactions for multi-table updates/deletes.
-- User is currently assumed as `userId: 1` (local-only).
+- Domain screens use `useDatabase()` from SessionContext; preferences use its nullable `database` handle. No global database or assumed account ID.
+- Domain writes go through `applyOperation`, which atomically updates local data and queues an account/installation-bound command.
 
 ## Routing
 - Routes are declared in `src/App.tsx`.
@@ -104,8 +107,8 @@ Keep changes consistent with existing patterns and scripts.
 - All user-facing text must be wired through the existing i18n keys (no hardcoded strings).
 
 ## Database Schema Notes
-- Entities: User, Gym, Exercise, GymEquipment, Workout, WorkoutSet, UserMeasurement.
-- Schema versions: currently a single `version(1)` in `db.ts`.
+- Entities: account profile, shared Gym, private timed Workout and UserMeasurement, mutation outbox, and sync metadata. Domain IDs are UUID strings; account IDs remain integers.
+- Account caches use one initial Dexie `version(1)` in `src/db/db.ts`. Initial SQLite DDL lives in `server/schema.js`; old databases require explicit reset.
 - Update schema carefully; Dexie migrations must be explicit.
 - Unless explicitly stated otherwise, make all database changes as if there is
   no application already running in production. Do not use `ALTER TABLE` or add

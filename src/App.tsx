@@ -1,16 +1,16 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { TrainingPage } from '@/pages/TrainingPage';
-import { AnalysisPage } from '@/pages/AnalysisPage';
+const AnalysisPage = lazy(() => import('@/pages/AnalysisPage').then(module => ({ default: module.AnalysisPage })));
 import { WorkoutPage } from '@/pages/WorkoutPage';
 import { EditWorkoutPage } from '@/pages/EditWorkoutPage';
 import { WorkoutDetailsPage } from '@/pages/WorkoutDetailsPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { ManageGymsPage } from '@/pages/ManageGymsPage';
-import { ManageExercisesPage } from '@/pages/ManageExercisesPage';
 import { AuthPage } from '@/pages/AuthPage';
-import { AdminPage } from '@/pages/AdminPage';
+const AdminPage = lazy(() => import('@/pages/AdminPage').then(module => ({ default: module.AdminPage })));
 import { SetupPage } from '@/pages/SetupPage';
 
 import { RequireUser } from '@/components/RequireUser';
@@ -25,9 +25,11 @@ import { SessionProvider } from '@/context/SessionContext';
 
 function App() {
   return (
+    <SessionProvider>
     <LanguageProvider>
       <ThemeProvider>
-        <SessionProvider>
+
+        <Suspense fallback={null}>
         <Routes>
           <Route path="/setup" element={<SetupPage />} />
 
@@ -46,9 +48,9 @@ function App() {
               <Route path="/analysis" element={<AnalysisPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/settings/gyms" element={<ManageGymsPage />} />
-              <Route path="/settings/exercises" element={<ManageExercisesPage />} />
+
               <Route element={<RequireAdmin />}>
+                <Route path="/settings/gyms" element={<ManageGymsPage />} />
                 <Route path="/admin" element={<AdminPage />} />
               </Route>
             </Route>
@@ -56,9 +58,11 @@ function App() {
           </Route>
           </Route>
         </Routes>
-        </SessionProvider>
+        </Suspense>
+
       </ThemeProvider>
     </LanguageProvider>
+    </SessionProvider>
   );
 }
 

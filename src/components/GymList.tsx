@@ -1,12 +1,13 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/db/db';
-import { MapPin, ChevronRight, Plus } from 'lucide-react';
+import { useDatabase } from '@/context/SessionContext';
+import { MapPin, ChevronRight } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 
-export function GymList({ onSelect, onAdd }: { onSelect: (gymId: number) => void, onAdd: () => void }) {
+export function GymList({ onSelect }: { onSelect: (gymId: string) => void }) {
+    const db = useDatabase();
     const { t } = useLanguage();
     const gymsWithVisits = useLiveQuery(async () => {
-        const gyms = await db.gyms.toArray();
+        const gyms = await db.gyms.filter(gym => !gym.archived).toArray();
 
         // Calculate visit count from completed workouts
         const gymsWithCounts = await Promise.all(
@@ -14,13 +15,13 @@ export function GymList({ onSelect, onAdd }: { onSelect: (gymId: number) => void
                 const completedWorkouts = await db.workouts
                     .where('gymId')
                     .equals(gym.id)
-                    .filter(w => w.endTime !== undefined)
+                    .filter(w => w.endTime !== null)
                     .toArray();
 
                 const visitCount = completedWorkouts.length;
                 const lastVisited = completedWorkouts.length > 0
                     ? Math.max(...completedWorkouts.map(w => w.endTime || 0))
-                    : gym.lastVisited;
+                    : 0;
 
                 return { ...gym, visitCount, lastVisited };
             })
@@ -43,13 +44,6 @@ export function GymList({ onSelect, onAdd }: { onSelect: (gymId: number) => void
                     </div>
                     <h3 className="text-lg font-medium text-[var(--foreground)] mb-1">{t('gyms.empty.title')}</h3>
                     <p className="text-[var(--muted-foreground)] text-sm mb-6">{t('gyms.empty.subtitle')}</p>
-                    <button
-                        onClick={onAdd}
-                        className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-medium transition-colors inline-flex items-center gap-2"
-                    >
-                        <Plus className="size-4" />
-                        {t('gyms.addNew')}
-                    </button>
                 </div>
             ) : (
                 <div className="grid gap-3">
@@ -77,14 +71,6 @@ export function GymList({ onSelect, onAdd }: { onSelect: (gymId: number) => void
                             </div>
                         </button>
                     ))}
-
-                    <button
-                        onClick={onAdd}
-                        className="w-full py-4 rounded-xl border border-dashed border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--accent)] transition-all flex items-center justify-center gap-2 text-sm font-medium mt-2"
-                    >
-                        <Plus className="size-4" />
-                        {t('gyms.addAnother')}
-                    </button>
                 </div>
             )}
         </div>

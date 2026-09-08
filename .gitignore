@@ -36,3 +36,7 @@ tbd.md
 /history.csv
 /exercises.txt
 /extract_exercises.sh
+
+# Browser test output
+/playwright-report/
+/test-results/

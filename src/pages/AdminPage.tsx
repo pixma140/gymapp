@@ -1,17 +1,18 @@
 import { useState } from 'react';
 import { Tabs } from '@/components/Tabs';
 import { OidcSettingsTab } from '@/components/admin/OidcSettingsTab';
+import { ManageGymsPage } from '@/pages/ManageGymsPage';
 import { UsersTab } from '@/components/admin/UsersTab';
 import { useLanguage } from '@/i18n/LanguageContext';
 
-type AdminTab = 'oidc' | 'general' | 'users';
+type AdminTab = 'oidc' | 'users' | 'gyms';
 
 export function AdminPage() {
     const { t } = useLanguage();
-    const [activeTab, setActiveTab] = useState<AdminTab>('general');
+    const [activeTab, setActiveTab] = useState<AdminTab>('users');
 
     const tabs = [
-        { id: 'general', label: t('admin.tab.general') },
+        { id: 'gyms', label: t('manageGyms.title') },
         { id: 'users', label: t('admin.tab.users') },
         { id: 'oidc', label: t('admin.tab.oidc') }
     ];
@@ -29,11 +30,7 @@ export function AdminPage() {
 
             {activeTab === 'users' && <UsersTab />}
 
-            {activeTab === 'general' && (
-                <div className="text-sm text-[var(--muted-foreground)] py-12 text-center">
-                    {t('admin.comingSoon')}
-                </div>
-            )}
+            {activeTab === 'gyms' && <ManageGymsPage />}
         </div>
     );
 }

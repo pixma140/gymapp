@@ -61,10 +61,35 @@ IDs are UUID strings, profile targeting is bound to the account, and snapshots
 carry account/catalog generations. Validators and durable command handling
 must land with the schema/client switch.
 
+## Phase B checkpoint
+
+Fresh SQLite schema uses non-reused integer account IDs, UUID domain IDs,
+foreign-key cascades, shared archived gyms, revisions, generations, and mutation
+receipts. Initialization/seeding is one serialized transaction. Restart tests
+verify edited passwords/roles/names and deleted users remain untouched. Reset
+checks the cooperating-process lease and removes only configured database/WAL/
+SHM files; fixture mode is explicit. The real `./db/gymapp.db` was checked for
+open handles, reset, and seeded on 2026-09-08. No source export was deleted.
+
+The schema switch required replacing the legacy HTTP mutation/snapshot contract
+and updating its client consumers together. Account caches now use installation
+and account identity, domain IDs are UUIDs, and local operations enqueue durable
+intent transactionally. Exercise components/stores/seeds were removed; timed
+screens use explicit start/resume/finish/cancel. Shared gym editing is protected
+and uses archive operations. Theme/language read the ready account handle.
+
+Additional tests cover fixture authentication, restart/reset, foreign keys,
+account-ID non-reuse, generations, identity-bound commands, revision conflicts,
+receipt replays, cache isolation, rollback, dependent edits, and one-time legacy
+cache cleanup. Chromium smoke coverage uses an isolated temporary server/database. Final validation: 58 Vitest tests and two Chromium smoke workflows pass; lint and build pass. Initial JS is approximately 446.6 kB / gzip 137.9 kB (baseline 858.86 / 252.54). Admin and analysis/chart code build as separate chunks.
+
 ## Next checkpoint
 
-Start Phase B initial schemas and fixture mode. Replace transitional account
-cleanup with foreign-key cascades when gyms become shared. The legacy client,
-HTTP sync, and exercise implementation remain active. No fixtures, database
-reset, or client model changes have been performed. Final checkpoint validation:
-57 tests in seven files, lint, and build pass (existing bundle warning remains).
+Finish remaining Phase C account-service consolidation and role refresh on
+forbidden responses. Then finish Phase D shared API/error handling and exhaustive
+multi-tab lifecycle testing; Phase E backoff/Retry-After and reviewed conflict
+reapplication remain. Dirty-cache generation checks currently run at bootstrap;
+extend this to reconnect delivery. Export/discard/reload is the current conflict
+resolution. Do not mark these requirements complete merely because the initial
+worker/snapshot plumbing exists. Phase G CI publication gates and Docker image
+verification remain, as does the future external exercise integration.

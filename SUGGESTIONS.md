@@ -1,3 +1,5 @@
+> Implementation checkpoint (2026-09-08): Phase B schemas/fixtures and the necessary command/cache/timed-screen switch are implemented. Exercise catalog and translation recommendations are superseded by exercise removal. Remaining recommendations and verification are tracked in [PLAN.md](PLAN.md); external exercise integration is still a future task.
+
 # Architecture and code-quality suggestions
 
 Assessment date: 2026-09-08. Scope: the current working tree, including uncommitted and untracked application files. This is a source-based engineering assessment of a small self-hosted workout tracker, not a complete security audit or a browser usability evaluation. See [ARCHITECTURE.md](ARCHITECTURE.md) for the system description.

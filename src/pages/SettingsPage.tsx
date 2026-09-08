@@ -1,5 +1,6 @@
-import { Database, Moon, Trash, Dumbbell, Earth, BicepsFlexed, Bell, Palette, Github, LogOut, Shield } from 'lucide-react';
-import { db } from '@/db/db';
+import { Database, Moon, Trash, Dumbbell, Earth, Bell, Palette, Github, LogOut, Shield } from 'lucide-react';
+import { useDatabase } from '@/context/SessionContext';
+import { applyOperation } from '@/db/operations';
 import type { Theme } from '@/context/ThemeContext';
 import type { Language } from '@/i18n/translations';
 import type { User } from '@/db/db';
@@ -9,15 +10,15 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { cn } from '@/lib/utils';
 import { APP_COMMIT, APP_RELEASE_URL, APP_VERSION } from '@/lib/constants';
-import { logoutSession } from '@/auth/session';
 import { useSession } from '@/context/SessionContext';
 
 export function SettingsPage() {
+    const db = useDatabase();
     const user = useLiveQuery(() => db.users.orderBy('id').first());
     const navigate = useNavigate();
     const { t, language, setLanguage } = useLanguage();
     const { theme, setTheme, mainColor, setColor } = useTheme();
-    const { isAdmin, refresh } = useSession();
+    const { isAdmin, logout, discardLocalChanges } = useSession();
 
     const colors = [
         { name: t('color.blue'), value: '#2563eb' },
@@ -31,24 +32,19 @@ export function SettingsPage() {
     ];
 
     const handleClearData = async () => {
-        if (confirm(t('settings.reset.confirm'))) {
-            await db.delete();
-            await db.open();
-            window.location.reload();
+        if (confirm(t('sync.discardConfirm'))) {
+            await discardLocalChanges();
         }
     };
 
     const handleFrequencyChange = async (freq: User['reminderFrequency']) => {
         if (!user) return;
         if (!freq) return;
-        await db.users.update(user.id, { reminderFrequency: freq });
+        await applyOperation(db, 'profile.update', null, { reminderFrequency: freq });
     };
 
     const handleLogout = async () => {
-        await logoutSession();
-        await db.delete();
-        await db.open();
-        await refresh();
+        await logout();
         navigate('/auth', { replace: true });
     };
 
@@ -146,17 +142,7 @@ export function SettingsPage() {
                         </select>
                     </div>
 
-                    <Link to="/settings/exercises" className="w-full flex items-center justify-between p-4 hover:bg-[var(--accent)] transition-colors">
-                        <div className="flex items-center gap-3">
-                            <BicepsFlexed className="size-5 text-[var(--muted-foreground)]" />
-                            <div className="text-left">
-                                <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.manage_exercises')}</h3>
-                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.manage_exercises.desc')}</p>
-                            </div>
-                        </div>
-                    </Link>
-
-                    <Link to="/settings/gyms" className="w-full flex items-center justify-between p-4 hover:bg-[var(--accent)] transition-colors border-b border-[var(--border)] border-dashed">
+                    {isAdmin && <Link to="/settings/gyms" className="w-full flex items-center justify-between p-4 hover:bg-[var(--accent)] transition-colors border-b border-[var(--border)] border-dashed">
                         <div className="flex items-center gap-3">
                             <Dumbbell className="size-5 text-[var(--muted-foreground)]" />
                             <div className="text-left">
@@ -164,7 +150,7 @@ export function SettingsPage() {
                                 <p className="text-xs text-[var(--muted-foreground)]">{t('settings.manage_gyms.desc')}</p>
                             </div>
                         </div>
-                    </Link>
+                    </Link>}
                 </div>
 
                 {isAdmin && (
@@ -185,12 +171,11 @@ export function SettingsPage() {
                     <button
                         onClick={async () => {
                             const data = {
+                                binding: db.binding,
+                                pending: await db.outbox.toArray(),
                                 users: await db.users.toArray(),
                                 gyms: await db.gyms.toArray(),
-                                exercises: await db.exercises.toArray(),
-                                gymEquipments: await db.gymEquipments.toArray(),
                                 workouts: await db.workouts.toArray(),
-                                workoutSets: await db.workoutSets.toArray(),
                                 userMeasurements: await db.userMeasurements.toArray(),
                                 exportDate: new Date().toISOString(),
                                 version: 1

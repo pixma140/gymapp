@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { WorkoutHistoryList } from '@/components/WorkoutHistoryList';
-import { ProgressChart } from '@/components/ProgressChart';
 import { BodyProgressChart } from '@/components/BodyProgressChart';
 import { Tabs } from '@/components/Tabs';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -34,25 +33,6 @@ export function AnalysisPage() {
 
             {activeTab === 'workout' ? (
                 <div className="space-y-8">
-                    <section className="space-y-3">
-                        <div className="flex items-center justify-between gap-3">
-                            <h2 className="text-lg font-bold text-[var(--foreground)]">{t('analysis.section.progress')}</h2>
-                            <label className="flex items-center gap-2 text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wider">
-                                <span>{t('charts.rangeLabel')}</span>
-                                <select
-                                    value={rangeDays}
-                                    onChange={e => setRangeDays(Number(e.target.value))}
-                                    className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-2 py-1 text-[var(--foreground)] text-xs font-medium"
-                                >
-                                    {rangeOptions.map(option => (
-                                        <option key={option.days} value={option.days}>{option.label}</option>
-                                    ))}
-                                </select>
-                            </label>
-                        </div>
-                        <ProgressChart rangeDays={rangeDays} />
-                    </section>
-
                     <section className="space-y-3">
                         <h2 className="text-lg font-bold text-[var(--foreground)]">{t('analysis.section.recent')}</h2>
                         <WorkoutHistoryList />

@@ -1,3 +1,4 @@
+import { SyncStatus } from '@/components/SyncStatus';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Dumbbell, LineChart, User, Settings, AlertCircle, Timer } from 'lucide-react';
 import { useEffect, useRef } from 'react';
@@ -35,12 +36,6 @@ export function Layout() {
         }
     };
 
-    // Navigate programmatically on both pointer-up and click. Plain <Link>
-    // click events don't reliably fire on touch in this environment (see the
-    // same onClick/onPointerUp pattern used by the "Add Exercise" button),
-    // which previously left an active workout "stuck on top" because tapping a
-    // tab never triggered a route change. Going to a tab keeps the workout
-    // running in the background (it reappears as the banner above).
     const handleNavigate = (path: string) => {
         if (location.pathname !== path) {
             navigate(path);
@@ -63,9 +58,9 @@ export function Layout() {
         <div className="flex flex-col h-dvh bg-[var(--background)] text-[var(--foreground)] font-sans transition-colors duration-300">
             <main ref={mainRef} className="flex-1 overflow-y-auto p-4 safe-area-top relative pb-[calc(5rem+env(safe-area-inset-bottom))]">
                 {activeWorkout && !isOnWorkoutPage && (
-                    <div
+                    <button
+                        type="button"
                         onClick={handleResumeWorkout}
-                        onPointerUp={handleResumeWorkout}
                         className="mb-4 bg-green-500/10 border border-green-500/50 rounded-xl p-3 flex items-center gap-3 animate-in slide-in-from-top-4 backdrop-blur-md cursor-pointer hover:bg-green-500/20 transition-colors shadow-lg shadow-green-900/10"
                     >
                         <div className="bg-green-500 rounded-full p-1.5 animate-pulse">
@@ -77,7 +72,7 @@ export function Layout() {
                                 {activeWorkout.gymName || t('common.unknownGym')} • {t('layout.tapToResume')}
                             </p>
                         </div>
-                    </div>
+                    </button>
                 )}
 
                 {showReminder && (
@@ -90,13 +85,13 @@ export function Layout() {
                         <button
                             type="button"
                             onClick={() => handleNavigate('/profile')}
-                            onPointerUp={() => handleNavigate('/profile')}
                             className="text-xs font-bold bg-blue-500 text-white px-3 py-1.5 rounded-lg"
                         >
                             {t('reminder.action')}
                         </button>
                     </div>
                 )}
+                <SyncStatus />
                 <Outlet />
             </main>
             <nav className="fixed bottom-0 inset-x-0 z-50 border-t border-[var(--border)] bg-[var(--background)]/90 backdrop-blur-lg pb-[env(safe-area-inset-bottom)]">
@@ -106,7 +101,6 @@ export function Layout() {
                             key={path}
                             type="button"
                             onClick={() => handleNavigate(path)}
-                            onPointerUp={() => handleNavigate(path)}
                             className={cn(
                                 "flex flex-col items-center justify-center w-full h-full text-xs font-medium transition-colors active:scale-95",
                                 location.pathname === path

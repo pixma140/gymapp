@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/db/db';
+import { useDatabase } from '@/context/SessionContext';
 
 export function useMeasurementReminder() {
+    const db = useDatabase();
     const user = useLiveQuery(() => db.users.orderBy('id').first());
     const lastMeasurement = useLiveQuery(() => db.userMeasurements.orderBy('timestamp').last());
     const [shouldRemind, setShouldRemind] = useState(false);

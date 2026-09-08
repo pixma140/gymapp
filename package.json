@@ -29,7 +29,12 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "dev:server": "SEED_DEV_DATA=${SEED_DEV_DATA:-true} PORT=${PORT:-3000} DATA_DIR=${DATA_DIR:-./db} node server/index.js",
+    "db:reset": "DATA_DIR=${DATA_DIR:-./db} node server/reset.js",
+    "db:reset:seed": "DATA_DIR=${DATA_DIR:-./db} node server/reset.js --seed",
+    "test:browser": "playwright test",
+    "test:browser:install": "playwright install chromium"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -47,6 +52,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.1.18",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",

@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import { db } from '@/db/db';
+import { useDatabase } from '@/context/SessionContext';
+import { applyOperation } from '@/db/operations';
+import { PROFILE_COLUMNS, type ProfileFields } from '@shared/commands';
 import type { User } from '@/db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Save, User as UserIcon } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 export function ProfilePage() {
+    const db = useDatabase();
     const user = useLiveQuery(() => db.users.orderBy('id').first());
     const [formData, setFormData] = useState<Partial<User>>({});
     const [isSaving, setIsSaving] = useState(false);
@@ -18,7 +21,7 @@ export function ProfilePage() {
             setFormData(user);
         } else {
             // Initialize default user if not exists
-            setFormData({ name: 'Guest User' });
+            setFormData({});
         }
     }, [user]);
 
@@ -30,7 +33,7 @@ export function ProfilePage() {
         };
     }, []);
 
-    const handleChange = (field: keyof User, value: string | number) => {
+    const handleChange = (field: keyof User, value: string | number | null) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
@@ -42,17 +45,20 @@ export function ProfilePage() {
             window.clearTimeout(clearMessageTimeout.current);
         }
         try {
-            if (user?.id) {
-                await db.users.update(user.id, formData);
-            } else {
-                await db.users.add(formData as User);
-            }
+            const payload = Object.fromEntries(PROFILE_COLUMNS.filter(key => formData[key] !== undefined).map(key => [key, formData[key]])) as Partial<ProfileFields>;
+            await db.transaction('rw', [db.users, db.userMeasurements, db.gyms, db.workouts, db.outbox], async () => {
+                await applyOperation(db, 'profile.update', null, payload);
+                if (formData.weight != null || formData.bodyFat != null) {
+                    await applyOperation(db, 'measurement.create', null, { weight: formData.weight ?? null, bodyFat: formData.bodyFat ?? null, timestamp: Date.now() });
+                }
+            });
             setSaveMessage(t('profile.saveSuccess'));
             clearMessageTimeout.current = window.setTimeout(() => {
                 setSaveMessage(null);
             }, 2500);
         } catch (err) {
             console.error("Failed to save profile", err);
+            setSaveMessage(t('sync.operationFailed'));
         } finally {
             setIsSaving(false);
         }
@@ -92,7 +98,7 @@ export function ProfilePage() {
                         <input
                             type="number"
                             value={formData.weight || ''}
-                            onChange={e => handleChange('weight', parseFloat(e.target.value))}
+                            onChange={e => handleChange('weight', e.target.value ? parseFloat(e.target.value) : null)}
                             className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] font-mono text-lg focus:outline-none focus:border-[var(--primary)] transition-colors"
                             placeholder="0.0"
                             step="0.1"
@@ -105,7 +111,7 @@ export function ProfilePage() {
                         <input
                             type="number"
                             value={formData.bodyFat || ''}
-                            onChange={e => handleChange('bodyFat', parseFloat(e.target.value))}
+                            onChange={e => handleChange('bodyFat', e.target.value ? parseFloat(e.target.value) : null)}
                             className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] font-mono text-lg focus:outline-none focus:border-[var(--primary)] transition-colors"
                             placeholder="0.0"
                             step="0.1"
@@ -118,7 +124,7 @@ export function ProfilePage() {
                         <input
                             type="number"
                             value={formData.height || ''}
-                            onChange={e => handleChange('height', parseFloat(e.target.value))}
+                            onChange={e => handleChange('height', e.target.value ? parseFloat(e.target.value) : null)}
                             className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] font-mono text-lg focus:outline-none focus:border-[var(--primary)] transition-colors"
                             placeholder="0"
                         />
@@ -130,7 +136,7 @@ export function ProfilePage() {
                         <input
                             type="number"
                             value={formData.age || ''}
-                            onChange={e => handleChange('age', parseInt(e.target.value))}
+                            onChange={e => handleChange('age', e.target.value ? parseInt(e.target.value) : null)}
                             className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] font-mono text-lg focus:outline-none focus:border-[var(--primary)] transition-colors"
                             placeholder="0"
                         />

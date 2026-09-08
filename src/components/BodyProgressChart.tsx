@@ -1,9 +1,10 @@
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/db/db';
+import { useDatabase } from '@/context/SessionContext';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 export function BodyProgressChart({ rangeDays }: { rangeDays: number }) {
+    const db = useDatabase();
     const { t } = useLanguage();
     const filteredData = useLiveQuery(async () => {
         const cutoff = Date.now() - (rangeDays * 24 * 60 * 60 * 1000);
@@ -34,7 +35,7 @@ export function BodyProgressChart({ rangeDays }: { rangeDays: number }) {
                                 contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px' }}
                                 itemStyle={{ color: 'var(--foreground)' }}
                             />
-                            <Line type="monotone" dataKey="weight" stroke="var(--primary)" strokeWidth={2} dot={{ fill: 'var(--primary)' }} name="Weight (kg)" />
+                            <Line type="monotone" dataKey="weight" stroke="var(--primary)" strokeWidth={2} dot={{ fill: 'var(--primary)' }} name={t('profile.weight')} />
                         </LineChart>
                     </ResponsiveContainer>
                 ) : (
@@ -56,7 +57,7 @@ export function BodyProgressChart({ rangeDays }: { rangeDays: number }) {
                                 contentStyle={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)', borderRadius: '8px' }}
                                 itemStyle={{ color: 'var(--foreground)' }}
                             />
-                            <Line type="monotone" dataKey="bodyFat" stroke="var(--primary)" strokeWidth={2} dot={{ fill: 'var(--primary)' }} name="Body Fat (%)" />
+                            <Line type="monotone" dataKey="bodyFat" stroke="var(--primary)" strokeWidth={2} dot={{ fill: 'var(--primary)' }} name={t('profile.bodyFat')} />
                         </LineChart>
                     </ResponsiveContainer>
                 ) : (

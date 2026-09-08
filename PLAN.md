@@ -1,6 +1,6 @@
 # Implementation plan
 
-Status: implementation in progress. Phase A test seams, serialized database access, account regressions, and replacement type declarations are complete. Phase B server schemas, fixtures, reset, and replacement HTTP commands are implemented. The client transition is the next commit in this checkpoint. The development database was explicitly reset and seeded on 2026-09-08. See `docs/implementation-baseline.md` for baseline and inventory.
+Status: Phase B implemented and verified, including the client/API changes required by the new schemas. The development database was explicitly reset and seeded on 2026-09-08. Some dependent Phase C–F work was brought forward; unchecked items remain. Resume with Phase C account-service consolidation and authorization-failure role refresh, then the remaining Phase D/E lifecycle and conflict work. See `docs/implementation-baseline.md` for checkpoint details.
 
 Sources: [SUGGESTIONS.md](SUGGESTIONS.md), [ARCHITECTURE.md](ARCHITECTURE.md), and the user's appendix. The appendix takes precedence: this is a work-in-progress reset, default test users and shared gyms are required, and the existing exercise implementation must be removed. External exercise integration belongs to a later task.
 
@@ -97,22 +97,22 @@ Each phase should be a reviewable change with relevant tests. Existing uncommitt
 - [x] Use foreign keys with enforcement enabled. Account deletion cascades private data, sessions, and mutation receipts. Workouts reference shared gyms; account deletion never deletes shared gyms.
 - [x] Remove persisted gym visit counters. Derive visits/last visit from the active user's completed workouts.
 - [x] Add a revision to mutable synchronized records and an account data-generation counter. Every private mutation increments its account generation; shared catalog changes increment a catalog generation.
-- [ ] Create account-local Dexie `version(1)` stores for profile, shared gym cache, workouts, measurements, outbox, and sync metadata. Domain keys are UUIDs, local outbox order uses an auto-increment sequence, and all records bind to the account/installation cache.
+- [x] Create account-local Dexie `version(1)` stores for profile, shared gym cache, workouts, measurements, outbox, and sync metadata. Domain keys are UUIDs, local outbox order uses an auto-increment sequence, and all records bind to the account/installation cache.
 - [x] Implement the fixture mode and one-time marker described above. Check exact roles and names in seed tests, and run normal password authentication to verify both credentials.
 - [x] Add a scoped reset command that closes connections and recreates only this app's configured database, including its WAL/SHM companions. Stop the running server first. Reset generates a new installation identity and reseeds only when requested.
-- [ ] During this authorized WIP reset, clear the known legacy `GymAppDB` cache once and document the reset. Do not delete unrelated browser storage or repeat a destructive reset on ordinary startup.
+- [x] During this authorized WIP reset, clear the known legacy `GymAppDB` cache once and document the reset. Do not delete unrelated browser storage or repeat a destructive reset on ordinary startup.
 
 **Exit:** reset-and-seed produces exactly two accounts, two shared gyms, and zero workout/exercise data; a restart leaves existing application data unchanged.
 
 ### Phase C — Enforce account and shared-gym authorization
 
 - [ ] Move account creation/deletion and role changes into shared service operations. Remove account deletion and role/credential changes from profile sync.
-- [ ] Keep self-deletion/self-demotion prohibited in this iteration. Check the last-admin invariant and cleanup inside the same serialized transaction. Keep regular registration non-admin and first-admin setup atomic.
+- [x] Keep self-deletion/self-demotion prohibited in this iteration. Check the last-admin invariant and cleanup inside the same serialized transaction. Keep regular registration non-admin and first-admin setup atomic.
 - [ ] Preserve password-reset session invalidation and OIDC verification behavior. Refresh role state on authorization failure; always enforce current roles server-side.
-- [ ] Expose catalog reads to authenticated users; expose create/edit/archive operations only to administrators. Archive gyms instead of deleting referenced records, preserving history. Prevent new workouts at archived gyms while allowing existing sessions to finish.
-- [ ] Move shared-gym management into the protected admin experience. Remove ordinary-user Add Gym controls and redirect/guard the old settings management route consistently.
-- [ ] Validate object shapes, UUIDs, finite measurements/timestamps, allowed command names, required fields, ownership, and revisions. Unknown/inherited property names must never select a handler. Reject removed exercise commands explicitly.
-- [ ] Bound the domain rules: nonempty names, positive weight/height when supplied, body-fat percentage in range, valid reminder/theme/language values, and workout end time not before start time. Enforce at most one unfinished workout per account, with a deliberate conflict outcome for concurrent device starts.
+- [x] Expose catalog reads to authenticated users; expose create/edit/archive operations only to administrators. Archive gyms instead of deleting referenced records, preserving history. Prevent new workouts at archived gyms while allowing existing sessions to finish.
+- [x] Move shared-gym management into the protected admin experience. Remove ordinary-user Add Gym controls and redirect/guard the old settings management route consistently.
+- [x] Validate object shapes, UUIDs, finite measurements/timestamps, allowed command names, required fields, ownership, and revisions. Unknown/inherited property names must never select a handler. Reject removed exercise commands explicitly.
+- [x] Bound the domain rules: nonempty names, positive weight/height when supplied, body-fat percentage in range, valid reminder/theme/language values, and workout end time not before start time. Enforce at most one unfinished workout per account, with a deliberate conflict outcome for concurrent device starts.
 
 **Exit:** `user` cannot access or mutate any admin operation through direct HTTP calls; both accounts read identical gym IDs, and their private histories remain isolated.
 
@@ -121,22 +121,22 @@ Each phase should be a reviewable change with relevant tests. Existing uncommitt
 - [ ] Replace independent session requests in guards/pages with one provider state model: loading, setup required, signed out, preparing cache, ready, and failed. Only mount domain screens and start the worker when ready.
 - [ ] Have bootstrap return installation/account identity and capabilities. A ready account uses its own database handle; guards consume provider state rather than fetching again.
 - [ ] Consolidate request handling and distinguish network failure, unauthenticated, forbidden, validation, conflict, and malformed response. Hydration returns distinct success/empty/error results; failure never silently triggers onboarding.
-- [ ] On logout/switch, stop worker scheduling, quiesce in-flight work, detach account UI/queries, invalidate the session, and retain that account's queue/cache. Late callbacks must not mutate the next account's state.
-- [ ] Bind outgoing commands to both expected account ID and installation identity; the server compares these with the current session/installation and rejects mismatches. This protects against a cookie changed by another tab between client checks and delivery.
+- [x] On logout/switch, stop worker scheduling, quiesce in-flight work, detach account UI/queries, invalidate the session, and retain that account's queue/cache. Late callbacks must not mutate the next account's state.
+- [x] Bind outgoing commands to both expected account ID and installation identity; the server compares these with the current session/installation and rejects mismatches. This protects against a cookie changed by another tab between client checks and delivery.
 - [ ] Coordinate tabs so a given account has one active sender, using a tested browser lock strategy. Propagate login/logout changes; a stale tab must pause rather than submit under a new cookie.
-- [ ] Let the initial session bootstrap hydrate empty caches. Existing caches with pending work must not be wiped. Provide a separately confirmed local-discard/reset action that explains pending-work loss.
+- [x] Let the initial session bootstrap hydrate empty caches. Existing caches with pending work must not be wiped. Provide a separately confirmed local-discard/reset action that explains pending-work loss.
 
 **Exit:** queued edits for A cannot be sent as B, erased by B's login, or replayed after a server reset. Failed bootstrap offers retry and preserves local data.
 
 ### Phase E — Implement durable commands, revisions, and refresh
 
-- [ ] Remove network-producing Dexie table hooks and `setupSQLiteSync(db)` from `main.tsx`. Every surviving domain write goes through an operation that atomically stores the local change and command in Dexie.
+- [x] Remove network-producing Dexie table hooks and `setupSQLiteSync(db)` from `main.tsx`. Every surviving domain write goes through an operation that atomically stores the local change and command in Dexie.
 - [ ] Use immutable command envelopes containing mutation UUID, expected account/installation, operation, target UUID, payload, and expected server revision. Store sequence, dependencies, attempts, and failure state locally.
-- [ ] For multiple offline edits to one record, sequence dependent commands. After an acknowledgement, persist the returned revision before preparing the next unsent command; do not invent server revisions. A command that may already have reached the server must retain its original ID/payload on retry.
+- [x] For multiple offline edits to one record, sequence dependent commands. After an acknowledgement, persist the returned revision before preparing the next unsent command; do not invent server revisions. A command that may already have reached the server must retain its original ID/payload on retry.
 - [ ] Run one ordered worker after bootstrap. Network/5xx retain and back off; 401 pauses for login; 429 honors retry timing; validation/permission/conflict failures remain actionable. Stop at blocked work initially for simple deterministic ordering.
-- [ ] On the server, authenticate and validate before dispatch. Check revision and operation-specific permissions, commit the command plus receipt in one transaction, and return the resulting revision. Retried mutation IDs return the stored result; reuse with a different payload is rejected.
-- [ ] Treat repeated deletes with the same mutation ID as successful receipt replays. An unknown deleted record cannot be resurrected by an update. With full snapshots, absent rows convey deletions; no incremental tombstone feed is required in this iteration.
-- [ ] Implement explicit Refresh: first drain pending work; if failed/conflicted work remains, block destructive replacement and expose resolution. Return full account data plus the shared gym catalog in a consistent read transaction.
+- [x] On the server, authenticate and validate before dispatch. Check revision and operation-specific permissions, commit the command plus receipt in one transaction, and return the resulting revision. Retried mutation IDs return the stored result; reuse with a different payload is rejected.
+- [x] Treat repeated deletes with the same mutation ID as successful receipt replays. An unknown deleted record cannot be resurrected by an update. With full snapshots, absent rows convey deletions; no incremental tombstone feed is required in this iteration.
+- [x] Implement explicit Refresh: first drain pending work; if failed/conflicted work remains, block destructive replacement and expose resolution. Return full account data plus the shared gym catalog in a consistent read transaction.
 - [ ] Freeze local domain writes briefly during snapshot replacement and swap tables atomically with recorded generation metadata. If the server account generation differs before replaying a dirty offline queue, require conflict/rebase handling instead of blindly sending stale commands.
 - [ ] Provide clear conflict actions: discard the rejected local change and dependent commands then reload, or reapply the user's reviewed intent against the latest revision with a new mutation ID. Never silently merge or overwrite. Preserve/export pending intent before discard when requested.
 - [ ] Show translated pending, paused, failed, conflict, and last-refreshed state. Shared gym admin edits use the same revision/deduplication principles, with server-side role checks and an explicit refresh for other clients.
@@ -145,26 +145,26 @@ Each phase should be a reviewable change with relevant tests. Existing uncommitt
 
 ### Phase F — Remove exercises and simplify the surviving screens
 
-- [ ] Delete the exercise components/page/chart listed in section 1 and the corresponding models, seed callback, sync branches, exports, test fixtures, extraction artifacts, and translations.
-- [ ] Simplify `useWorkoutSession` to timed session lifecycle only. Use string UUID route params throughout training, active-workout lookup, details, and history.
-- [ ] Remove automatic session creation on mere page render if it can duplicate sessions; create through an explicit Start Workout action with idempotent operation semantics. Resume an existing active session instead of silently starting another.
-- [ ] Rewrite workout details/history around gym, start/end, duration, and deletion. Remove set counts, volume, exercise selection, and set-edit routes/links. Keep the old edit URL redirect only as navigation compatibility, not old storage compatibility.
+- [x] Delete the exercise components/page/chart listed in section 1 and the corresponding models, seed callback, sync branches, exports, test fixtures, extraction artifacts, and translations.
+- [x] Simplify `useWorkoutSession` to timed session lifecycle only. Use string UUID route params throughout training, active-workout lookup, details, and history.
+- [x] Remove automatic session creation on mere page render if it can duplicate sessions; create through an explicit Start Workout action with idempotent operation semantics. Resume an existing active session instead of silently starting another.
+- [x] Rewrite workout details/history around gym, start/end, duration, and deletion. Remove set counts, volume, exercise selection, and set-edit routes/links. Keep the old edit URL redirect only as navigation compatibility, not old storage compatibility.
 - [ ] Preserve profile and measurement forms using transactional operations, measurement history, and body-progress analysis. Remove the exercise-progress analysis tab.
-- [ ] Keep cancellation on-screen with translated error feedback when it fails. Ensure cancel/delete cannot trigger automatic recreation.
+- [x] Keep cancellation on-screen with translated error feedback when it fails. Ensure cancel/delete cannot trigger automatic recreation.
 - [ ] Use native links/buttons and one activation path; verify the old touch-navigation issue rather than retaining paired pointer/click workarounds. Keep scroll reset, safe areas, and keyboard-accessible labels.
-- [ ] Hide the empty General admin tab, lazy-load surviving admin/analysis screens, and remove dead imports/helpers/styles without a broad visual redesign.
+- [x] Hide the empty General admin tab, lazy-load surviving admin/analysis screens, and remove dead imports/helpers/styles without a broad visual redesign.
 
 **Exit:** both users can select shared gyms and run timed sessions; exercise routes/components/tables are gone; no request reaches an external exercise provider.
 
 ### Phase G — Verification, CI, and documentation
 
 - [ ] Extend existing Vitest HTTP and fake-IndexedDB tests for the matrix below. Replace old schema/exercise fixtures; preserve relevant password/OIDC/authz tests.
-- [ ] Add browser smoke coverage for the surviving workflows. Keep the setup small; choose a browser runner in implementation only if the available environment has no reusable harness. Wire its install/run commands explicitly if introduced.
+- [x] Add browser smoke coverage for the surviving workflows. Keep the setup small; choose a browser runner in implementation only if the available environment has no reusable harness. Wire its install/run commands explicitly if introduced.
 - [ ] Extend ESLint to server/shared JavaScript with appropriate globals. Keep formatting/line-ending normalization isolated from behavior changes.
-- [ ] Run `npm test`, `npm run lint`, and `npm run build`; fix failures. Measure the resulting initial bundle and verify charts/admin code actually load separately.
+- [x] Run `npm test`, `npm run lint`, and `npm run build`; fix failures. Measure the resulting initial bundle and verify charts/admin code actually load separately.
 - [ ] Update GitLab workflow rules so verification runs for branches/merge requests as well as release tags. Make multi-architecture image publication depend on passing checks, while retaining tag-only publishing.
-- [ ] Update Docker/Compose and README with the fixture flag, reset command, exact test logins, shared-gym permissions, offline/refresh limitations, and the temporary absence of exercise logging. Keep non-fixture setup documented.
-- [ ] Update `ARCHITECTURE.md`, stale `AGENTS.md` assumptions, new test-file listings, and the suggestions disposition. Do not mark the future external exercise integration complete.
+- [x] Update Docker/Compose and README with the fixture flag, reset command, exact test logins, shared-gym permissions, offline/refresh limitations, and the temporary absence of exercise logging. Keep non-fixture setup documented.
+- [x] Update `ARCHITECTURE.md`, stale `AGENTS.md` assumptions, new test-file listings, and the suggestions disposition. Do not mark the future external exercise integration complete.
 
 ## 4. Required acceptance matrix
 

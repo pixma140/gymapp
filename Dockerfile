@@ -14,7 +14,7 @@ RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY server ./server
 COPY shared ./shared
-RUN apk add --no-cache sqlite && mkdir -p /app/data && touch /app/data/gymapp.db
+RUN apk add --no-cache sqlite && mkdir -p /app/data
 ENV NODE_ENV=production
 EXPOSE 80
 CMD ["node", "server/index.js"]

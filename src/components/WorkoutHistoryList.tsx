@@ -1,10 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/db/db';
+import { useDatabase } from '@/context/SessionContext';
+import { applyOperation } from '@/db/operations';
 import { Link } from 'react-router-dom';
-import { Calendar, Clock, ChevronRight, Edit2, Trash2 } from 'lucide-react';
+import { Calendar, Clock, ChevronRight, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 export function WorkoutHistoryList() {
+    const db = useDatabase();
     const { t } = useLanguage();
     const workouts = useLiveQuery(async () => {
         const allWorkouts = await db.workouts.orderBy('startTime').reverse().toArray();
@@ -32,6 +34,7 @@ export function WorkoutHistoryList() {
                     <div key={workout.id} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 flex justify-between items-center group hover:border-[var(--primary)]/40 transition-colors">
                         <div>
                             <h3 className="font-semibold text-[var(--foreground)]">{workout.gymName || t('common.unknownGym')}</h3>
+                            {workout.endTime !== null && <p className="text-sm text-[var(--muted-foreground)]">{Math.floor((workout.endTime - workout.startTime) / 1000)} {t('timed.seconds')}</p>}
                             <div className="flex items-center gap-3 text-sm text-[var(--muted-foreground)] mt-1">
                                 <div className="flex items-center gap-1">
                                     <Calendar className="size-3" />
@@ -44,21 +47,11 @@ export function WorkoutHistoryList() {
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Link
-                                to={`/workout/${workout.id}/edit`}
-                                className="p-2 rounded-full hover:bg-[var(--accent)] text-[var(--muted-foreground)] hover:text-[var(--primary)] transition-colors"
-                                title={t('history.edit')}
-                            >
-                                <Edit2 className="size-4" />
-                            </Link>
                             <button
                                 onClick={async (e) => {
                                     e.preventDefault();
                                     if (window.confirm(t('history.deleteConfirm'))) {
-                                        await db.transaction('rw', db.workouts, db.workoutSets, async () => {
-                                            await db.workoutSets.where('workoutId').equals(workout.id!).delete();
-                                            await db.workouts.delete(workout.id!);
-                                        });
+                                        await applyOperation(db, 'workout.delete', workout.id, {});
                                     }
                                 }}
                                 className="p-2 rounded-full hover:bg-red-500/10 text-[var(--muted-foreground)] hover:text-red-500 transition-colors"

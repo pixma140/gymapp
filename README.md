@@ -1,90 +1,131 @@
 # gymapp
 
-A local-first gym & workout tracker. The app runs entirely in the browser
-against IndexedDB (via Dexie) and works offline; an optional self-hosted server
-provides multi-user accounts and cross-device sync backed by SQLite.
+A local-first timed-workout tracker built with React, TypeScript, Tailwind,
+Dexie, Express, and SQLite. Accounts require server authentication. Once an
+account cache is ready, local edits and their outgoing commands are stored
+atomically in IndexedDB and survive connectivity interruptions.
 
-## Tech Stack
-- **Frontend:** Vite + React + TypeScript, Tailwind CSS v4, React Router.
-- **Local storage:** Dexie (IndexedDB), reactive via `useLiveQuery`.
-- **Server:** Express (Node ESM) + SQLite (`sqlite3`).
-- **Auth:** Username/password sessions (HttpOnly cookie) and optional OIDC.
-- **Path alias:** `@/*` -> `src/*`, `@shared/*` -> `shared/*`.
-
-## Project Layout
-- `src/` — React app (pages, components, hooks, Dexie schema in `src/db/db.ts`).
-- `server/` — Express API server (`server/index.js`) and pure helpers in
-  `server/lib/` (password hashing, cookie parsing, column whitelist, OIDC).
-- `shared/` — single source of truth for the sync schema (`syncSchema.js` +
-  `syncSchema.d.ts`), imported by **both** the client and the server.
-- `test/` — client-side tests (Dexie hydration via `fake-indexeddb`).
+Exercise logging is temporarily unavailable. Gym selection, timed workout
+start/resume/finish/cancel, private history, profiles, and body measurements
+remain available. External exercise integration is a future task.
 
 ## Development
+
 ```bash
 npm install
-npm run dev        # Vite dev server (proxies /api to the backend)
-```
-The dev server proxies `/api` to `http://localhost:80` by default. Override the
-backend target with `VITE_API_TARGET`. To run the API locally:
-```bash
-PORT=3000 DATA_DIR=./db node server/index.js
+npm run dev:server
+# In a second terminal:
 VITE_API_TARGET=http://localhost:3000 npm run dev
 ```
 
-## Scripts
-- `npm run dev` — start the Vite dev server.
-- `npm run build` — type-check (`tsc -b`) and build the production bundle.
-- `npm run preview` — preview the production build.
-- `npm run lint` — run ESLint.
-- `npm test` — run the Vitest suite once (`npm run test:watch` for watch mode).
+The API development command defaults to `PORT=3000`, `DATA_DIR=./db`, and
+`SEED_DEV_DATA=true`. Vite's proxy otherwise defaults to `http://localhost:80`.
 
-## Tests
-Vitest covers the security-critical paths:
-- `server/lib/*.test.js` — password hashing/verification, cookie parsing,
-  column whitelisting, OIDC token verification (against an in-memory JWKS).
-- `server/sync.test.js` — HTTP integration test of `/api/sync` authorization
-  and per-user scoping (composite `(userId, id)` keys, ownership checks).
-- `server/adminUsers.test.js` — HTTP integration test of the `/api/admin/users`
-  routes (list/create/promote/demote/password-reset/delete authz and guards).
-- `test/hydrate.test.ts` — client snapshot hydration into IndexedDB.
+Development fixtures are initialized **once** on a fresh installation:
 
-New features ship with tests. Add or extend coverage alongside the code
-(server routes → an HTTP integration test, helpers → a unit test, client logic
-→ a `test/*.test.ts`) and keep `npm test` green.
+| Username | Password | Role |
+| --- | --- | --- |
+| `admin` | `123geheim` | Administrator |
+| `user` | `123geheim` | Regular user |
+
+Both accounts see the same UUIDs for **Iron Odyssey** (Foundry District) and
+**Moonshot Barbell Club** (Riverside Hangar). Only administrators can create,
+rename, or archive gyms. Archiving retains workout history; completed-workout
+visits are calculated from the signed-in account's private workouts. An admin
+cannot read another account's workout history through sync.
+
+Restarting fixture mode preserves changed passwords, roles, gym names, and
+intentionally deleted accounts. `ADMIN_USERNAME` never repairs fixture roles.
+Enabling fixtures on an installation initialized without fixtures is refused.
+
+## Explicit reset
+
+The schema is for a fresh WIP installation. Legacy databases are rejected with
+`database_reset_required`; there is no automatic migration or startup wipe.
+Stop the API first (Ctrl-C, or `docker compose stop gymapp`), then run:
 
 ```bash
-npm test                                   # all tests
-npx vitest run server/lib/crypto.test.js   # a single file
-npx vitest run -t "rejects an expired token"   # by test name
+npm run db:reset:seed   # reset ./db/gymapp.db and create the fixture baseline
+npm run db:reset        # reset without fixtures; next startup offers setup
 ```
 
-## Deployment (Docker)
+For a different directory, set `DATA_DIR` when invoking either command. Reset
+removes only `gymapp.db`, `gymapp.db-wal`, and `gymapp.db-shm` in that directory.
+It creates a new installation UUID, so old account queues cannot target reset
+accounts. A server/reset lock prevents concurrent use by application processes.
+After a crash, a stale `gymapp.db.lock` may remain: verify all processes and
+containers using that directory are stopped before removing that lock file.
+Do not reset a database used by an older server that predates the lock.
+
+The browser clears the known legacy `GymAppDB` cache once when preparing its
+first account cache. It records completion in `GymAppCacheControl`; unrelated
+IndexedDB databases, local storage, and source exports are untouched. Modern
+account caches survive ordinary startup/logout. Settings offers an explicitly
+confirmed discard of pending local changes followed by a server reload; export
+first if you need to retain pending intent.
+
+## Non-fixture setup and Docker
+
+```bash
+SEED_DEV_DATA=false PORT=3000 DATA_DIR=./db node server/index.js
+```
+
+An empty non-fixture installation offers first-administrator setup. Regular
+registration creates non-admin accounts; OIDC remains optional and is configured
+in the admin area. Concurrent setup requests cannot create multiple first admins.
+
 ```bash
 docker build -t gymapp .
 docker run -p 8080:80 -v "$(pwd)/db:/app/data" gymapp
 ```
-A `docker-compose.yml` is provided (configured for Traefik). The container
-serves the built frontend and the API from the same Express process.
 
-### Configuration (environment variables)
-| Variable         | Default        | Description                                                        |
-| ---------------- | -------------- | ------------------------------------------------------------------ |
-| `PORT`           | `80`           | Port the server listens on.                                        |
-| `DATA_DIR`       | `/app/data`    | Directory for the SQLite database (`gymapp.db`).                   |
-| `COOKIE_SECURE`  | `false`        | Set `true` when served over HTTPS so the session cookie is Secure. |
-| `ADMIN_USERNAME` | _(unset)_      | Username promoted to admin on startup.                             |
-| `PUBLIC_URL`     | _(auto)_       | Public base URL used to build the OIDC redirect URI.               |
+The current Compose file is a **development** configuration with fixtures
+explicitly enabled and a Traefik network. Disable its `SEED_DEV_DATA` flag for a
+non-fixture installation. Docker excludes local databases, `history.csv`, and
+exercise-extraction artifacts from its build context.
 
-The **first** account created via setup becomes the admin. OIDC is configured
-from the in-app admin settings.
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `PORT` | `80` | Express listening port |
+| `DATA_DIR` | `/app/data` | Directory containing `gymapp.db` |
+| `SEED_DEV_DATA` | `false` | One-time development fixtures on a fresh installation |
+| `COOKIE_SECURE` | `false` | Secure session cookie when served over HTTPS |
+| `ADMIN_USERNAME` | unset | Legacy non-fixture bootstrap promotion only |
+| `PUBLIC_URL` | detected | Base URL for OIDC callback construction |
 
-## Data & Sync Model
-The client is the source of truth while offline: every mutation is written to
-IndexedDB first, then pushed to `/api/sync`. Failed mutations are buffered in a
-local outbox (`pendingSync`) and retried when connectivity returns. On login or
-on a fresh device, the client pulls a full snapshot from `/api/sync/snapshot`
-and replaces its local data.
+## Sync behavior and current limits
 
-Server-side, user-scoped tables use composite primary keys `(userId, id)` so
-each device's IndexedDB auto-increment ids can be stored without colliding
-across users. Every sync operation is scoped to the authenticated user.
+Domain IDs are UUIDs; account IDs are non-reused server integers. Each
+account/installation pair has a separate IndexedDB database. Explicit commands
+carry both identities, a mutation UUID, and expected revision. The server
+validates and commits a mutation plus its receipt in one transaction; retries
+return the saved result instead of applying the mutation twice.
+
+The client retains failed or ambiguous work. A browser Web Lock permits one
+sender per account across tabs; browsers without Web Locks retain their queue.
+Use HTTPS or localhost for the browser capabilities needed by synchronization.
+Account/catalog generation changes pause a dirty cache for review. Refresh
+never replaces pending work silently. Current resolution is export, explicitly
+discard local intent, and reload. Reviewed reapplication, richer error reporting,
+and retry backoff/`Retry-After` handling remain in PLAN.md. There is no automatic
+merge, continuous background pull, service worker, or offline cold start.
+
+## Verification
+
+```bash
+npm test
+npm run lint
+npm run build
+npm run test:browser:install   # install Chromium once
+npm run test:browser           # uses the built dist/; temporary fixture database
+```
+
+Vitest covers password/cookie/OIDC helpers, server transactions, setup/admin
+HTTP authorization, command validation/idempotency/scoping, fixture/reset
+behavior, and account-local IndexedDB hydration and durable operations.
+Playwright exercises mobile-width login, shared gyms, timed workouts,
+account switching, private history, and deletion against a throwaway server.
+`npm run test:watch` starts Vitest watch mode; `npm run preview` previews a build.
+
+See [PLAN.md](PLAN.md) for remaining work and [ARCHITECTURE.md](ARCHITECTURE.md)
+for module boundaries and persistence details.

@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { db } from '@/db/db';
+import { useDatabase } from '@/context/SessionContext';
+import { applyOperation } from '@/db/operations';
 import type { User } from '@/db/db';
 import { useNavigate } from 'react-router-dom';
 import { Rocket, User as UserIcon, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { Language } from '@/i18n/translations';
-import { getSessionUser } from '@/auth/session';
 
 export function OnboardingPage() {
+    const db = useDatabase();
     const navigate = useNavigate();
     const { t, setLanguage } = useLanguage();
     const [formData, setFormData] = useState<Partial<User>>({
@@ -33,28 +34,12 @@ export function OnboardingPage() {
 
         setIsSubmitting(true);
         try {
-            const sessionUser = await getSessionUser();
-            if (!sessionUser) {
-                navigate('/auth', { replace: true });
-                return;
-            }
-
-            const userId = sessionUser.id;
-            await db.users.put({
-                ...(formData as User),
-                id: userId,
-                name: formData.name || sessionUser.username
+            await db.transaction('rw', [db.users, db.userMeasurements, db.gyms, db.workouts, db.outbox], async () => {
+                await applyOperation(db, 'profile.update', null, formData);
+                if (formData.weight != null || formData.bodyFat != null) {
+                    await applyOperation(db, 'measurement.create', null, { weight: formData.weight ?? null, bodyFat: formData.bodyFat ?? null, timestamp: Date.now() });
+                }
             });
-
-            // Log initial measurements if provided
-            if (formData.weight || formData.bodyFat) {
-                await db.userMeasurements.add({
-                    userId,
-                    weight: formData.weight,
-                    bodyFat: formData.bodyFat,
-                    timestamp: Date.now()
-                });
-            }
 
             navigate('/', { replace: true });
         } catch (error) {

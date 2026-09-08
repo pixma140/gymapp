@@ -11,6 +11,8 @@ services:
     image: gymapp:latest
     environment:
       - NODE_ENV=production
+      # Development fixtures only; disable for a non-fixture installation.
+      - SEED_DEV_DATA=true
       # Promote this username to admin on startup (first OIDC/admin setup).
       # - ADMIN_USERNAME=myadmin
       # Public base URL used to build the OIDC redirect URI.

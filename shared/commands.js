@@ -16,7 +16,7 @@ const object = value => value !== null && typeof value === 'object' && !Array.is
 const timestamp = value => Number.isSafeInteger(value) && value >= 0;
 
 export function validateCommand(command) {
-    if (!object(command) || !Object.hasOwn(COMMAND_FIELDS, command.operation)) return 'unsupported_operation';
+    if (!object(command) || typeof command.operation !== 'string' || !Object.hasOwn(COMMAND_FIELDS, command.operation)) return 'unsupported_operation';
     const keys = ['mutationId', 'accountId', 'installationId', 'operation', 'targetId', 'expectedRevision', 'payload'];
     if (Object.keys(command).length !== keys.length || keys.some(key => !Object.hasOwn(command, key))) return 'invalid_command';
     if (!isUuid(command.mutationId) || !isUuid(command.installationId) || !Number.isSafeInteger(command.accountId) || command.accountId <= 0) return 'invalid_binding';
