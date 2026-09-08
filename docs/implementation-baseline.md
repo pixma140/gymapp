@@ -114,3 +114,13 @@ verification remain, as does the future external exercise integration.
   workflows passed. HTTP/browser tests ran outside the sandbox for local port
   binding. Initial JS: 446.79 kB / gzip 137.94 kB; admin and analysis remain separate
   chunks. Phase D/E's broader request classification and conflict work remain open.
+
+## Phase D server checkpoint — 2026-09-08
+
+Added a no-store `GET /api/bootstrap` response with setup/signed-out/authenticated
+states. Authenticated responses include installation identity, current session
+user/capabilities, and a private snapshot. Session resolution and snapshot reads
+share one serialized transaction, using the same snapshot reader as explicit
+refresh. Added HTTP coverage in `server/sync.test.js` for setup, absent/expired
+sessions, role capabilities, and account/installation binding. The full Vitest
+suite passed (80 tests including the in-progress client regressions).

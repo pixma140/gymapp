@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { verifyPassword, parseCookies, base64UrlEncode } from './lib/crypto.js';
 import { verifyIdToken } from './lib/oidc.js';
 import { createAccountService } from './services/accounts.js';
-import { createSyncService } from './services/sync.js';
+import { createSyncService, readSnapshot } from './services/sync.js';
 
 export function createApp({ database, cookieSecure = false, adminUsername = '', publicUrl = '', distDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist') }) {
     const { runSql, getSql, allSql } = database;
@@ -37,20 +37,20 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
         setSessionCookie(res, sessionId);
     }
 
-    async function resolveSessionUser(req) {
+    async function resolveSessionUser(req, sql = database) {
         const cookies = parseCookies(req.headers.cookie);
         const sessionId = cookies[SESSION_COOKIE];
         if (!sessionId) {
             return null;
         }
 
-        const row = await getSql(
+        const row = await sql.getSql(
             'SELECT users.id, users.username, users.name, users.language, users.theme, users.isAdmin FROM sessions JOIN users ON users.id = sessions.userId WHERE sessions.id = ? AND sessions.expiresAt > ?',
             [sessionId, Date.now()]
         );
 
         if (!row) {
-            await runSql('DELETE FROM sessions WHERE id = ?', [sessionId]).catch(() => {});
+            await sql.runSql('DELETE FROM sessions WHERE id = ?', [sessionId]).catch(() => {});
             return null;
         }
 
@@ -236,6 +236,28 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
     }
 
     const RATE_WINDOW_MS = 1000 * 60 * 15;
+
+    app.get('/api/bootstrap', async (req, res) => {
+        res.setHeader('Cache-Control', 'no-store');
+        try {
+            const result = await database.transaction(async tx => {
+                const { id: installationId } = await tx.getSql('SELECT id FROM installation WHERE singleton = 1');
+                const { count } = await tx.getSql('SELECT COUNT(*) AS count FROM users');
+                if (!count) return { status: 'setup', installationId };
+                const user = await resolveSessionUser(req, tx);
+                if (!user) return { status: 'signedOut', installationId };
+                return {
+                    status: 'authenticated', installationId, user,
+                    capabilities: { manageUsers: user.isAdmin, manageOidc: user.isAdmin, manageGyms: user.isAdmin },
+                    snapshot: await readSnapshot(tx, user.id)
+                };
+            });
+            res.json({ ok: true, ...result });
+        } catch (error) {
+            console.error('bootstrap_failed', error);
+            res.status(500).json({ ok: false, error: 'bootstrap_failed' });
+        }
+    });
 
     app.get('/api/setup/status', async (_req, res) => {
         try {

@@ -33,6 +33,11 @@ afterAll(async () => {
 
 describe('replacement sync contract', () => {
     let gymId, workoutId;
+    it('bootstraps an empty installation without fabricating a session', async () => {
+        const result = await request('GET', '/api/bootstrap');
+        expect(result.status).toBe(200);
+        expect(result.body).toEqual({ ok: true, status: 'setup', installationId });
+    });
     it('serializes concurrent first-admin setup', async () => {
         const results = await Promise.all(['admin', 'otheradmin'].map(username => request('POST', '/api/setup', {
             body: { username, password: 'adminpassword', name: 'Admin' },
@@ -43,6 +48,20 @@ describe('replacement sync contract', () => {
         adminCookie = result.cookie; adminId = result.body.user.id;
         const user = await request('POST', '/api/auth/register', { body: { username: 'regular', password: 'userpassword' } });
         userCookie = user.cookie; userId = user.body.user.id;
+    });
+    it('bootstraps scoped account data and current capabilities in one response', async () => {
+        expect((await request('GET', '/api/bootstrap')).body).toEqual({ ok: true, status: 'signedOut', installationId });
+        for (const [cookie, id, admin] of [[adminCookie, adminId, true], [userCookie, userId, false]]) {
+            const { body } = await request('GET', '/api/bootstrap', { cookie });
+            expect(body.status).toBe('authenticated');
+            expect(body.installationId).toBe(installationId);
+            expect(body.user.id).toBe(id);
+            expect(body.capabilities).toEqual({ manageUsers: admin, manageOidc: admin, manageGyms: admin });
+            expect(body.snapshot.accountId).toBe(id);
+            expect(body.snapshot.profile.id).toBe(id);
+            expect(body.snapshot.installationId).toBe(installationId);
+        }
+        expect((await request('GET', '/api/bootstrap', { cookie: 'gymapp_session=expired' })).body.status).toBe('signedOut');
     });
     it('authenticates before dispatch and rejects legacy/inherited commands', async () => {
         expect((await request('POST', '/api/sync', { body: {} })).status).toBe(401);

@@ -7,19 +7,7 @@ const canonical = value => JSON.stringify(value, (_key, entry) => entry && typeo
 
 export function createSyncService(database) {
     return {
-        snapshot: accountId => database.transaction(async tx => {
-            const installation = await tx.getSql('SELECT id, catalogGeneration FROM installation WHERE singleton = 1');
-            const user = await tx.getSql(`SELECT id, revision, dataGeneration, ${PROFILE_COLUMNS.join(', ')} FROM users WHERE id = ?`, [accountId]);
-            if (!user) return failure(401, 'unauthorized');
-            const { dataGeneration, ...profile } = user;
-            return {
-                accountId, installationId: installation.id, accountGeneration: dataGeneration,
-                catalogGeneration: installation.catalogGeneration, profile,
-                gyms: (await tx.allSql('SELECT * FROM gyms ORDER BY name, id')).map(gym => ({ ...gym, archived: Boolean(gym.archived) })),
-                workouts: await tx.allSql('SELECT id, gymId, startTime, endTime, revision FROM workouts WHERE userId = ?', [accountId]),
-                measurements: await tx.allSql('SELECT id, weight, bodyFat, timestamp, revision FROM userMeasurements WHERE userId = ?', [accountId]),
-            };
-        }),
+        snapshot: accountId => database.transaction(tx => readSnapshot(tx, accountId)),
         apply: (accountId, command) => database.transaction(async tx => {
             const invalid = validateCommand(command);
             if (invalid) return failure(400, invalid);
@@ -71,5 +59,19 @@ export function createSyncService(database) {
                 [accountId, command.mutationId, serialized, JSON.stringify(result), Date.now()]);
             return result;
         }),
+    };
+}
+
+export async function readSnapshot(tx, accountId) {
+    const installation = await tx.getSql('SELECT id, catalogGeneration FROM installation WHERE singleton = 1');
+    const user = await tx.getSql(`SELECT id, revision, dataGeneration, ${PROFILE_COLUMNS.join(', ')} FROM users WHERE id = ?`, [accountId]);
+    if (!user) return failure(401, 'unauthorized');
+    const { dataGeneration, ...profile } = user;
+    return {
+        accountId, installationId: installation.id, accountGeneration: dataGeneration,
+        catalogGeneration: installation.catalogGeneration, profile,
+        gyms: (await tx.allSql('SELECT * FROM gyms ORDER BY name, id')).map(gym => ({ ...gym, archived: Boolean(gym.archived) })),
+        workouts: await tx.allSql('SELECT id, gymId, startTime, endTime, revision FROM workouts WHERE userId = ?', [accountId]),
+        measurements: await tx.allSql('SELECT id, weight, bodyFat, timestamp, revision FROM userMeasurements WHERE userId = ?', [accountId]),
     };
 }

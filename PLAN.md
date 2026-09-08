@@ -118,6 +118,11 @@ Each phase should be a reviewable change with relevant tests. Existing uncommitt
 
 ### Phase D — Centralize bootstrap and account-local state
 
+Server checkpoint: `GET /api/bootstrap` now returns setup/session status, installation
+identity, current capabilities, and an account-scoped snapshot from one serialized
+transaction. HTTP tests cover empty setup, signed-out/expired sessions, and both roles.
+Client integration and browser coordination are being completed separately.
+
 - [ ] Replace independent session requests in guards/pages with one provider state model: loading, setup required, signed out, preparing cache, ready, and failed. Only mount domain screens and start the worker when ready.
 - [ ] Have bootstrap return installation/account identity and capabilities. A ready account uses its own database handle; guards consume provider state rather than fetching again.
 - [ ] Consolidate request handling and distinguish network failure, unauthenticated, forbidden, validation, conflict, and malformed response. Hydration returns distinct success/empty/error results; failure never silently triggers onboarding.
