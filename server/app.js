@@ -6,9 +6,11 @@ import { TABLE_COLUMNS, SNAPSHOT_TABLES } from '../shared/syncSchema.js';
 import { hashPassword, verifyPassword, parseCookies, base64UrlEncode } from './lib/crypto.js';
 import { pickAllowedColumns } from './lib/columns.js';
 import { verifyIdToken } from './lib/oidc.js';
+import { createAccountService } from './services/accounts.js';
 
 export function createApp({ database, cookieSecure = false, adminUsername = '', publicUrl = '', distDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist') }) {
     const { runSql, getSql, allSql } = database;
+    const accounts = createAccountService(database);
     const SESSION_COOKIE = 'gymapp_session';
     const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
     const COOKIE_SECURE = cookieSecure;
@@ -265,20 +267,14 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
         }
 
         try {
-            const count = await getUserCount();
-            if (count > 0) {
-                res.status(409).json({ ok: false, error: 'already_setup' });
+            const result = await accounts.setup({ username, password, name, email, language });
+            if (result.error) {
+                res.status(result.status).json({ ok: false, error: result.error });
                 return;
             }
 
-            const passwordHash = hashPassword(password);
-            const result = await runSql(
-                'INSERT INTO users (username, passwordHash, name, email, isAdmin, language, theme, createdAt) VALUES (?, ?, ?, ?, 1, ?, ?, ?)',
-                [username, passwordHash, name, email, language, 'dark', Date.now()]
-            );
-
-            const user = await getSql('SELECT id, username, name, language, theme, isAdmin FROM users WHERE id = ?', [result.lastID]);
-            await createSession(result.lastID, res);
+            const user = await getSql('SELECT id, username, name, language, theme, isAdmin FROM users WHERE id = ?', [result.id]);
+            await createSession(result.id, res);
             res.json({ ok: true, user: { ...user, isAdmin: Boolean(user?.isAdmin) } });
         } catch (error) {
             console.error('setup_failed', error);
@@ -619,28 +615,11 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
         const nextIsAdmin = req.body.isAdmin;
 
         try {
-            const target = await getSql('SELECT id, isAdmin FROM users WHERE id = ?', [userId]);
-            if (!target) {
-                res.status(404).json({ ok: false, error: 'user_not_found' });
+            const result = await accounts.changeRole(admin.id, userId, nextIsAdmin);
+            if (result.error) {
+                res.status(result.status).json({ ok: false, error: result.error });
                 return;
             }
-
-            // Prevent admins from demoting themselves to avoid lockout.
-            if (userId === admin.id && !nextIsAdmin) {
-                res.status(400).json({ ok: false, error: 'cannot_demote_self' });
-                return;
-            }
-
-            // Never allow removing the last remaining admin.
-            if (Boolean(target.isAdmin) && !nextIsAdmin) {
-                const adminCount = await getSql('SELECT COUNT(*) AS count FROM users WHERE isAdmin = 1');
-                if (Number(adminCount?.count ?? 0) <= 1) {
-                    res.status(400).json({ ok: false, error: 'last_admin' });
-                    return;
-                }
-            }
-
-            await runSql('UPDATE users SET isAdmin = ? WHERE id = ?', [nextIsAdmin ? 1 : 0, userId]);
             res.json({ ok: true });
         } catch (error) {
             console.error('user_update_failed', error);
@@ -666,22 +645,11 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
         }
 
         try {
-            const target = await getSql('SELECT id, isAdmin FROM users WHERE id = ?', [userId]);
-            if (!target) {
-                res.status(404).json({ ok: false, error: 'user_not_found' });
+            const result = await accounts.delete(admin.id, userId);
+            if (result.error) {
+                res.status(result.status).json({ ok: false, error: result.error });
                 return;
             }
-
-            if (Boolean(target.isAdmin)) {
-                const adminCount = await getSql('SELECT COUNT(*) AS count FROM users WHERE isAdmin = 1');
-                if (Number(adminCount?.count ?? 0) <= 1) {
-                    res.status(400).json({ ok: false, error: 'last_admin' });
-                    return;
-                }
-            }
-
-            await runSql('DELETE FROM sessions WHERE userId = ?', [userId]).catch(() => {});
-            await runSql('DELETE FROM users WHERE id = ?', [userId]);
             res.json({ ok: true });
         } catch (error) {
             console.error('user_delete_failed', error);
@@ -828,7 +796,7 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
         }
 
         const { table, operation } = req.body ?? {};
-        if (!table || !TABLE_COLUMNS[table]) {
+        if (!table || !Object.hasOwn(TABLE_COLUMNS, table)) {
             res.status(400).json({ ok: false, error: 'unsupported_table' });
             return;
         }
@@ -949,18 +917,7 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
                 }
 
                 if (table === 'users') {
-                    if (id !== userId) {
-                        res.status(403).json({ ok: false, error: 'forbidden' });
-                        return;
-                    }
-
-                    await runSql('DELETE FROM users WHERE id = ?', [userId]);
-                    for (const scopedTable of SNAPSHOT_TABLES) {
-                        await runSql(`DELETE FROM ${scopedTable} WHERE userId = ?`, [userId]).catch(() => {});
-                    }
-                    await runSql('DELETE FROM sessions WHERE userId = ?', [userId]);
-                    clearSessionCookie(res);
-                    res.json({ ok: true });
+                    res.status(403).json({ ok: false, error: 'account_delete_requires_admin' });
                     return;
                 }
 

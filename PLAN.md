@@ -1,6 +1,6 @@
 # Implementation plan
 
-Status: implementation in progress. Phase A lifecycle extraction and serialized database access are verified. No database reset has been performed. See `docs/implementation-baseline.md` for baseline and inventory.
+Status: implementation in progress. Phase A test seams, serialized database access, account regressions, and replacement type declarations are complete. The legacy HTTP sync contract remains active until the schema/client switch. No database reset has been performed. See `docs/implementation-baseline.md` for baseline and inventory.
 
 Sources: [SUGGESTIONS.md](SUGGESTIONS.md), [ARCHITECTURE.md](ARCHITECTURE.md), and the user's appendix. The appendix takes precedence: this is a work-in-progress reset, default test users and shared gyms are required, and the existing exercise implementation must be removed. External exercise integration belongs to a later task.
 
@@ -85,8 +85,9 @@ Each phase should be a reviewable change with relevant tests. Existing uncommitt
 - [x] Record the current passing test/build/lint baseline and inventory all domain writes, route ID parsing, table consumers, and exercise references.
 - [x] Extract `createApp` and database lifecycle without changing existing behavior first. Adapt HTTP tests to inject and close temporary databases explicitly.
 - [x] Add a serialized transaction helper: asynchronous statements inside one transaction must not interleave with another request's writes on the shared SQLite connection.
-- [ ] Define explicit command and snapshot types for profiles, measurements, timed workouts, and shared gyms. Remove arbitrary table mutation as the public write contract when switching implementations.
-- [ ] Add focused regression coverage for alternate account deletion, orphan cleanup, and concurrent setup. Tests for the replacement contract can land with the corresponding implementation; do not retain old exercise behavior as a compatibility requirement.
+- [x] Define explicit command and snapshot types for profiles, measurements, timed workouts, and shared gyms (`shared/commands.d.ts`).
+- [ ] Remove arbitrary table mutation as the public write contract when switching implementations (phases B–E).
+- [x] Add focused regression coverage for alternate account deletion, orphan cleanup, and concurrent setup. Tests for the replacement contract can land with the corresponding implementation; do not retain old exercise behavior as a compatibility requirement.
 
 **Exit:** test resources are isolated and the replacement contract is concrete enough for the schema/client work below.
 

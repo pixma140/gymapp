@@ -62,9 +62,13 @@ describe('sync authorization and scoping', () => {
     let userId;
 
     it('bootstraps the first admin via setup', async () => {
-        const res = await request('POST', '/api/setup', {
-            body: { username: 'admin', password: 'adminpassword', name: 'Admin' },
-        });
+        const results = await Promise.all(['admin', 'otheradmin'].map(username => request('POST', '/api/setup', {
+            body: { username, password: 'adminpassword', name: 'Admin' },
+        })));
+        expect(results.map(result => result.status).sort()).toEqual([200, 409]);
+        expect(results.find(result => result.status === 409).body.error).toBe('already_setup');
+        expect(await database.getSql('SELECT COUNT(*) AS count FROM users')).toEqual({ count: 1 });
+        const res = results.find(result => result.status === 200);
         expect(res.status).toBe(200);
         expect(res.body.ok).toBe(true);
         adminCookie = res.cookie;
@@ -193,5 +197,26 @@ describe('sync authorization and scoping', () => {
             body: { table: 'users', operation: 'update', id: adminId, changes: { name: 'Hacked' } },
         });
         expect(res.status).toBe(403);
+    });
+
+    it('rejects profile-sync deletion for both roles without deleting either account', async () => {
+        for (const [cookie, id] of [[adminCookie, adminId], [userCookie, userId]]) {
+            const result = await request('POST', '/api/sync', {
+                cookie, body: { table: 'users', operation: 'delete', id },
+            });
+            expect(result.status).toBe(403);
+            expect(result.body.error).toBe('account_delete_requires_admin');
+            expect((await request('GET', '/api/auth/me', { cookie })).status).toBe(200);
+        }
+    });
+
+    it('rejects inherited table names before dispatch', async () => {
+        for (const table of ['constructor', '__proto__', 'toString']) {
+            const result = await request('POST', '/api/sync', {
+                cookie: adminCookie, body: { table, operation: 'delete', id: adminId },
+            });
+            expect(result.status).toBe(400);
+            expect(result.body.error).toBe('unsupported_table');
+        }
     });
 });

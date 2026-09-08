@@ -262,12 +262,31 @@ describe('admin user management', () => {
         expect(res.body.error).toBe('cannot_delete_self');
     });
 
-    it('deletes a user and their sessions', async () => {
+    it('rolls back account cleanup if any private-data deletion fails', async () => {
+        await database.runSql('INSERT INTO userMeasurements (userId, id, weight, timestamp) VALUES (?, 99, 80, 1)', [bobId]);
+        await database.runSql("CREATE TRIGGER reject_user_delete BEFORE DELETE ON users BEGIN SELECT RAISE(ABORT, 'test cleanup failure'); END");
+        try {
+            const result = await request('DELETE', `/api/admin/users/${bobId}`, { cookie: adminCookie });
+            expect(result.status).toBe(500);
+            expect(await database.getSql('SELECT weight FROM userMeasurements WHERE userId = ? AND id = 99', [bobId])).toEqual({ weight: 80 });
+            expect((await request('GET', '/api/auth/me', { cookie: bobCookie })).status).toBe(200);
+        } finally {
+            await database.runSql('DROP TRIGGER reject_user_delete');
+        }
+    });
+
+    it('deletes a user, private data, and sessions without touching another account', async () => {
+        await database.runSql('INSERT INTO userMeasurements (userId, id, weight, timestamp) VALUES (?, 1, 80, 1), (?, 1, 90, 1)', [bobId, adminId]);
+        await database.runSql('INSERT INTO workouts (userId, id, gymId, startTime) VALUES (?, 1, 1, 1)', [bobId]);
         const res = await request('DELETE', `/api/admin/users/${bobId}`, { cookie: adminCookie });
         expect(res.status).toBe(200);
 
         const list = await request('GET', '/api/admin/users', { cookie: adminCookie });
         expect(list.body.users.find((u) => u.id === bobId)).toBeUndefined();
+
+        expect(await database.allSql('SELECT * FROM userMeasurements WHERE userId = ?', [bobId])).toEqual([]);
+        expect(await database.allSql('SELECT * FROM workouts WHERE userId = ?', [bobId])).toEqual([]);
+        expect(await database.getSql('SELECT weight FROM userMeasurements WHERE userId = ?', [adminId])).toEqual({ weight: 90 });
 
         // Bob's active session is gone.
         const me = await request('GET', '/api/auth/me', { cookie: bobCookie });

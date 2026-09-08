@@ -45,8 +45,26 @@ wait for the current transaction). Await all scoped statements before returning.
 Close drains queued operations and rejects later work. Transactions reject
 use of their scoped handle after completion.
 
+## Account regression checkpoint
+
+First-administrator creation now checks and inserts within one serialized
+transaction. Role changes and administrator deletion recheck current authority,
+self guards, and last-admin constraints inside the same transaction. Legacy
+private rows and sessions are deleted atomically; profile sync cannot delete
+accounts. The legacy table dispatcher rejects inherited property names.
+HTTP regression coverage includes concurrent setup, both roles attempting
+sync deletion, orphan cleanup, and rollback on a deliberately failed deletion.
+
+`shared/commands.d.ts` declares the replacement command/snapshot protocol;
+it does not activate a new HTTP contract. Account IDs stay integers, domain
+IDs are UUID strings, profile targeting is bound to the account, and snapshots
+carry account/catalog generations. Validators and durable command handling
+must land with the schema/client switch.
+
 ## Next checkpoint
 
-Finish Phase A's replacement command/snapshot contract and account regression
-coverage before switching schemas. No fixtures, schema reset, or client model
-changes have been made in the lifecycle extraction checkpoint.
+Start Phase B initial schemas and fixture mode. Replace transitional account
+cleanup with foreign-key cascades when gyms become shared. The legacy client,
+HTTP sync, and exercise implementation remain active. No fixtures, database
+reset, or client model changes have been performed. Final checkpoint validation:
+57 tests in seven files, lint, and build pass (existing bundle warning remains).
