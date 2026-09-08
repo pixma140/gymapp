@@ -57,6 +57,13 @@ test('offline timed intent, cancellation, profile measurements, and catalog edit
     await context.setOffline(true);
     await page.getByRole('button', { name: 'Start workout', exact: true }).click();
     await expect(page.getByText('Pending changes: 1', { exact: true })).toBeVisible();
+    const offlineRevalidation = page.waitForEvent('requestfailed', request => request.url().endsWith('/api/bootstrap'));
+    await page.evaluate(() => {
+        Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
+        document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await offlineRevalidation;
+    await expect(page.getByRole('button', { name: 'Finish workout', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Refresh', exact: true }).click();
     await expect(page.getByText('Pending changes must be synchronized or explicitly discarded before refreshing.')).toBeVisible();
     page.once('dialog', dialog => dialog.accept());
@@ -111,4 +118,84 @@ test('authorization failure refreshes a demoted administrator role', async ({ pa
     } finally {
         await admin.dispose();
     }
+});
+
+test('failed bootstrap preserves pending intent and retries without onboarding', async ({ page, context }) => {
+    expect((await page.request.post('/api/auth/register', {
+        data: { username: 'browser-retry', password: '123geheim' },
+    })).ok()).toBe(true);
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+    await context.route('**/api/sync', route => route.abort());
+    await page.getByRole('button', { name: /Foundry District/ }).click();
+    await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+    await expect(page.getByText('Pending changes: 1', { exact: true })).toBeVisible();
+    await page.route('**/api/bootstrap', route => route.fulfill({ status: 500, body: 'unavailable' }));
+    await page.reload();
+    await expect(page.getByText('Could not load your account. Local data has been preserved.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Start workout', exact: true })).toHaveCount(0);
+    await page.unroute('**/api/bootstrap');
+    await page.getByRole('button', { name: 'Retry', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Finish workout', exact: true })).toBeVisible();
+    await expect(page.getByText('Pending changes: 1', { exact: true })).toBeVisible();
+    page.once('dialog', dialog => dialog.accept());
+    await page.getByRole('button', { name: 'Cancel workout', exact: true }).click();
+    await context.unroute('**/api/sync');
+    await expect(page.getByText('Pending changes: 0', { exact: true })).toBeVisible();
+});
+
+test('two tabs serialize senders and propagate logout and account switches', async ({ page, context }) => {
+    expect((await page.request.post('/api/auth/register', {
+        data: { username: 'browser-tabs', password: '123geheim' },
+    })).ok()).toBe(true);
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+    const second = await context.newPage();
+    await second.goto('/');
+    await expect(second.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+    let sends = 0;
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    await context.route('**/api/sync', async route => {
+        sends++;
+        await gate;
+        await route.continue();
+    });
+    try {
+        await page.getByRole('button', { name: /Foundry District/ }).click();
+        await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+        await expect.poll(() => sends).toBe(1);
+        // A second sender's timer fires while the first still holds the browser lock.
+        await expect.poll(() => second.evaluate(async () =>
+            (await navigator.locks.query()).pending?.some(lock => lock.name?.startsWith('sync:')) ?? false)).toBe(true);
+        expect(sends).toBe(1);
+    } finally { release(); }
+    await expect(page.getByText('Pending changes: 0', { exact: true })).toBeVisible();
+    await expect(second.getByRole('button', { name: 'Resume workout', exact: true })).toBeVisible();
+    await context.unroute('**/api/sync');
+    await context.route('**/api/sync', route => route.abort());
+    page.once('dialog', dialog => dialog.accept());
+    await page.getByRole('button', { name: 'Cancel workout', exact: true }).click();
+    await expect(page.getByText('Pending changes: 1', { exact: true })).toBeVisible();
+    await second.getByRole('button', { name: 'Settings', exact: true }).click();
+    await second.getByRole('button', { name: /Log out|Logout/i }).click();
+    await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
+    await second.locator('input[autocomplete=username]').fill('admin');
+    await second.locator('input[autocomplete=current-password]').fill('123geheim');
+    await second.getByRole('button', { name: 'Log in', exact: true }).click();
+    await expect(second.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+    await expect(page.getByText('Pending changes: 0', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Resume workout', exact: true })).toHaveCount(0);
+    await second.getByRole('button', { name: 'Settings', exact: true }).click();
+    await second.getByRole('button', { name: /Log out|Logout/i }).click();
+    await second.locator('input[autocomplete=username]').fill('browser-tabs');
+    await second.locator('input[autocomplete=current-password]').fill('123geheim');
+    await second.getByRole('button', { name: 'Log in', exact: true }).click();
+    await expect(second.getByText('Pending changes: 1', { exact: true })).toBeVisible();
+    await context.unroute('**/api/sync');
+    await expect(second.getByText('Pending changes: 0', { exact: true })).toBeVisible();
+    const snapshot = await (await second.request.get('/api/sync/snapshot')).json();
+    expect(snapshot.workouts).toEqual([]);
+    await second.close();
 });

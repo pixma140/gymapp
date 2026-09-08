@@ -1,8 +1,8 @@
 # Architecture
 
-Current implementation checkpoint: Phase B schemas and deterministic fixtures,
-with the client/API changes required to consume the new model. PLAN.md tracks
-remaining authorization, lifecycle, conflict-resolution, and release hardening.
+Current implementation checkpoint: Phases A–D, including deterministic fixtures,
+account authorization, transactional bootstrap, and account-local tab coordination.
+PLAN.md tracks remaining outbox, conflict-resolution, UI, and release hardening.
 
 ## Runtime and modules
 
@@ -17,14 +17,16 @@ built frontend and APIs; Vite proxies API requests during development.
 | `server/schema.js` | Fresh initial DDL, installation identity, revision/generation triggers |
 | `server/seed.js` | Deterministic fixture accounts and shared gym UUIDs |
 | `server/reset.js`, `databaseFiles.js` | Scoped reset and cooperating-process database lease |
-| `server/services/accounts.js` | Atomic first setup, role changes, cascading deletion guards |
+| `server/services/accounts.js` | Account creation/OIDC identity resolution, role/deletion guards, atomic password reset |
 | `server/services/sync.js` | Validated commands, revisions, receipts, consistent snapshots |
 | `shared/commands.js`, `.d.ts` | Runtime command validation and protocol types |
 | `src/context/SessionContext.tsx` | Bootstrap, ready-account handle, worker scheduling, logout/discard |
 | `src/db/db.ts` | Account/installation database factory and one-time legacy-cache cleanup |
 | `src/db/operations.ts` | Atomic local state plus outgoing command |
 | `src/db/sqliteSync.ts` | Ordered Web-Lock sender and receipt/dependency reconciliation |
-| `src/db/hydrate.ts` | Identity-checked snapshot replacement that refuses pending work |
+| `src/db/hydrate.ts` | Validated snapshots, explicit empty/success/error preparation, pending-work preservation |
+| `src/lib/api.ts` | Typed network/HTTP/malformed-response handling shared by auth, admin, bootstrap, and sync |
+| `src/auth/tabs.ts` | Session locks, session-change notifications, and stale-sender epoch checks |
 
 Providers are ordered session → language → theme. Domain routes mount only
 with a ready account cache. Preference providers use that account's profile
@@ -74,19 +76,35 @@ edits to the same record depend on earlier queued commands. An acknowledged
 revision is persisted and passed to the next unsent dependent command; an
 attempted command retains its original envelope for retry.
 
-Logout detaches account screens, stops scheduling, waits for this tab's sender,
-closes its database handle, and invalidates the server session. Caches/outboxes
-are retained. BroadcastChannel notifies other tabs; server-side envelope
-identity checks also protect against cookie changes between checks and sending.
-Snapshot refresh refuses any pending queue. Dirty-cache generation mismatches
-are surfaced as conflicts instead of silently replacing local data.
+`GET /api/bootstrap` reads setup/session status, installation identity, current
+capabilities, and an account-scoped snapshot in one SQLite transaction. The
+provider validates the response before preparing a cache. Setup and route guards
+consume provider state; errors show retry and never become an onboarding signal.
+A valid account with no activity is an explicit empty hydration result.
+
+Logout synchronously detaches the active handle, stops scheduling, waits for this
+tab's tracked sender (including manual refresh), closes its handle, and invalidates
+the server session. Caches/outboxes are retained. All senders take a shared
+`gymapp-session` Web Lock followed by an exclusive `sync:<database name>` lock.
+Bootstrap/cache preparation and password login/register/setup/logout take the
+session lock exclusively, so cookie changes cannot overtake active senders.
+BroadcastChannel announces changing/changed sessions; a shared localStorage epoch
+also prevents sending before a delayed channel notification arrives. Returning
+tabs check identity on visibility changes while preserving a ready cache offline;
+OIDC return announces the changed cookie.
+Browsers without Web Locks retain queues without sending.
+
+Server-side envelope identity checks additionally protect against externally
+changed cookies. Binding mismatch pauses the old queue and revalidates the
+session. Dirty-cache generation mismatches are surfaced as conflicts; pending
+intent is never silently replaced. Explicit refresh drains the tracked sender
+and refuses snapshot replacement while pending work remains.
 
 ## Remaining limits
 
-This checkpoint does not complete every Phase C–G requirement. Account creation,
-password reset, and OIDC flows still have code in app.js; HTTP error handling is
-not yet one shared typed client. Authorization-failure role refresh, exhaustive
-multi-tab lifecycle tests, retry backoff/Retry-After, and reviewed conflict
-reapplication remain. Export/discard/reload is currently the available conflict
-resolution. No offline cold start, continuous pull, or automatic merging is
-promised. CI publishing gates and Docker build verification remain Phase G work.
+Retry backoff/Retry-After and reviewed conflict reapplication remain Phase E
+work. OIDC protocol orchestration remains in app.js; identity creation and
+password reset use the account service. Export/discard/reload is currently the
+available conflict resolution. No offline cold start, continuous pull, or
+automatic merging is promised. CI publishing gates and Docker build verification
+remain Phase G work.

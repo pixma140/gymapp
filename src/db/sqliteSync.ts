@@ -1,33 +1,33 @@
-import { authorizedFetch } from '@/auth/authorization';
+import { readSession } from '@/auth/tabs';
+import { ApiError, AUTHORIZATION_FAILURE, isObject, jsonBody, requestJson } from '@/lib/api';
 import type { Receipt } from '@shared/commands';
 import type { AccountDatabase } from './db';
 
 // One sender across tabs for this account. Unsupported browsers retain their queue.
 export async function flushPendingMutations(db: AccountDatabase, active: () => boolean = () => true): Promise<void> {
     if (!navigator.locks) return;
-    await navigator.locks.request(`sync:${db.name}`, async () => {
+    await readSession(() => navigator.locks.request(`sync:${db.name}`, async () => {
         while (active()) {
             const entry = await db.outbox.orderBy('sequence').first();
-            if (!entry || ['failed', 'conflict', 'paused'].includes(entry.state)) return;
+            if (!active() || !entry || ['failed', 'conflict', 'paused'].includes(entry.state)) return;
             await db.outbox.update(entry.sequence, { state: 'sending', attempts: entry.attempts + 1 });
-            let response: Response;
-            try {
-                response = await authorizedFetch('/api/sync', { method: 'POST', credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry.command) });
-            } catch {
-                // Sending state keeps the immutable envelope for ambiguous retries.
-                return;
-            }
-            if (!response.ok) {
-                if (response.status >= 500 || response.status === 429) return;
-                const state = response.status === 401 ? 'paused' : response.status === 409 ? 'conflict' : 'failed';
-                await db.outbox.update(entry.sequence, { state, error: `http_${response.status}` });
-                return;
-            }
+            if (!active()) return;
             let receipt: Receipt;
-            try { receipt = await response.json(); } catch { return; }
-            if (receipt.mutationId !== entry.command.mutationId || receipt.accountId !== db.binding.accountId
-                || receipt.installationId !== db.binding.installationId || !Number.isSafeInteger(receipt.revision)) return;
+            try {
+                receipt = await requestJson('/api/sync', (value): value is Receipt =>
+                    isObject(value) && value.mutationId === entry.command.mutationId && value.accountId === db.binding.accountId
+                    && value.installationId === db.binding.installationId && Number.isSafeInteger(value.revision) && Number(value.revision) > 0
+                    && Number.isSafeInteger(value.accountGeneration) && Number(value.accountGeneration) >= 0
+                    && Number.isSafeInteger(value.catalogGeneration) && Number(value.catalogGeneration) >= 0,
+                jsonBody(entry.command));
+            } catch (error) {
+                if (!(error instanceof ApiError) || ['network', 'server', 'rateLimited', 'malformed'].includes(error.kind)) return;
+                const bindingChanged = error.message === 'account_binding_mismatch';
+                const state = error.kind === 'unauthenticated' || bindingChanged ? 'paused' : error.kind === 'conflict' ? 'conflict' : 'failed';
+                await db.outbox.update(entry.sequence, { state, error: error.message });
+                if (bindingChanged && typeof window !== 'undefined') window.dispatchEvent(new Event(AUTHORIZATION_FAILURE));
+                return;
+            }
             await db.transaction('rw', [db.users, db.gyms, db.workouts, db.userMeasurements, db.outbox, db.syncMetadata], async () => {
                 const domain = entry.command.operation.split('.')[0];
                 const table = domain === 'profile' ? db.users : domain === 'gym' ? db.gyms : domain === 'workout' ? db.workouts : db.userMeasurements;
@@ -41,5 +41,5 @@ export async function flushPendingMutations(db: AccountDatabase, active: () => b
                 await db.outbox.delete(entry.sequence);
             });
         }
-    });
+    }));
 }

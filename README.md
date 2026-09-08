@@ -110,6 +110,13 @@ discard local intent, and reload. Reviewed reapplication, richer error reporting
 and retry backoff/`Retry-After` handling remain in PLAN.md. There is no automatic
 merge, continuous background pull, service worker, or offline cold start.
 
+Bootstrap failures offer Retry and preserve cached data and pending changes.
+Tabs coordinate senders and login/logout using Web Locks and session-change
+notifications. A tab following an account switch opens the new account's cache;
+the previous account's pending queue stays in its own cache. Browsers without
+Web Locks retain pending work without sending it. A new browser session still
+requires the server to authenticate and prepare its cache.
+
 ## Verification
 
 ```bash

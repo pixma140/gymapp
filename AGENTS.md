@@ -29,10 +29,11 @@ Keep changes consistent with existing patterns and scripts.
   - `server/lib/*.test.js`: pure server helpers (password hashing, cookies, OIDC verify).
   - `server/sync.test.js`: HTTP integration test of `/api/sync` authz/scoping (boots the Express app on an ephemeral port against a temp SQLite DB).
   - `server/adminUsers.test.js`: HTTP integration test of `/api/admin/users` routes (list/create/promote/demote/password-reset/delete authz and guards).
+  - `test/api.test.ts`: typed API error classification, malformed bootstrap responses, and failed logout.
   - `test/*.test.ts`: client-side logic (account-cache isolation, hydration, transactional outbox, and dependent acknowledgements via `fake-indexeddb`).
 - `server/app.js` exports `createApp({ database, ...config })` without opening a database or binding a port. Tests explicitly initialize and close handles from `server/db.js`; `server/index.js` owns process startup.
 - `server/seed.test.js`: fixture authentication/restart behavior, fresh-schema invariants, and scoped reset/lease guards.
-- `test/browser/workflows.spec.ts`: Playwright mobile-width account and timed-workout smoke test; `test/browser/server.mjs` owns its temporary database. Run `npm run build`, `npm run test:browser:install` once, then `npm run test:browser`.
+- `test/browser/workflows.spec.ts`: Playwright mobile-width account, timed-workout, bootstrap-retry, and two-tab lifecycle tests; `test/browser/server.mjs` owns its temporary database. Run `npm run build`, `npm run test:browser:install` once, then `npm run test:browser`.
 - `server/db.test.js`: database isolation, transaction serialization, rollback isolation, and closed-handle guards.
 
 ## Cursor/Copilot Rules

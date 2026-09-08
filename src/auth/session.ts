@@ -1,84 +1,63 @@
+import { isUuid } from '@shared/commands';
+import type { Snapshot } from '@shared/commands';
+import { actionRequest, isObject, jsonBody, requestJson, type ActionResponse } from '@/lib/api';
+import { isSnapshot } from '@/db/hydrate';
+import { changeSession, notifySession } from './tabs';
+
 export interface SessionUser {
     id: number;
-    username: string;
-    name?: string;
-    language?: 'en' | 'de';
-    theme?: 'light' | 'dark' | 'oled' | 'system';
-    isAdmin?: boolean;
-}
-
-interface AuthResponse {
-    ok: boolean;
-    user?: SessionUser;
-    error?: string;
-}
-
-async function sendAuthRequest(path: string, body?: Record<string, unknown>): Promise<AuthResponse> {
-    const response = await fetch(path, {
-        method: body ? 'POST' : 'GET',
-        credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: body ? JSON.stringify(body) : undefined
-    });
-
-    const payload = (await response.json()) as AuthResponse;
-
-    if (response.status >= 500) throw new Error('server_unavailable');
-    if (!response.ok || !payload.ok) {
-        return { ok: false, error: payload.error ?? 'unknown_error' };
-    }
-
-    return payload;
-}
-
-export async function getSessionUser(): Promise<SessionUser | null> {
-    const result = await sendAuthRequest('/api/auth/me');
-    return result.ok && result.user ? result.user : null;
-}
-
-export async function loginWithUsername(username: string, password: string): Promise<AuthResponse> {
-    return sendAuthRequest('/api/auth/login', { username, password });
-}
-
-export async function registerWithUsername(username: string, password: string): Promise<AuthResponse> {
-    return sendAuthRequest('/api/auth/register', { username, password });
-}
-
-export interface SetupInput {
-    username: string;
-    password: string;
+    username: string | null;
     name: string;
-    email?: string;
-    language?: 'en' | 'de';
+    language: 'en' | 'de';
+    theme: 'light' | 'dark' | 'oled' | 'system';
+    isAdmin: boolean;
 }
+export interface Capabilities { manageUsers: boolean; manageOidc: boolean; manageGyms: boolean }
+export type Bootstrap =
+    | { status: 'setup' | 'signedOut'; installationId: string }
+    | { status: 'authenticated'; installationId: string; user: SessionUser; capabilities: Capabilities; snapshot: Snapshot };
 
-export async function getSetupStatus(): Promise<boolean> {
-    const response = await fetch('/api/setup/status', { credentials: 'include' });
-    const payload = await response.json();
-    if (!response.ok || !payload.ok || typeof payload.needsSetup !== 'boolean') throw new Error('setup_status_failed');
-    return payload.needsSetup;
+function isSessionUser(value: unknown): value is SessionUser {
+    return isObject(value) && Number.isSafeInteger(value.id) && Number(value.id) > 0
+        && (value.username === null || typeof value.username === 'string') && typeof value.name === 'string'
+        && ['en', 'de'].includes(String(value.language)) && ['light', 'dark', 'oled', 'system'].includes(String(value.theme))
+        && typeof value.isAdmin === 'boolean';
 }
-
-export async function setupInitialAdmin(input: SetupInput): Promise<AuthResponse> {
-    return sendAuthRequest('/api/setup', { ...input });
+export function isBootstrap(value: unknown): value is Bootstrap {
+    if (!isObject(value) || !isUuid(value.installationId)) return false;
+    if (value.status === 'setup' || value.status === 'signedOut') return true;
+    if (value.status !== 'authenticated' || !isSessionUser(value.user) || !isObject(value.capabilities)
+        || !isSnapshot(value.snapshot)) return false;
+    const { capabilities, user } = value;
+    return ['manageUsers', 'manageOidc', 'manageGyms'].every(key => capabilities[key] === user.isAdmin)
+        && value.snapshot.accountId === value.user.id && value.snapshot.installationId === value.installationId;
 }
+export const getBootstrap = () => requestJson('/api/bootstrap', isBootstrap, undefined, false);
 
+interface AuthResponse extends ActionResponse { user?: SessionUser }
+const isAuthResponse = (value: unknown): value is AuthResponse => isObject(value) && value.ok === true && isSessionUser(value.user);
+const authenticate = (path: string, body: unknown): Promise<AuthResponse> =>
+    changeSession(() => actionRequest(path, isAuthResponse, jsonBody(body), false));
+
+export const loginWithUsername = (username: string, password: string) => authenticate('/api/auth/login', { username, password });
+export const registerWithUsername = (username: string, password: string) => authenticate('/api/auth/register', { username, password });
+export interface SetupInput { username: string; password: string; name: string; email?: string; language?: 'en' | 'de' }
+export const setupInitialAdmin = (input: SetupInput) => authenticate('/api/setup', input);
 export async function logoutSession(): Promise<void> {
-    await sendAuthRequest('/api/auth/logout', {});
+    await changeSession(() => requestJson('/api/auth/logout',
+        (value): value is { ok: true } => isObject(value) && value.ok === true, jsonBody({}), false));
 }
-
 export async function getOidcStatus(): Promise<boolean> {
     try {
-        const response = await fetch('/api/auth/oidc/status', { credentials: 'include' });
-        const payload = (await response.json()) as { ok: boolean; enabled?: boolean };
-        return Boolean(payload.ok && payload.enabled);
-    } catch {
-        return false;
-    }
+        const result = await requestJson('/api/auth/oidc/status',
+            (value): value is { enabled: boolean } => isObject(value) && typeof value.enabled === 'boolean', undefined, false);
+        return result.enabled;
+    } catch { return false; }
 }
-
 export function startOidcLogin(): void {
+    // Navigation leaves cookie handling to the OIDC callback. Server-side command
+    // bindings still reject stale tabs if the browser changes its cookie externally.
+    sessionStorage.setItem('gymapp-oidc-return', 'true');
+    notifySession('changing');
     window.location.href = '/api/auth/oidc/login';
 }

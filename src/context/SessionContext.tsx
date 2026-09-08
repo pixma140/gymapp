@@ -1,130 +1,164 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { AUTHORIZATION_FAILURE } from '@/auth/authorization';
-import { getSessionUser, getSetupStatus, logoutSession, type SessionUser } from '@/auth/session';
+import { AUTHORIZATION_FAILURE, ApiError } from '@/lib/api';
+import { getBootstrap, logoutSession, type Capabilities, type SessionUser } from '@/auth/session';
+import { readSession, subscribeSession, notifySession, sessionEpoch } from '@/auth/tabs';
 import { AccountDatabase, clearLegacyCacheOnce } from '@/db/db';
-import { hydrateFromServer } from '@/db/hydrate';
+import { prepareAccountCache } from '@/db/hydrate';
 import { flushPendingMutations } from '@/db/sqliteSync';
-import type { Snapshot } from '@shared/commands';
 
 type Status = 'loading' | 'setup' | 'signedOut' | 'preparing' | 'ready' | 'failed';
-interface SessionContextValue {
+interface SessionState {
+    status: Status;
     user: SessionUser | null;
+    database: AccountDatabase | null;
+    capabilities: Capabilities | null;
+    error: Error | null;
+}
+interface SessionContextValue extends SessionState {
     userId: number | null;
     isAdmin: boolean;
     isLoading: boolean;
-    status: Status;
-    database: AccountDatabase | null;
     refresh: () => Promise<void>;
+    drain: () => Promise<void>;
     logout: () => Promise<void>;
     discardLocalChanges: () => Promise<void>;
 }
+const detached = (status: Status, error: Error | null = null): SessionState =>
+    ({ status, user: null, database: null, capabilities: null, error });
 const SessionContext = createContext<SessionContextValue | undefined>(undefined);
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-    const [state, setState] = useState<{ status: Status; user: SessionUser | null; database: AccountDatabase | null }>({ status: 'loading', user: null, database: null });
+    const [state, setState] = useState<SessionState>(detached('loading'));
     const generation = useRef(0);
     const current = useRef<AccountDatabase | null>(null);
+    const readyRole = useRef(false);
+    const epoch = useRef<string | null>(null);
     const sender = useRef<Promise<void>>(Promise.resolve());
     const stop = useCallback(async () => {
         const version = ++generation.current;
+        const database = current.current;
+        current.current = null;
+        setState(detached('loading'));
         await sender.current.catch(() => {});
-        if (version === generation.current) {
-            current.current?.close();
-            current.current = null;
-        }
+        database?.close();
         return version;
     }, []);
     const refresh = useCallback(async () => {
-        setState({ status: 'loading', user: null, database: null });
         const version = await stop();
         if (version !== generation.current) return;
         let database: AccountDatabase | null = null;
         try {
-            if (await getSetupStatus()) {
-                if (version === generation.current) setState({ status: 'setup', user: null, database: null });
-                return;
-            }
-            const user = await getSessionUser();
-            if (version !== generation.current) return;
-            if (!user) { setState({ status: 'signedOut', user: null, database: null }); return; }
-            setState({ status: 'preparing', user, database: null });
-            const response = await fetch('/api/sync/snapshot', { credentials: 'include' });
-            if (!response.ok) throw new Error('snapshot_failed');
-            const snapshot: Snapshot = await response.json();
-            if (snapshot.accountId !== user.id) throw new Error('account_changed');
-            await clearLegacyCacheOnce();
-            database = new AccountDatabase({ accountId: user.id, installationId: snapshot.installationId });
-            await database.open();
-            const pending = await database.outbox.orderBy('sequence').first();
-            if (!pending) await hydrateFromServer(database, snapshot);
-            else {
-                const metadata = await database.syncMetadata.get('state');
-                if (!metadata || metadata.accountGeneration !== snapshot.accountGeneration || metadata.catalogGeneration !== snapshot.catalogGeneration) {
-                    await database.outbox.update(pending.sequence, { state: 'conflict', error: 'generation_conflict' });
-                } else if (pending.state === 'paused') {
-                    await database.outbox.update(pending.sequence, { state: 'pending', error: undefined });
+            // Bootstrap and cache preparation exclude senders in every tab. Its
+            // snapshot cannot become stale while waiting for an account lock.
+            await readSession(async () => {
+                if (version !== generation.current) return;
+                const preparingEpoch = sessionEpoch();
+                const bootstrap = await getBootstrap();
+                if (version !== generation.current) return;
+                if (bootstrap.status !== 'authenticated') {
+                    setState(detached(bootstrap.status));
+                    return;
                 }
-            }
-            if (version !== generation.current) { database.close(); return; }
-            current.current = database;
-            setState({ status: 'ready', user, database });
-        } catch {
-            database?.close();
-            if (version === generation.current) setState({ status: 'failed', user: null, database: null });
+                const { user, capabilities, snapshot } = bootstrap;
+                setState({ ...detached('preparing'), user, capabilities });
+                await clearLegacyCacheOnce();
+                if (version !== generation.current) return;
+                database = new AccountDatabase({ accountId: user.id, installationId: bootstrap.installationId });
+                await database.open();
+                const result = await prepareAccountCache(database, snapshot);
+                if (result.status === 'error') throw result.error;
+                if (version !== generation.current) { database.close(); return; }
+                if (preparingEpoch !== sessionEpoch()) { database.close(); return; }
+                readyRole.current = user.isAdmin;
+                epoch.current = preparingEpoch;
+                current.current = database;
+                setState({ status: 'ready', user, capabilities, database, error: null });
+            }, true);
+        } catch (error) {
+            // The locally opened handle belongs to this bootstrap, never a later account.
+            if (database) (database as AccountDatabase).close();
+            if (version === generation.current) setState(detached('failed', error instanceof Error ? error : new Error('bootstrap_failed')));
         }
     }, [stop]);
+    const drain = useCallback(() => {
+        const database = current.current;
+        if (database && epoch.current !== sessionEpoch()) return refresh();
+        const version = generation.current;
+        const active = () => generation.current === version && current.current === database && epoch.current === sessionEpoch();
+        sender.current = sender.current.catch(() => {}).then(() =>
+            database && active() ? flushPendingMutations(database, active) : undefined);
+        return sender.current;
+    }, [refresh]);
     const logout = useCallback(async () => {
-        setState({ status: 'loading', user: null, database: null });
+        const version = await stop();
+        if (version !== generation.current) return;
         try {
-            await stop();
             await logoutSession();
-            setState({ status: 'signedOut', user: null, database: null });
-            const channel = new BroadcastChannel('gymapp-session');
-            channel.postMessage('changed'); channel.close();
-        } catch {
-            setState({ status: 'failed', user: null, database: null });
+            if (version === generation.current) setState(detached('signedOut'));
+        } catch (error) {
+            if (version === generation.current) setState(detached('failed', error instanceof Error ? error : new Error('logout_failed')));
         }
     }, [stop]);
     const discardLocalChanges = useCallback(async () => {
         const binding = current.current?.binding;
         if (!binding) return;
-        setState({ status: 'loading', user: null, database: null });
-        await stop();
-        const database = new AccountDatabase(binding);
-        try {
-            const discard = () => database.outbox.clear();
-            if (navigator.locks) await navigator.locks.request(`sync:${database.name}`, discard);
-            else await discard();
-        } finally { database.close(); }
-        await refresh();
+        const version = await stop();
+        if (version !== generation.current) return;
+        await readSession(async () => {
+            if (version !== generation.current) return;
+            const database = new AccountDatabase(binding);
+            try { await database.outbox.clear(); } finally { database.close(); }
+        }, true);
+        if (version === generation.current) await refresh();
     }, [refresh, stop]);
     useEffect(() => {
         void refresh();
-        const channel = new BroadcastChannel('gymapp-session');
+        const unsubscribe = subscribeSession(message => {
+            if (message === 'changing') void stop();
+            else void refresh();
+        });
         const revalidate = () => void refresh();
-        channel.onmessage = revalidate;
+        const resume = () => {
+            const database = current.current;
+            if (document.visibilityState !== 'visible' || !database) return;
+            if (epoch.current !== sessionEpoch()) { void refresh(); return; }
+            const version = generation.current;
+            // A ready cache remains usable offline. Only a confirmed identity or
+            // role change detaches it; returning to the tab is not a data refresh.
+            void readSession(getBootstrap).then(bootstrap => {
+                if (version !== generation.current || current.current !== database) return;
+                if (bootstrap.status !== 'authenticated' || bootstrap.user.id !== database.binding.accountId
+                    || bootstrap.installationId !== database.binding.installationId || bootstrap.user.isAdmin !== readyRole.current) {
+                    void refresh();
+                }
+            }).catch(() => {});
+        };
         window.addEventListener(AUTHORIZATION_FAILURE, revalidate);
+        document.addEventListener('visibilitychange', resume);
+        // An OIDC redirect replaces the document, so the arriving document tells
+        // waiting tabs to revalidate after the callback has set its cookie.
+        if (sessionStorage.getItem('gymapp-oidc-return')) {
+            sessionStorage.removeItem('gymapp-oidc-return');
+            notifySession('changed');
+        }
         return () => {
+            unsubscribe();
             window.removeEventListener(AUTHORIZATION_FAILURE, revalidate);
-            channel.close();
+            document.removeEventListener('visibilitychange', resume);
             void stop();
         };
     }, [refresh, stop]);
     useEffect(() => {
         if (state.status !== 'ready' || !state.database) return;
-        const database = state.database;
-        const version = generation.current;
-        const active = () => generation.current === version && current.current === database;
-        const send = () => {
-            sender.current = sender.current.then(() => active() ? flushPendingMutations(database, active) : undefined).catch(() => {});
-        };
+        const send = () => { void drain().catch(() => {}); };
         send();
         const timer = window.setInterval(send, 2000);
         window.addEventListener('online', send);
         return () => { clearInterval(timer); window.removeEventListener('online', send); };
-    }, [state]);
-    return <SessionContext.Provider value={{ ...state, userId: state.user?.id ?? null, isAdmin: Boolean(state.user?.isAdmin),
-        isLoading: ['loading', 'preparing'].includes(state.status), refresh, logout, discardLocalChanges }}>{children}</SessionContext.Provider>;
+    }, [state.status, state.database, drain]);
+    return <SessionContext.Provider value={{ ...state, userId: state.user?.id ?? null,
+        isAdmin: state.status === 'ready' && Boolean(state.capabilities?.manageUsers),
+        isLoading: ['loading', 'preparing'].includes(state.status), refresh, drain, logout, discardLocalChanges }}>{children}</SessionContext.Provider>;
 }
 export function useSession() {
     const context = useContext(SessionContext);
@@ -132,7 +166,7 @@ export function useSession() {
     return context;
 }
 export function useDatabase(): AccountDatabase {
-    const { database } = useSession();
-    if (!database) throw new Error('account_cache_not_ready');
+    const { status, database } = useSession();
+    if (status !== 'ready' || !database) throw new ApiError('unauthenticated', 'account_cache_not_ready');
     return database;
 }

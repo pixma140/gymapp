@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountDatabase, clearLegacyCacheOnce } from '@/db/db';
-import { hydrateFromServer } from '@/db/hydrate';
+import { hydrateFromServer, prepareAccountCache } from '@/db/hydrate';
 import { applyOperation } from '@/db/operations';
 import { flushPendingMutations } from '@/db/sqliteSync';
 import type { Snapshot } from '@shared/commands';
@@ -75,20 +75,65 @@ describe('account caches and transactional intent', () => {
         const id = await applyOperation(db, 'workout.start', null, { gymId: snapshot.gyms[0].id, startTime: 10 });
         await applyOperation(db, 'workout.finish', id, { endTime: 20 });
         const before = await db.outbox.orderBy('sequence').first();
-        vi.stubGlobal('navigator', { locks: { request: async (_name: string, callback: () => Promise<void>) => callback() } });
+        vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
         vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network')));
         await flushPendingMutations(db);
         expect((await db.outbox.orderBy('sequence').first())?.command).toEqual(before?.command);
         const delivered: Array<{ expectedRevision: number | null }> = [];
         vi.stubGlobal('fetch', vi.fn(async (_url, options) => {
             const command = JSON.parse(options.body); delivered.push(command);
-            return { ok: true, json: async () => ({ ...db.binding, mutationId: command.mutationId,
+            return { ok: true, json: async () => ({ ok: true, ...db.binding, mutationId: command.mutationId,
                 revision: delivered.length, accountGeneration: delivered.length, catalogGeneration: 1 }) };
         }));
         await flushPendingMutations(db);
         expect(delivered.map(command => command.expectedRevision)).toEqual([null, 1]);
         expect(await db.outbox.count()).toBe(0);
         expect((await db.workouts.get(id!))?.revision).toBe(2);
+    });
+    it('distinguishes an empty account from malformed hydration without erasing cached data', async () => {
+        const { db, snapshot } = fixture();
+        expect(await prepareAccountCache(db, snapshot)).toEqual({ status: 'empty' });
+        await applyOperation(db, 'profile.update', null, { name: 'Keep local intent' });
+        const malformed = { ...snapshot, gyms: [{ ...snapshot.gyms[0], archived: 'false' }] };
+        expect((await prepareAccountCache(db, malformed as unknown as Snapshot)).status).toBe('error');
+        expect((await db.users.get(1))?.name).toBe('Keep local intent');
+        expect(await db.outbox.count()).toBe(1);
+        expect((await prepareAccountCache(db, snapshot)).status).toBe('success');
+        expect((await db.users.get(1))?.name).toBe('Keep local intent');
+    });
+    it('does not send when a lifecycle change happens while waiting for a lock', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await applyOperation(db, 'profile.update', null, { name: 'Paused edit' });
+        let active = true;
+        vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => {
+            active = false;
+            return (args.at(-1) as () => Promise<void>)();
+        } } });
+        const fetch = vi.fn();
+        vi.stubGlobal('fetch', fetch);
+        await flushPendingMutations(db, () => active);
+        expect(fetch).not.toHaveBeenCalled();
+        expect((await db.outbox.toArray())[0].attempts).toBe(0);
+    });
+    it.each([
+        [401, 'unauthorized', 'paused'], [403, 'forbidden', 'failed'],
+        [409, 'account_binding_mismatch', 'paused'], [409, 'revision_conflict', 'conflict'],
+        [400, 'invalid_payload', 'failed'],
+    ])('retains and stops rejected intent for HTTP %s / %s', async (status, error, state) => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await applyOperation(db, 'profile.update', null, { name: 'Keep rejected intent' });
+        const before = (await db.outbox.toArray())[0].command;
+        vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) =>
+            (args.at(-1) as () => Promise<void>)() } });
+        const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: false, error }), { status: Number(status) }));
+        vi.stubGlobal('fetch', fetch);
+        await flushPendingMutations(db);
+        await flushPendingMutations(db);
+        expect(fetch).toHaveBeenCalledTimes(1);
+        expect((await db.outbox.toArray())[0]).toMatchObject({ state, error, command: before });
+        expect((await db.users.get(1))?.name).toBe('Keep rejected intent');
     });
     it('prevents concurrent local starts and leaves rejected validation out of the queue', async () => {
         const { db, snapshot } = fixture();

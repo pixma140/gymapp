@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { getOidcStatus, loginWithUsername, registerWithUsername, startOidcLogin } from '@/auth/session';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useSession } from '@/context/SessionContext';
@@ -17,7 +17,7 @@ export function AuthPage() {
     const [oidcEnabled, setOidcEnabled] = useState(false);
     const navigate = useNavigate();
     const { t, language, setLanguage } = useLanguage();
-    const { refresh } = useSession();
+    const { status, refresh } = useSession();
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -65,9 +65,6 @@ export function AuthPage() {
             // reconcile/hydrate the local database for this account.
             await refresh();
 
-            const channel = new BroadcastChannel('gymapp-session');
-            channel.postMessage('changed'); channel.close();
-
             navigate(mode === 'register' ? '/onboarding' : '/', { replace: true });
         } catch {
             setErrorKey('auth.error.generic');
@@ -75,6 +72,8 @@ export function AuthPage() {
             setIsSubmitting(false);
         }
     };
+
+    if (status === 'ready' && !isSubmitting) return <Navigate to="/" replace />;
 
     return (
         <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] flex flex-col p-6">

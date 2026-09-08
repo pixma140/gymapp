@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useDatabase, useSession } from '@/context/SessionContext';
-import { flushPendingMutations } from '@/db/sqliteSync';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 export function SyncStatus() {
     const db = useDatabase();
-    const { refresh } = useSession();
+    const { refresh, drain } = useSession();
     const { t } = useLanguage();
     const [busy, setBusy] = useState(false);
     const [blocked, setBlocked] = useState(false);
@@ -19,7 +18,7 @@ export function SyncStatus() {
             <button className="rounded-lg border border-[var(--border)] px-3 py-1 disabled:opacity-50" disabled={busy} onClick={async () => {
                 setBusy(true); setBlocked(false);
                 try {
-                    await flushPendingMutations(db);
+                    await drain();
                     if (await db.outbox.count()) { setBlocked(true); return; }
                     await refresh();
                 } catch { setBlocked(true); } finally { setBusy(false); }

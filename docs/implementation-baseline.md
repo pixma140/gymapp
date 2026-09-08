@@ -124,3 +124,30 @@ share one serialized transaction, using the same snapshot reader as explicit
 refresh. Added HTTP coverage in `server/sync.test.js` for setup, absent/expired
 sessions, role capabilities, and account/installation binding. The full Vitest
 suite passed (80 tests including the in-progress client regressions).
+
+## Phase D client checkpoint — 2026-09-08
+
+- SessionProvider consumes the validated transactional bootstrap. Setup/guards
+  use provider state; only a ready account mounts domain screens and runs its
+  tracked sender. Manual refresh uses the same sender as scheduled delivery.
+- Auth, admin, bootstrap, and sync share typed request/error handling. Network,
+  unauthenticated, forbidden, validation, conflict, malformed, server, and
+  rate-limit failures remain distinct. Failed logout does not claim success.
+- Cache preparation reports success, valid empty activity, or error. It validates
+  profile/catalog/private records and bindings before writing, retains dirty
+  caches, and never interprets a failed load as onboarding.
+- Web Locks serialize senders per account and exclude cookie changes/bootstrap
+  from active sends. Channel notifications and an epoch changed under the lock
+  invalidate stale work; login/logout propagates between tabs. Identity checks
+  when a tab becomes visible preserve ready offline data on network failure.
+- Added `test/api.test.ts` and extended HTTP, fake-IndexedDB, and browser tests
+  for response classification, bootstrap binding, rejected/paused intent,
+  stale lock waiters, failed reload/retry, offline tab return, single-sender
+  exclusion, and queue retention through logout/account switching.
+- Final validation: 86 Vitest tests in eight files, lint, production build, and
+  all five Playwright workflows passed. Tests requiring local ports/browser
+  processes ran outside the sandbox. Initial JS: 451.86 kB / gzip 139.31 kB;
+  admin and analysis remain separate chunks.
+- Phase E remains open for backoff/Retry-After, immutable-envelope refinements,
+  freezing local writes during snapshot replacement, and reviewed conflict
+  reapplication. No application database reset or schema migration was needed.

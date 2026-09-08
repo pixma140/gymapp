@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
-import { getSetupStatus, setupInitialAdmin } from '@/auth/session';
+import { setupInitialAdmin } from '@/auth/session';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useSession } from '@/context/SessionContext';
 import type { Language, TranslationKey } from '@/i18n/translations';
@@ -9,7 +9,7 @@ import type { Language, TranslationKey } from '@/i18n/translations';
 export function SetupPage() {
     const navigate = useNavigate();
     const { t, language, setLanguage } = useLanguage();
-    const { refresh } = useSession();
+    const { status, refresh } = useSession();
 
     const [username, setUsername] = useState('');
     const [name, setName] = useState('');
@@ -18,20 +18,6 @@ export function SetupPage() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    useEffect(() => {
-        let mounted = true;
-
-        void getSetupStatus().then((needsSetup) => {
-            if (mounted && !needsSetup) {
-                navigate('/auth', { replace: true });
-            }
-        });
-
-        return () => {
-            mounted = false;
-        };
-    }, [navigate]);
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -67,6 +53,10 @@ export function SetupPage() {
             setIsSubmitting(false);
         }
     };
+
+    if (status === 'failed') return <div className="p-6"><p>{t('sync.loadFailed')}</p><button onClick={() => void refresh()}>{t('sync.retry')}</button></div>;
+    if (status === 'loading' || status === 'preparing') return <p>{t('common.loading')}</p>;
+    if (status !== 'setup') return <Navigate to={status === 'ready' ? '/' : '/auth'} replace />;
 
     const labelClass = 'text-xs uppercase tracking-wider text-[var(--muted-foreground)]';
     const inputClass = 'w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]';
