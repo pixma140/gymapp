@@ -104,11 +104,13 @@ return the saved result instead of applying the mutation twice.
 The client retains failed or ambiguous work. A browser Web Lock permits one
 sender per account across tabs; browsers without Web Locks retain their queue.
 Use HTTPS or localhost for the browser capabilities needed by synchronization.
-Account/catalog generation changes pause a dirty cache for review. Refresh
-never replaces pending work silently. Current resolution is export, explicitly
-discard local intent, and reload. Reviewed reapplication, richer error reporting,
-and retry backoff/`Retry-After` handling remain in PLAN.md. There is no automatic
-merge, continuous background pull, service worker, or offline cold start.
+Network and server failures use persisted exponential backoff; rate limits honor
+`Retry-After`. Account/catalog generation changes pause a dirty cache for review
+before its first delivery. Refresh never replaces pending work silently.
+Conflicts can discard the rejected dependency chain or reapply reviewed intent
+against current server revisions with new mutation IDs. Settings can export all
+pending intent before either discard path. There is no automatic merge,
+continuous background pull, service worker, or offline cold start.
 
 Bootstrap failures offer Retry and preserve cached data and pending changes.
 Tabs coordinate senders and login/logout using Web Locks and session-change

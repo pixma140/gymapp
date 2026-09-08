@@ -1,8 +1,9 @@
 # Architecture
 
-Current implementation checkpoint: Phases A–D, including deterministic fixtures,
-account authorization, transactional bootstrap, and account-local tab coordination.
-PLAN.md tracks remaining outbox, conflict-resolution, UI, and release hardening.
+Current implementation checkpoint: Phases A–E, including deterministic fixtures,
+account authorization, transactional bootstrap, account-local tab coordination,
+and durable revisioned synchronization. PLAN.md tracks remaining UI and release
+hardening.
 
 ## Runtime and modules
 
@@ -20,11 +21,11 @@ built frontend and APIs; Vite proxies API requests during development.
 | `server/services/accounts.js` | Account creation/OIDC identity resolution, role/deletion guards, atomic password reset |
 | `server/services/sync.js` | Validated commands, revisions, receipts, consistent snapshots |
 | `shared/commands.js`, `.d.ts` | Runtime command validation and protocol types |
-| `src/context/SessionContext.tsx` | Bootstrap, ready-account handle, worker scheduling, logout/discard |
+| `src/context/SessionContext.tsx` | Bootstrap, ready-account handle, worker scheduling, logout/discard/conflict resolution |
 | `src/db/db.ts` | Account/installation database factory and one-time legacy-cache cleanup |
 | `src/db/operations.ts` | Atomic local state plus outgoing command |
-| `src/db/sqliteSync.ts` | Ordered Web-Lock sender and receipt/dependency reconciliation |
-| `src/db/hydrate.ts` | Validated snapshots, explicit empty/success/error preparation, pending-work preservation |
+| `src/db/sqliteSync.ts` | Ordered Web-Lock sender, generation preflight, retry timing, and receipt/dependency reconciliation |
+| `src/db/hydrate.ts` | Validated atomic snapshots, pending-work preservation, and explicit conflict resolution |
 | `src/lib/api.ts` | Typed network/HTTP/malformed-response handling shared by auth, admin, bootstrap, and sync |
 | `src/auth/tabs.ts` | Session locks, session-change notifications, and stale-sender epoch checks |
 
@@ -57,8 +58,10 @@ The old initial schema requires explicit reset; there are no ALTER migrations.
 IndexedDB names are `GymApp:<installation UUID>:<account ID>`. Initial version 1
 stores contain profile (`users`), shared catalog cache (`gyms`), private workouts,
 measurements, ordered outbox, and sync metadata. IDs are UUIDs except the account
-profile and auto-increment outbox sequence. Each outbox envelope additionally
-carries the account/installation binding checked by the server.
+profile and auto-increment outbox sequence. The outbox persists immutable intent,
+an immutable prepared envelope once its server revision is known, dependency,
+attempt count, state, error, and next retry time. Each prepared envelope carries
+the account/installation binding checked by the server.
 
 There are no exercise, equipment, or set stores, seeds, routes, or provider calls.
 `history.csv` is a standalone source export excluded from Docker input.
@@ -72,9 +75,11 @@ are stored atomically with successful mutations; a reused mutation UUID with
 different content is rejected. Updates never resurrect deleted records.
 
 Local operations update data and append intent in one Dexie transaction. Later
-edits to the same record depend on earlier queued commands. An acknowledged
-revision is persisted and passed to the next unsent dependent command; an
-attempted command retains its original envelope for retry.
+edits to the same record depend on earlier queued commands and remain unprepared
+until the earlier acknowledgement supplies the real server revision. An
+attempted command retains its original envelope for retry. Network/5xx failures
+use persisted exponential backoff, 429 honors `Retry-After`, and terminal errors
+remain at the head of the ordered queue for explicit action.
 
 `GET /api/bootstrap` reads setup/session status, installation identity, current
 capabilities, and an account-scoped snapshot in one SQLite transaction. The
@@ -96,15 +101,18 @@ Browsers without Web Locks retain queues without sending.
 
 Server-side envelope identity checks additionally protect against externally
 changed cookies. Binding mismatch pauses the old queue and revalidates the
-session. Dirty-cache generation mismatches are surfaced as conflicts; pending
-intent is never silently replaced. Explicit refresh drains the tracked sender
-and refuses snapshot replacement while pending work remains.
+session. Before first delivery, a dirty queue compares its recorded private or
+catalog generation with a consistent server snapshot; mismatches become explicit
+conflicts. Snapshot replacement detaches domain UI and swaps all domain tables
+and generation metadata in one Dexie transaction. Conflict actions either drop
+the rejected dependency chain or atomically load current server data and reapply
+reviewed intent with new mutation IDs. Pending intent is never silently replaced.
+Explicit refresh drains the tracked sender and refuses replacement while pending
+work remains.
 
 ## Remaining limits
 
-Retry backoff/Retry-After and reviewed conflict reapplication remain Phase E
-work. OIDC protocol orchestration remains in app.js; identity creation and
-password reset use the account service. Export/discard/reload is currently the
-available conflict resolution. No offline cold start, continuous pull, or
+OIDC protocol orchestration remains in app.js; identity creation and password
+reset use the account service. No offline cold start, continuous pull, or
 automatic merging is promised. CI publishing gates and Docker build verification
 remain Phase G work.

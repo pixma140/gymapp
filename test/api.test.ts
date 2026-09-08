@@ -17,6 +17,12 @@ describe('typed API and bootstrap failures', () => {
         vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')));
         await expect(getBootstrap()).rejects.toMatchObject({ kind: 'network' });
     });
+    it('parses Retry-After seconds for rate-limited requests', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"ok":false,"error":"too_many_requests"}', {
+            status: 429, headers: { 'Retry-After': '12' },
+        })));
+        await expect(requestJson('/api/test', valid)).rejects.toMatchObject({ kind: 'rateLimited', retryAfterMs: 12_000 });
+    });
     it.each(['not json', '{}', '{"ok":true}', '{"ok":true,"status":"signedOut","installationId":"invalid"}'])(
         'rejects malformed bootstrap %s', async body => {
             vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(body)));

@@ -94,6 +94,23 @@ resolution. Do not mark these requirements complete merely because the initial
 worker/snapshot plumbing exists. Phase G CI publication gates and Docker image
 verification remain, as does the future external exercise integration.
 
+## Phase E checkpoint — 2026-09-08
+
+- Outbox rows now separate immutable local intent from the immutable command
+  envelope prepared when its real expected server revision is known. Sequence,
+  dependency, attempts, state, error, and retry deadline persist in IndexedDB.
+- The ordered Web-Lock worker performs generation preflight before first delivery,
+  retains ambiguous envelopes unchanged, exponentially backs off network/5xx
+  responses, honors 429 `Retry-After`, pauses 401/binding failures, and leaves
+  validation, permission, and revision failures actionable at the queue head.
+- Snapshot replacement detaches account UI and commits domain tables, outbox, and
+  generation metadata atomically. Conflict actions either discard the rejected
+  dependency chain or replay reviewed intent over the authoritative snapshot with
+  new mutation IDs. Settings export remains available before destructive action.
+- Sync UI reports translated pending, paused, failed, conflict, and last-refresh
+  state. Final validation: 107 Vitest tests in nine files, lint, production build,
+  and all eight Chromium workflows pass.
+
 ## Phase C checkpoint — 2026-09-08
 
 - Setup and password-account creation share one insert operation. Registration

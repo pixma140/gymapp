@@ -1,7 +1,8 @@
 import { isUuid, PROFILE_COLUMNS, validateCommand } from '@shared/commands';
 import { ApiError, isObject } from '@/lib/api';
 import type { Snapshot } from '@shared/commands';
-import type { AccountDatabase } from './db';
+import type { AccountDatabase, MutationIntent, PendingMutation } from './db';
+import { applyIntent } from './operations';
 
 const revision = (value: unknown) => Number.isSafeInteger(value) && Number(value) >= 1;
 const generation = (value: unknown) => Number.isSafeInteger(value) && Number(value) >= 0;
@@ -31,17 +32,27 @@ export function isSnapshot(value: unknown): value is Snapshot {
 }
 
 export type HydrationResult = { status: 'success' | 'empty' } | { status: 'error'; error: Error };
+export function generationConflictSequences(entries: PendingMutation[], metadata: { accountGeneration: number; catalogGeneration: number } | undefined,
+    snapshot: Pick<Snapshot, 'accountGeneration' | 'catalogGeneration'>): number[] {
+    if (!metadata) return entries.map(entry => entry.sequence);
+    const accountChanged = metadata.accountGeneration !== snapshot.accountGeneration;
+    const catalogChanged = metadata.catalogGeneration !== snapshot.catalogGeneration;
+    return entries.filter(entry => entry.intent.operation.startsWith('gym.') ? catalogChanged : accountChanged)
+        .map(entry => entry.sequence);
+}
 export async function prepareAccountCache(db: AccountDatabase, snapshot: Snapshot): Promise<HydrationResult> {
     try {
         if (!isSnapshot(snapshot)) throw new ApiError('malformed', 'invalid_snapshot');
         if (snapshot.accountId !== db.binding.accountId || snapshot.installationId !== db.binding.installationId) throw new Error('account_binding_mismatch');
-        const pending = await db.outbox.orderBy('sequence').first();
-        if (!pending) return await hydrateFromServer(db, snapshot);
+        const pending = await db.outbox.orderBy('sequence').toArray();
+        if (!pending.length) return await hydrateFromServer(db, snapshot);
         const metadata = await db.syncMetadata.get('state');
-        if (!metadata || metadata.accountGeneration !== snapshot.accountGeneration || metadata.catalogGeneration !== snapshot.catalogGeneration) {
-            await db.outbox.update(pending.sequence, { state: 'conflict', error: 'generation_conflict' });
-        } else if (pending.state === 'paused') {
-            await db.outbox.update(pending.sequence, { state: 'pending', error: undefined });
+        const head = pending[0];
+        const conflictSequences = head.attempts === 0 ? generationConflictSequences(pending, metadata, snapshot) : [];
+        if (conflictSequences.length) {
+            await db.outbox.where('sequence').anyOf(conflictSequences).modify({ state: 'conflict', error: 'generation_conflict' });
+        } else if (head.state === 'paused') {
+            await db.outbox.update(head.sequence, { state: 'pending', error: undefined, nextAttemptAt: undefined });
         }
         if (!await db.users.get(db.binding.accountId)) throw new Error('missing_cached_profile');
         return { status: 'success' };
@@ -70,15 +81,42 @@ async function replaceAccountData(db: AccountDatabase, snapshot: Snapshot): Prom
         catalogGeneration: snapshot.catalogGeneration, lastRefreshed: Date.now() });
 }
 
+function assertPendingUnchanged(entries: PendingMutation[], expectedMutationIds: string[]): void {
+    const mutationIds = entries.map(entry => entry.intent.mutationId);
+    if (mutationIds.length !== expectedMutationIds.length || mutationIds.some((id, index) => id !== expectedMutationIds[index])) {
+        throw new Error('pending_work_changed');
+    }
+}
+
 export async function discardPendingChanges(db: AccountDatabase, snapshot: Snapshot, expectedMutationIds: string[]): Promise<void> {
     if (!isSnapshot(snapshot)) throw new ApiError('malformed', 'invalid_snapshot');
     if (snapshot.accountId !== db.binding.accountId || snapshot.installationId !== db.binding.installationId) throw new Error('account_binding_mismatch');
     await db.transaction('rw', [db.users, db.gyms, db.workouts, db.userMeasurements, db.outbox, db.syncMetadata], async () => {
-        const mutationIds = (await db.outbox.orderBy('sequence').toArray()).map(entry => entry.command.mutationId);
-        if (mutationIds.length !== expectedMutationIds.length || mutationIds.some((id, index) => id !== expectedMutationIds[index])) {
-            throw new Error('pending_work_changed');
-        }
+        assertPendingUnchanged(await db.outbox.orderBy('sequence').toArray(), expectedMutationIds);
         await db.outbox.clear();
         await replaceAccountData(db, snapshot);
+    });
+}
+
+export async function resolvePendingConflict(db: AccountDatabase, snapshot: Snapshot, expectedMutationIds: string[],
+    resolution: 'discard' | 'reapply'): Promise<void> {
+    if (!isSnapshot(snapshot)) throw new ApiError('malformed', 'invalid_snapshot');
+    if (snapshot.accountId !== db.binding.accountId || snapshot.installationId !== db.binding.installationId) throw new Error('account_binding_mismatch');
+    await db.transaction('rw', [db.users, db.gyms, db.workouts, db.userMeasurements, db.outbox, db.syncMetadata], async () => {
+        const entries = await db.outbox.orderBy('sequence').toArray();
+        assertPendingUnchanged(entries, expectedMutationIds);
+        const rejected = entries.filter(entry => entry.state === 'conflict');
+        if (!rejected.length) throw new Error('conflict_not_found');
+        const discarded = new Set<number>(rejected.map(entry => entry.sequence));
+        for (const entry of entries) {
+            if (entry.dependency !== undefined && discarded.has(entry.dependency)) discarded.add(entry.sequence);
+        }
+        const reviewed = resolution === 'reapply' ? entries : entries.filter(entry => !discarded.has(entry.sequence));
+        await db.outbox.clear();
+        await replaceAccountData(db, snapshot);
+        for (const entry of reviewed) {
+            await applyIntent(db, Object.freeze({ ...entry.intent, mutationId: crypto.randomUUID(),
+                payload: Object.freeze({ ...entry.intent.payload }) }) as MutationIntent);
+        }
     });
 }

@@ -2,10 +2,12 @@ export type ApiErrorKind = 'network' | 'unauthenticated' | 'forbidden' | 'valida
 export class ApiError extends Error {
     readonly kind: ApiErrorKind;
     readonly status?: number;
-    constructor(kind: ApiErrorKind, message: string, status?: number) {
+    readonly retryAfterMs?: number;
+    constructor(kind: ApiErrorKind, message: string, status?: number, retryAfterMs?: number) {
         super(message);
         this.kind = kind;
         this.status = status;
+        this.retryAfterMs = retryAfterMs;
     }
 }
 export const AUTHORIZATION_FAILURE = 'gymapp-authorization-failure';
@@ -34,7 +36,12 @@ export async function requestJson<T>(
         const kind: ApiErrorKind = response.status === 401 ? 'unauthenticated' : response.status === 403 ? 'forbidden'
             : response.status === 409 ? 'conflict' : response.status === 400 || response.status === 422 ? 'validation'
                 : response.status === 429 ? 'rateLimited' : response.status >= 500 ? 'server' : 'http';
-        throw new ApiError(kind, isObject(payload) && typeof payload.error === 'string' ? payload.error : `http_${response.status}`, response.status);
+        const retryAfter = response.headers.get('Retry-After');
+        const seconds = retryAfter === null ? NaN : Number(retryAfter);
+        const retryAfterMs = retryAfter === null ? undefined : Number.isFinite(seconds) && seconds >= 0
+            ? seconds * 1000 : Math.max(0, Date.parse(retryAfter) - Date.now());
+        throw new ApiError(kind, isObject(payload) && typeof payload.error === 'string' ? payload.error : `http_${response.status}`,
+            response.status, Number.isFinite(retryAfterMs) ? retryAfterMs : undefined);
     }
     if (!isObject(payload) || payload.ok !== true || !validate(payload)) throw new ApiError('malformed', 'invalid_response', response.status);
     return payload;

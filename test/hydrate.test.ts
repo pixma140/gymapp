@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountDatabase, clearLegacyCacheOnce } from '@/db/db';
-import { discardPendingChanges, hydrateFromServer, prepareAccountCache } from '@/db/hydrate';
+import { discardPendingChanges, hydrateFromServer, prepareAccountCache, resolvePendingConflict } from '@/db/hydrate';
 import { applyOperation } from '@/db/operations';
 import { flushPendingMutations } from '@/db/sqliteSync';
 import type { Snapshot } from '@shared/commands';
@@ -55,7 +55,7 @@ describe('account caches and transactional intent', () => {
             profile: { ...first.snapshot.profile, revision: 2, name: 'Server name' }, workouts: [{
                 id: crypto.randomUUID(), revision: 1, gymId: first.snapshot.gyms[0].id, startTime: 10, endTime: 20,
             }] };
-        const expected = (await first.db.outbox.toArray()).map(entry => entry.command.mutationId);
+        const expected = (await first.db.outbox.toArray()).map(entry => entry.intent.mutationId);
         await discardPendingChanges(first.db, authoritative, expected);
         expect(await first.db.outbox.count()).toBe(0);
         expect((await first.db.users.get(1))?.name).toBe('Server name');
@@ -69,7 +69,7 @@ describe('account caches and transactional intent', () => {
         await hydrateFromServer(db, snapshot);
         await applyOperation(db, 'profile.update', null, { name: 'Keep local' });
         const before = await db.outbox.toArray();
-        const expected = before.map(entry => entry.command.mutationId);
+        const expected = before.map(entry => entry.intent.mutationId);
         await expect(discardPendingChanges(db, { ...snapshot, gyms: [{ ...snapshot.gyms[0], archived: 'false' }] } as unknown as Snapshot, expected))
             .rejects.toThrow('invalid_snapshot');
         await expect(discardPendingChanges(db, { ...snapshot, accountId: 2, profile: { ...snapshot.profile, id: 2 } }, expected))
@@ -84,7 +84,7 @@ describe('account caches and transactional intent', () => {
         const { db, snapshot } = fixture();
         await hydrateFromServer(db, snapshot);
         await applyOperation(db, 'profile.update', null, { name: 'Originally confirmed' });
-        const expected = (await db.outbox.toArray()).map(entry => entry.command.mutationId);
+        const expected = (await db.outbox.toArray()).map(entry => entry.intent.mutationId);
         await applyOperation(db, 'profile.update', null, { weight: 80 });
         await expect(discardPendingChanges(db, snapshot, expected)).rejects.toThrow('pending_work_changed');
         expect((await db.users.get(1))?.name).toBe('Originally confirmed');
@@ -123,11 +123,17 @@ describe('account caches and transactional intent', () => {
         await applyOperation(db, 'workout.finish', id, { endTime: 20 });
         const before = await db.outbox.orderBy('sequence').first();
         vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
-        vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network')));
+        vi.stubGlobal('fetch', vi.fn(async url => {
+            if (String(url).endsWith('/snapshot')) return new Response(JSON.stringify({ ok: true, ...snapshot }));
+            throw new Error('network');
+        }));
         await flushPendingMutations(db);
         expect((await db.outbox.orderBy('sequence').first())?.command).toEqual(before?.command);
+        await db.outbox.update(before!.sequence, { nextAttemptAt: Date.now() - 1 });
         const delivered: Array<{ expectedRevision: number | null }> = [];
-        vi.stubGlobal('fetch', vi.fn(async (_url, options) => {
+        vi.stubGlobal('fetch', vi.fn(async (url, options) => {
+            if (String(url).endsWith('/snapshot')) return new Response(JSON.stringify({ ok: true, ...snapshot,
+                accountGeneration: delivered.length }));
             const command = JSON.parse(options.body); delivered.push(command);
             return { ok: true, json: async () => ({ ok: true, ...db.binding, mutationId: command.mutationId,
                 revision: delivered.length, accountGeneration: delivered.length, catalogGeneration: 1 }) };
@@ -136,6 +142,161 @@ describe('account caches and transactional intent', () => {
         expect(delivered.map(command => command.expectedRevision)).toEqual([null, 1]);
         expect(await db.outbox.count()).toBe(0);
         expect((await db.workouts.get(id!))?.revision).toBe(2);
+    });
+    it('keeps dependent intent unprepared until the acknowledged server revision is known', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await applyOperation(db, 'profile.update', null, { name: 'First' });
+        await applyOperation(db, 'profile.update', null, { weight: 80 });
+        const entries = await db.outbox.orderBy('sequence').toArray();
+        expect(entries[0].command).toMatchObject({ expectedRevision: 1, payload: { name: 'First' } });
+        expect(entries[1]).toMatchObject({ dependency: entries[0].sequence, command: null, attempts: 0 });
+        expect(entries[1].intent.payload).toEqual({ weight: 80 });
+    });
+    it('backs transient failures off durably and honors Retry-After', async () => {
+        const now = Date.now();
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await applyOperation(db, 'profile.update', null, { name: 'Retry later' });
+        vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
+        const fetch = vi.fn(async (url: string) => String(url).endsWith('/snapshot')
+            ? new Response(JSON.stringify({ ok: true, ...snapshot }))
+            : new Response(JSON.stringify({ ok: false, error: 'too_many_requests' }), { status: 429, headers: { 'Retry-After': '7' } }));
+        vi.stubGlobal('fetch', fetch);
+        await flushPendingMutations(db);
+        const entry = (await db.outbox.toArray())[0];
+        expect(entry).toMatchObject({ state: 'pending', attempts: 1, preflightAttempts: 0 });
+        expect(entry.nextAttemptAt).toBeGreaterThanOrEqual(now + 7000);
+        await flushPendingMutations(db);
+        expect(fetch).toHaveBeenCalledTimes(2);
+    });
+    it('backs generation preflight failures off before retrying', async () => {
+        const now = Date.now();
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await applyOperation(db, 'profile.update', null, { name: 'Preflight later' });
+        vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
+        const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: false, error: 'too_many_requests' }), {
+            status: 429, headers: { 'Retry-After': '7' },
+        }));
+        vi.stubGlobal('fetch', fetch);
+        await flushPendingMutations(db);
+        expect((await db.outbox.toArray())[0]).toMatchObject({ state: 'pending', attempts: 0, preflightAttempts: 1 });
+        expect((await db.outbox.toArray())[0].nextAttemptAt).toBeGreaterThanOrEqual(now + 7000);
+        await flushPendingMutations(db);
+        expect(fetch).toHaveBeenCalledTimes(1);
+    });
+    it('blocks a clean unsent queue when the server generation changed', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await applyOperation(db, 'profile.update', null, { name: 'Stale local edit' });
+        vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
+        const changed = { ...snapshot, accountGeneration: 1,
+            profile: { ...snapshot.profile, revision: 2, name: 'Other device' } };
+        const fetch = vi.fn(async (url: string) => String(url).endsWith('/snapshot')
+            ? new Response(JSON.stringify({ ok: true, ...changed }))
+            : new Response(JSON.stringify({ ok: true })));
+        vi.stubGlobal('fetch', fetch);
+        await flushPendingMutations(db);
+        expect(fetch).toHaveBeenCalledTimes(1);
+        expect((await db.outbox.toArray())[0]).toMatchObject({ state: 'conflict', attempts: 0, error: 'generation_conflict' });
+        expect((await db.users.get(1))?.name).toBe('Stale local edit');
+    });
+    it('marks the affected domain intent when a mixed queue has one stale generation', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await applyOperation(db, 'profile.update', null, { name: 'Private edit' });
+        await applyOperation(db, 'gym.update', snapshot.gyms[0].id, { name: 'Catalog edit' });
+        vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
+        vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ ok: true, ...snapshot, catalogGeneration: 2,
+            gyms: [{ ...snapshot.gyms[0], revision: 2, name: 'Remote catalog' }] }))));
+        await flushPendingMutations(db);
+        const entries = await db.outbox.orderBy('sequence').toArray();
+        expect(entries[0].state).toBe('pending');
+        expect(entries[1]).toMatchObject({ state: 'conflict', error: 'generation_conflict' });
+    });
+    it('marks every stale domain intent and discards them without rebasing unrelated work', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await applyOperation(db, 'profile.update', null, { name: 'Private edit' });
+        const measurementId = await applyOperation(db, 'measurement.create', null, { weight: 80, bodyFat: null, timestamp: 10 });
+        await applyOperation(db, 'gym.update', snapshot.gyms[0].id, { name: 'Catalog edit' });
+        vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
+        const changed = { ...snapshot, accountGeneration: 2,
+            profile: { ...snapshot.profile, revision: 2, name: 'Remote profile' } };
+        vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ ok: true, ...changed }))));
+        await flushPendingMutations(db);
+        const conflicted = await db.outbox.orderBy('sequence').toArray();
+        expect(conflicted.map(entry => entry.state)).toEqual(['conflict', 'conflict', 'pending']);
+        await resolvePendingConflict(db, changed, conflicted.map(entry => entry.intent.mutationId), 'discard');
+        const remaining = await db.outbox.toArray();
+        expect(remaining).toHaveLength(1);
+        expect(remaining[0].intent.operation).toBe('gym.update');
+        expect(await db.userMeasurements.get(measurementId!)).toBeUndefined();
+        expect((await db.users.get(1))?.name).toBe('Remote profile');
+        expect((await db.gyms.get(snapshot.gyms[0].id))?.name).toBe('Catalog edit');
+    });
+    it('does not advance the unrelated generation after an acknowledgement', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await applyOperation(db, 'profile.update', null, { name: 'Private edit' });
+        vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
+        vi.stubGlobal('fetch', vi.fn(async (url, options) => {
+            if (String(url).endsWith('/snapshot')) return new Response(JSON.stringify({ ok: true, ...snapshot }));
+            const command = JSON.parse(String(options?.body));
+            return new Response(JSON.stringify({ ok: true, ...db.binding, mutationId: command.mutationId,
+                revision: 2, accountGeneration: 1, catalogGeneration: 5 }));
+        }));
+        await flushPendingMutations(db);
+        expect(await db.syncMetadata.get('state')).toMatchObject({ accountGeneration: 1, catalogGeneration: 1 });
+    });
+    it('retains an unchanged envelope after a malformed acknowledgement', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await applyOperation(db, 'profile.update', null, { name: 'Ambiguous edit' });
+        vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
+        vi.stubGlobal('fetch', vi.fn(async (url: string) => String(url).endsWith('/snapshot')
+            ? new Response(JSON.stringify({ ok: true, ...snapshot })) : new Response('{"ok":true}')));
+        await flushPendingMutations(db);
+        const entry = (await db.outbox.toArray())[0];
+        expect(entry).toMatchObject({ state: 'pending', attempts: 1, error: 'invalid_response' });
+        expect(entry.command?.mutationId).toBe(entry.intent.mutationId);
+    });
+    it.each(['discard', 'reapply'] as const)('resolves a conflict by %s with an atomic authoritative replacement', async resolution => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await applyOperation(db, 'profile.update', null, { name: 'Reviewed' });
+        await applyOperation(db, 'profile.update', null, { weight: 80 });
+        const before = await db.outbox.orderBy('sequence').toArray();
+        await db.outbox.update(before[0].sequence, { state: 'conflict', error: 'revision_conflict' });
+        const authoritative = { ...snapshot, accountGeneration: 4,
+            profile: { ...snapshot.profile, revision: 3, name: 'Server' } };
+        await resolvePendingConflict(db, authoritative, before.map(entry => entry.intent.mutationId), resolution);
+        const after = await db.outbox.orderBy('sequence').toArray();
+        if (resolution === 'discard') {
+            expect(after).toHaveLength(0);
+            expect(await db.users.get(1)).toMatchObject({ name: 'Server', weight: null, revision: 3 });
+        } else {
+            expect(after).toHaveLength(2);
+            expect(after.map(entry => entry.intent.mutationId)).not.toEqual(before.map(entry => entry.intent.mutationId));
+            expect(after[0].command).toMatchObject({ expectedRevision: 3, payload: { name: 'Reviewed' } });
+            expect(after[1]).toMatchObject({ dependency: after[0].sequence, command: null });
+            expect(await db.users.get(1)).toMatchObject({ name: 'Reviewed', weight: 80, revision: 3 });
+        }
+    });
+    it('discards a workout that depends on a rejected offline gym create', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        const gymId = await applyOperation(db, 'gym.create', null, { name: 'Offline gym', location: 'Local' });
+        await applyOperation(db, 'workout.start', null, { gymId: gymId!, startTime: 10 });
+        const entries = await db.outbox.orderBy('sequence').toArray();
+        expect(entries[1]).toMatchObject({ dependency: entries[0].sequence, revisionDependency: false });
+        expect(entries[1].command).toMatchObject({ operation: 'workout.start', expectedRevision: null });
+        await db.outbox.update(entries[0].sequence, { state: 'conflict', error: 'record_exists' });
+        await resolvePendingConflict(db, snapshot, entries.map(entry => entry.intent.mutationId), 'discard');
+        expect(await db.outbox.count()).toBe(0);
+        expect(await db.gyms.get(gymId!)).toBeUndefined();
+        expect(await db.workouts.count()).toBe(0);
     });
     it('distinguishes an empty account from malformed hydration without erasing cached data', async () => {
         const { db, snapshot } = fixture();
@@ -174,7 +335,8 @@ describe('account caches and transactional intent', () => {
         const responseGate = new Promise<void>(resolve => { release = resolve; });
         vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) =>
             (args.at(-1) as () => Promise<void>)() } });
-        vi.stubGlobal('fetch', vi.fn(async (_url, options) => {
+        vi.stubGlobal('fetch', vi.fn(async (url, options) => {
+            if (String(url).endsWith('/snapshot')) return new Response(JSON.stringify({ ok: true, ...snapshot }));
             const sent = JSON.parse(String(options?.body));
             active = false;
             await responseGate;
@@ -202,11 +364,13 @@ describe('account caches and transactional intent', () => {
         const before = (await db.outbox.toArray())[0].command;
         vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) =>
             (args.at(-1) as () => Promise<void>)() } });
-        const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: false, error }), { status: Number(status) }));
+        const fetch = vi.fn(async (url: string) => String(url).endsWith('/snapshot')
+            ? new Response(JSON.stringify({ ok: true, ...snapshot }))
+            : new Response(JSON.stringify({ ok: false, error }), { status: Number(status) }));
         vi.stubGlobal('fetch', fetch);
         await flushPendingMutations(db);
         await flushPendingMutations(db);
-        expect(fetch).toHaveBeenCalledTimes(1);
+        expect(fetch).toHaveBeenCalledTimes(2);
         expect((await db.outbox.toArray())[0]).toMatchObject({ state, error, command: before });
         expect((await db.users.get(1))?.name).toBe('Keep rejected intent');
     });

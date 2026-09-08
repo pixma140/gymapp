@@ -1,17 +1,29 @@
 import Dexie, { type EntityTable } from 'dexie';
 import { isUuid } from '@shared/commands';
-import type { AccountBinding, Command, Profile, Gym, Workout, Measurement } from '@shared/commands';
+import type { AccountBinding, Command, CommandPayloads, Operation, Profile, Gym, Workout, Measurement } from '@shared/commands';
 
 export type User = Profile;
 export type { Gym, Workout };
 export type UserMeasurement = Measurement;
+export type MutationIntent = {
+    [K in Operation]: Readonly<{
+        mutationId: string;
+        operation: K;
+        targetId: K extends 'profile.update' ? null : string;
+        payload: Readonly<CommandPayloads[K]>;
+    }>
+}[Operation];
 export interface PendingMutation {
     sequence: number;
-    command: Command;
+    intent: MutationIntent;
+    command: Command | null;
     dependency?: number;
+    revisionDependency?: boolean;
     attempts: number;
+    preflightAttempts?: number;
     state: 'pending' | 'sending' | 'failed' | 'conflict' | 'paused';
     error?: string;
+    nextAttemptAt?: number;
 }
 export interface SyncMetadata extends AccountBinding {
     key: 'state';

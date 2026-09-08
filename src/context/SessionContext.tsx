@@ -4,7 +4,7 @@ import { AUTHORIZATION_FAILURE, ApiError } from '@/lib/api';
 import { getBootstrap, logoutSession, type Capabilities, type SessionUser } from '@/auth/session';
 import { readSession, subscribeSession, notifySession, sessionEpoch } from '@/auth/tabs';
 import { AccountDatabase, clearLegacyCacheOnce } from '@/db/db';
-import { discardPendingChanges, prepareAccountCache } from '@/db/hydrate';
+import { discardPendingChanges, prepareAccountCache, resolvePendingConflict } from '@/db/hydrate';
 import { flushPendingMutations } from '@/db/sqliteSync';
 
 type Status = 'loading' | 'setup' | 'signedOut' | 'preparing' | 'ready' | 'failed';
@@ -23,6 +23,7 @@ interface SessionContextValue extends SessionState {
     drain: () => Promise<void>;
     logout: () => Promise<void>;
     discardLocalChanges: () => Promise<void>;
+    resolveConflict: (resolution: 'discard' | 'reapply') => Promise<void>;
 }
 const detached = (status: Status, error: Error | null = null): SessionState =>
     ({ status, user: null, database: null, capabilities: null, error });
@@ -103,7 +104,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         const attached = current.current;
         if (!attached) return;
         const binding = attached.binding;
-        const expectedMutationIds = (await attached.outbox.orderBy('sequence').toArray()).map(entry => entry.command.mutationId);
+        const expectedMutationIds = (await attached.outbox.orderBy('sequence').toArray()).map(entry => entry.intent.mutationId);
         const version = await stop();
         if (version !== generation.current) return;
         let database: AccountDatabase | null = null;
@@ -127,6 +128,37 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
             if (database) (database as AccountDatabase).close();
             if (version === generation.current) setState(detached('failed', error instanceof Error ? error : new Error('discard_failed')));
+            throw error;
+        }
+    }, [stop]);
+    const resolveConflict = useCallback(async (resolution: 'discard' | 'reapply') => {
+        const attached = current.current;
+        if (!attached) return;
+        const binding = attached.binding;
+        const expectedMutationIds = (await attached.outbox.orderBy('sequence').toArray()).map(entry => entry.intent.mutationId);
+        const version = await stop();
+        if (version !== generation.current) return;
+        let database: AccountDatabase | null = null;
+        try {
+            await readSession(async () => {
+                if (version !== generation.current) return;
+                const preparingEpoch = sessionEpoch();
+                const bootstrap = await getBootstrap();
+                if (version !== generation.current) return;
+                if (bootstrap.status !== 'authenticated' || bootstrap.user.id !== binding.accountId
+                    || bootstrap.installationId !== binding.installationId) throw new Error('account_binding_mismatch');
+                database = new AccountDatabase(binding);
+                await database.open();
+                await resolvePendingConflict(database, bootstrap.snapshot, expectedMutationIds, resolution);
+                if (version !== generation.current || preparingEpoch !== sessionEpoch()) { database.close(); return; }
+                readyRole.current = bootstrap.user.isAdmin;
+                epoch.current = preparingEpoch;
+                current.current = database;
+                setState({ status: 'ready', user: bootstrap.user, capabilities: bootstrap.capabilities, database, error: null });
+            }, true);
+        } catch (error) {
+            if (database) (database as AccountDatabase).close();
+            if (version === generation.current) setState(detached('failed', error instanceof Error ? error : new Error('resolution_failed')));
             throw error;
         }
     }, [stop]);
@@ -178,7 +210,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }, [state.status, state.database, drain]);
     return <SessionContext.Provider value={{ ...state, userId: state.user?.id ?? null,
         isAdmin: state.status === 'ready' && Boolean(state.capabilities?.manageUsers),
-        isLoading: ['loading', 'preparing'].includes(state.status), refresh, drain, logout, discardLocalChanges }}>{children}</SessionContext.Provider>;
+        isLoading: ['loading', 'preparing'].includes(state.status), refresh, drain, logout, discardLocalChanges, resolveConflict }}>{children}</SessionContext.Provider>;
 }
 export function useSession() {
     const context = useContext(SessionContext);
