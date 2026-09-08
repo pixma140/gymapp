@@ -62,6 +62,19 @@ describe('admin user management', () => {
     let bobCookie;
     let bobId;
 
+    it('rejects malformed setup without creating an administrator', async () => {
+        for (const body of [
+            { username: ['admin'], password: 'adminpassword', name: 'Admin' },
+            { username: 'admin', password: 'adminpassword', name: 'Admin', language: 'fr' },
+            { username: 'admin', password: 'adminpassword', name: 'Admin', isAdmin: true },
+        ]) {
+            const result = await request('POST', '/api/setup', { body });
+            expect(result.status).toBe(400);
+            expect(result.body.error).toBe('invalid_payload');
+        }
+        expect(await database.getSql('SELECT COUNT(*) AS count FROM users')).toEqual({ count: 0 });
+    });
+
     it('bootstraps the first admin via setup', async () => {
         const res = await request('POST', '/api/setup', {
             body: { username: 'admin', password: 'adminpassword', name: 'Admin' },
@@ -147,6 +160,20 @@ describe('admin user management', () => {
         expect(res.status).toBe(400);
     });
 
+    it('rejects unexpected role and password properties without mutation', async () => {
+        const role = await request('PATCH', `/api/admin/users/${bobId}`, {
+            cookie: adminCookie, body: { isAdmin: true, unexpected: true },
+        });
+        expect(role.status).toBe(400);
+        expect(await database.getSql('SELECT isAdmin FROM users WHERE id = ?', [bobId])).toEqual({ isAdmin: 0 });
+
+        const password = await request('POST', `/api/admin/users/${bobId}/password`, {
+            cookie: adminCookie, body: { password: ['longpassword'] },
+        });
+        expect(password.status).toBe(400);
+        expect((await request('POST', '/api/auth/login', { body: { username: 'bob', password: 'bobpassword' } })).status).toBe(200);
+    });
+
     it('prevents an admin from demoting themselves', async () => {
         const res = await request('PATCH', `/api/admin/users/${adminId}`, {
             cookie: adminCookie,
@@ -172,6 +199,19 @@ describe('admin user management', () => {
         expect(typeof carol.createdAt).toBe('number');
         // Never logged in yet.
         expect(carol.lastLoginAt).toBeNull();
+    });
+
+    it('rejects coerced administrator creation and leaves no account behind', async () => {
+        for (const body of [
+            { username: 'coerced-admin', password: 'longpassword', name: 'Coerced', isAdmin: 'false' },
+            { username: 'extra-admin', password: 'longpassword', name: 'Extra', isAdmin: true, unexpected: true },
+        ]) {
+            const result = await request('POST', '/api/admin/users', { cookie: adminCookie, body });
+            expect(result.status).toBe(400);
+            expect(result.body.error).toBe('invalid_payload');
+        }
+        expect(await database.getSql("SELECT COUNT(*) AS count FROM users WHERE username IN ('coerced-admin', 'extra-admin')"))
+            .toEqual({ count: 0 });
     });
 
     it('lets an admin-created user log in with their credentials', async () => {
@@ -269,12 +309,35 @@ describe('admin user management', () => {
         }
     });
 
-    it('serializes competing registrations and never accepts an admin role from registration', async () => {
+    it('rejects registration privilege fields and serializes valid competing registrations', async () => {
+        const privileged = await request('POST', '/api/auth/register', {
+            body: { username: 'privileged', password: 'longpassword', isAdmin: true },
+        });
+        expect(privileged.status).toBe(400);
+        expect(await database.getSql("SELECT COUNT(*) AS count FROM users WHERE username = 'privileged'"))
+            .toEqual({ count: 0 });
         const results = await Promise.all(['Concurrent', 'concurrent'].map(username =>
-            request('POST', '/api/auth/register', { body: { username, password: 'longpassword', isAdmin: true } })));
+            request('POST', '/api/auth/register', { body: { username, password: 'longpassword' } })));
         expect(results.map(result => result.status).sort()).toEqual([200, 409]);
         const created = results.find(result => result.status === 200);
         expect(created.body.user.isAdmin).toBe(false);
+    });
+
+    it('rejects malformed login and OIDC settings without changing security state', async () => {
+        const login = await request('POST', '/api/auth/login', {
+            body: { username: ['admin'], password: 'adminpassword' },
+        });
+        expect(login.status).toBe(400);
+        expect(login.cookie).toBeUndefined();
+
+        const oidc = await request('PUT', '/api/admin/oidc', {
+            cookie: adminCookie,
+            body: { enabled: 'false', issuer: 'https://issuer.example', clientId: 'client', clientSecret: 'secret', scopes: 'openid' },
+        });
+        expect(oidc.status).toBe(400);
+        expect(oidc.body.error).toBe('invalid_payload');
+        expect((await request('GET', '/api/auth/oidc/status')).body.enabled).toBe(false);
+        expect(await database.getSql("SELECT value FROM app_settings WHERE key = 'oidc.config'")).toBeNull();
     });
 
     it('rejects a password reset that is too short', async () => {

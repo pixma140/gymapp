@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { openDatabase } from './db.js';
 import { createApp } from './app.js';
 import { resetDatabase } from './reset.js';
-import { acquireDatabaseLease } from './databaseFiles.js';
+import { acquireDatabaseLease, databasePath } from './databaseFiles.js';
 import { DEVELOPMENT_GYMS } from './seed.js';
 import { hashPassword, verifyPassword } from './lib/crypto.js';
 
@@ -20,13 +20,14 @@ describe('fresh schema and development fixtures', () => {
             await new Promise((resolve, reject) => { server = app.listen(0, resolve); server.once('error', reject); });
             const base = `http://127.0.0.1:${server.address().port}`;
             const catalogs = [];
-            for (const [username, isAdmin] of [['admin', true], ['user', false]]) {
+            for (const [username, name, isAdmin] of [['admin', 'Administrator', true], ['user', 'User', false]]) {
                 const response = await fetch(`${base}/api/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password: '123geheim' }) });
                 expect(response.status).toBe(200);
-                expect((await response.json()).user.isAdmin).toBe(isAdmin);
+                const authenticated = await response.json();
+                expect(authenticated.user).toMatchObject({ username, name, isAdmin });
                 const snapshot = await fetch(`${base}/api/sync/snapshot`, { headers: { Cookie: response.headers.get('set-cookie').split(';')[0] } });
                 const data = await snapshot.json();
-                expect(data.profile.name).toBeTruthy();
+                expect(data.profile.name).toBe(name);
                 expect(data.workouts).toEqual([]); expect(data.measurements).toEqual([]);
                 catalogs.push(data.gyms.map(({ id, name, location }) => ({ id, name, location })));
             }
@@ -94,22 +95,40 @@ describe('fresh schema and development fixtures', () => {
     });
     it('resets only configured database files, reseeds explicitly, and refuses a running-server lease', async () => {
         const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'gymapp-reset-'));
-        const filename = path.join(dir, 'gymapp.db');
+        const filename = databasePath({ DATA_DIR: dir });
         try {
             await fs.writeFile(path.join(dir, 'history.csv'), 'preserve');
+            await fs.writeFile(path.join(dir, 'gymapp.db.backup'), 'unrelated');
             const first = await resetDatabase(filename, { seedDevData: true });
             const release = await acquireDatabaseLease(filename);
             try { await expect(resetDatabase(filename)).rejects.toThrow('database_in_use'); } finally { await release(); }
+            await fs.writeFile(`${filename}-wal`, 'stale-wal');
+            await fs.writeFile(`${filename}-shm`, 'stale-shm');
             const second = await resetDatabase(filename, { seedDevData: true });
             expect(second).not.toBe(first);
             let db = openDatabase(filename);
-            expect(await db.getSql('SELECT COUNT(*) AS count FROM users')).toEqual({ count: 2 });
+            expect(await db.allSql('SELECT username, name, isAdmin FROM users ORDER BY id')).toEqual([
+                { username: 'admin', name: 'Administrator', isAdmin: 1 },
+                { username: 'user', name: 'User', isAdmin: 0 },
+            ]);
+            expect(await db.allSql('SELECT id, name, location FROM gyms ORDER BY id')).toEqual(
+                [...DEVELOPMENT_GYMS].sort((left, right) => left.id.localeCompare(right.id)));
+            for (const table of ['workouts', 'userMeasurements', 'mutation_receipts']) {
+                expect(await db.getSql(`SELECT COUNT(*) AS count FROM ${table}`)).toEqual({ count: 0 });
+            }
+            const tables = (await db.allSql("SELECT name FROM sqlite_master WHERE type = 'table'")).map(row => row.name);
+            for (const name of ['exercises', 'gymEquipments', 'workoutSets']) expect(tables).not.toContain(name);
             await db.close();
+            for (const [suffix, stale] of [['-wal', 'stale-wal'], ['-shm', 'stale-shm']]) {
+                const contents = await fs.readFile(`${filename}${suffix}`, 'utf8').catch(error => error.code === 'ENOENT' ? null : Promise.reject(error));
+                expect(contents).not.toBe(stale);
+            }
             await resetDatabase(filename, { seedDevData: false });
             db = openDatabase(filename);
             expect(await db.getSql('SELECT COUNT(*) AS count FROM users')).toEqual({ count: 0 });
             await db.close();
             expect(await fs.readFile(path.join(dir, 'history.csv'), 'utf8')).toBe('preserve');
+            expect(await fs.readFile(path.join(dir, 'gymapp.db.backup'), 'utf8')).toBe('unrelated');
             expect(await fs.readdir(dir)).not.toContain('gymapp.db.lock');
         } finally { await fs.rm(dir, { recursive: true }); }
     });

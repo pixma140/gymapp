@@ -51,17 +51,34 @@ export async function prepareAccountCache(db: AccountDatabase, snapshot: Snapsho
 }
 
 export async function hydrateFromServer(db: AccountDatabase, snapshot: Snapshot): Promise<{ status: 'success' | 'empty' }> {
-    if (snapshot.accountId !== db.binding.accountId || snapshot.installationId !== db.binding.installationId) throw new Error('account_binding_mismatch');
     if (!isSnapshot(snapshot)) throw new ApiError('malformed', 'invalid_snapshot');
+    if (snapshot.accountId !== db.binding.accountId || snapshot.installationId !== db.binding.installationId) throw new Error('account_binding_mismatch');
     await db.transaction('rw', [db.users, db.gyms, db.workouts, db.userMeasurements, db.outbox, db.syncMetadata], async () => {
         if (await db.outbox.count()) throw new Error('pending_work');
-        await Promise.all([db.users.clear(), db.gyms.clear(), db.workouts.clear(), db.userMeasurements.clear()]);
-        await db.users.put(snapshot.profile);
-        await db.gyms.bulkPut(snapshot.gyms);
-        await db.workouts.bulkPut(snapshot.workouts);
-        await db.userMeasurements.bulkPut(snapshot.measurements);
-        await db.syncMetadata.put({ key: 'state', ...db.binding, accountGeneration: snapshot.accountGeneration,
-            catalogGeneration: snapshot.catalogGeneration, lastRefreshed: Date.now() });
+        await replaceAccountData(db, snapshot);
     });
     return { status: snapshot.workouts.length || snapshot.measurements.length ? 'success' : 'empty' };
+}
+
+async function replaceAccountData(db: AccountDatabase, snapshot: Snapshot): Promise<void> {
+    await Promise.all([db.users.clear(), db.gyms.clear(), db.workouts.clear(), db.userMeasurements.clear(), db.syncMetadata.clear()]);
+    await db.users.put(snapshot.profile);
+    await db.gyms.bulkPut(snapshot.gyms);
+    await db.workouts.bulkPut(snapshot.workouts);
+    await db.userMeasurements.bulkPut(snapshot.measurements);
+    await db.syncMetadata.put({ key: 'state', ...db.binding, accountGeneration: snapshot.accountGeneration,
+        catalogGeneration: snapshot.catalogGeneration, lastRefreshed: Date.now() });
+}
+
+export async function discardPendingChanges(db: AccountDatabase, snapshot: Snapshot, expectedMutationIds: string[]): Promise<void> {
+    if (!isSnapshot(snapshot)) throw new ApiError('malformed', 'invalid_snapshot');
+    if (snapshot.accountId !== db.binding.accountId || snapshot.installationId !== db.binding.installationId) throw new Error('account_binding_mismatch');
+    await db.transaction('rw', [db.users, db.gyms, db.workouts, db.userMeasurements, db.outbox, db.syncMetadata], async () => {
+        const mutationIds = (await db.outbox.orderBy('sequence').toArray()).map(entry => entry.command.mutationId);
+        if (mutationIds.length !== expectedMutationIds.length || mutationIds.some((id, index) => id !== expectedMutationIds[index])) {
+            throw new Error('pending_work_changed');
+        }
+        await db.outbox.clear();
+        await replaceAccountData(db, snapshot);
+    });
 }

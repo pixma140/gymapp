@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import fs from 'node:fs/promises';
 
 test('fixture users share gyms and retain private timed workouts through logout and reload', async ({ page }) => {
     const errors: string[] = [];
@@ -29,6 +30,7 @@ test('fixture users share gyms and retain private timed workouts through logout 
     await expect(page.locator('a[href="/admin"]')).toHaveCount(0);
     await expect(page.locator('a[href="/settings/gyms"]')).toHaveCount(0);
     await page.getByRole('button', { name: /Log out|Logout/i }).click();
+    await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
     await login('admin');
     await page.getByRole('button', { name: 'Analysis', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Iron Odyssey', exact: true })).toHaveCount(0);
@@ -38,6 +40,7 @@ test('fixture users share gyms and retain private timed workouts through logout 
     await expect(page.getByRole('button', { name: 'Users', exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Settings', exact: true }).click();
     await page.getByRole('button', { name: /Log out|Logout/i }).click();
+    await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
     await login('user');
     await page.getByRole('button', { name: 'Analysis', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Iron Odyssey', exact: true })).toBeVisible();
@@ -144,6 +147,151 @@ test('failed bootstrap preserves pending intent and retries without onboarding',
     await expect(page.getByText('Pending changes: 0', { exact: true })).toBeVisible();
 });
 
+test('discard is confirmed, failure-atomic, exportable, and scoped to the current account', async ({ page, context }) => {
+    const register = async (username: string) => {
+        expect((await page.request.post('/api/auth/register', {
+            data: { username, password: '123geheim' },
+        })).ok()).toBe(true);
+        await page.goto('/');
+        await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+    };
+    const queueWorkout = async () => {
+        await page.getByRole('button', { name: /Foundry District/ }).click();
+        await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+        await expect(page.getByText('Pending changes: 1', { exact: true })).toBeVisible();
+    };
+
+    await context.route('**/api/sync', route => route.abort());
+    await register('discard-account-a');
+    await queueWorkout();
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    await page.getByRole('button', { name: /Log out|Logout/i }).click();
+
+    await register('discard-account-b');
+    await queueWorkout();
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    const discard = page.getByRole('button', { name: /Discard pending changes/ });
+    page.once('dialog', dialog => dialog.dismiss());
+    await discard.click();
+    await expect(discard).toBeEnabled();
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: /Export Data/ }).click();
+    const download = await downloadPromise;
+    const downloadPath = await download.path();
+    expect(downloadPath).toBeTruthy();
+    const exported = JSON.parse(await fs.readFile(downloadPath!, 'utf8'));
+    expect(exported.pending).toHaveLength(1);
+    expect(exported.pending[0].command.accountId).toBe(exported.binding.accountId);
+    expect(exported.syncMetadata).toHaveLength(1);
+
+    await page.route('**/api/bootstrap', route => route.fulfill({ status: 500, body: 'unavailable' }));
+    page.once('dialog', dialog => dialog.accept());
+    await discard.click();
+    await expect(page.getByText('Could not load your account. Local data has been preserved.')).toBeVisible();
+    await page.unroute('**/api/bootstrap');
+    await page.getByRole('button', { name: 'Retry', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
+    await expect(page.getByText(/Workout session active/)).toBeVisible();
+    await expect(page.getByText('Pending changes: 1', { exact: true })).toBeVisible();
+
+    page.once('dialog', dialog => dialog.accept());
+    await page.getByRole('button', { name: /Discard pending changes/ }).click();
+    await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Discard pending changes/ })).toBeDisabled();
+    await page.getByRole('button', { name: /Log out|Logout/i }).click();
+    expect((await page.request.post('/api/auth/login', {
+        data: { username: 'discard-account-a', password: '123geheim' },
+    })).ok()).toBe(true);
+    await page.goto('/');
+    await expect(page.getByRole('button', { name: 'Resume workout', exact: true })).toBeVisible();
+    await expect(page.getByText('Pending changes: 1', { exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    page.once('dialog', dialog => dialog.accept());
+    await page.getByRole('button', { name: /Discard pending changes/ }).click();
+    await context.unroute('**/api/sync');
+});
+
+test('superseded bootstrap completion cannot publish stale session state', async ({ page }) => {
+    expect((await page.request.post('/api/auth/register', {
+        data: { username: 'superseded-bootstrap', password: '123geheim' },
+    })).ok()).toBe(true);
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+    let calls = 0;
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    await page.route('**/api/bootstrap', async route => {
+        calls++;
+        if (calls === 1) {
+            await gate;
+            await route.fulfill({ json: { ok: true, status: 'signedOut', installationId: crypto.randomUUID() } });
+            return;
+        }
+        await route.continue();
+    });
+    await page.evaluate(() => {
+        const channel = new BroadcastChannel('gymapp-session');
+        channel.postMessage('changed');
+        channel.close();
+    });
+    await expect.poll(() => calls).toBe(1);
+    await page.evaluate(() => {
+        const channel = new BroadcastChannel('gymapp-session');
+        channel.postMessage('changed');
+        channel.close();
+    });
+    release();
+    await expect.poll(() => calls).toBe(2);
+    await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Log in', exact: true })).toHaveCount(0);
+});
+
+test('an external cookie switch pauses stale intent and rebinds the visible tab', async ({ page }) => {
+    expect((await page.request.post('/api/auth/register', {
+        data: { username: 'external-cookie-a', password: '123geheim' },
+    })).ok()).toBe(true);
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+    let sending = false;
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    await page.route('**/api/sync', async route => {
+        sending = true;
+        await gate;
+        await route.continue();
+    });
+    const mismatch = page.waitForResponse(response => response.url().endsWith('/api/sync') && response.status() === 409);
+    await page.getByRole('button', { name: /Foundry District/ }).click();
+    await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+    await expect.poll(() => sending).toBe(true);
+    expect((await page.request.post('/api/auth/login', {
+        data: { username: 'admin', password: '123geheim' },
+    })).ok()).toBe(true);
+    release();
+    expect((await mismatch).status()).toBe(409);
+    await page.unroute('**/api/sync');
+    await expect(page.getByRole('button', { name: 'Start workout', exact: true })).toBeVisible();
+    await expect(page.getByText('Pending changes: 0', { exact: true })).toBeVisible();
+    expect((await (await page.request.get('/api/sync/snapshot')).json()).workouts).toEqual([]);
+
+    await page.route('**/api/sync', route => route.abort());
+    expect((await page.request.post('/api/auth/login', {
+        data: { username: 'external-cookie-a', password: '123geheim' },
+    })).ok()).toBe(true);
+    await page.evaluate(() => {
+        Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
+        document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await expect(page.getByRole('button', { name: 'Finish workout', exact: true })).toBeVisible();
+    await expect(page.getByText('Pending changes: 1', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+    page.once('dialog', dialog => dialog.accept());
+    await page.getByRole('button', { name: /Discard pending changes/ }).click();
+    await page.unroute('**/api/sync');
+});
+
 test('two tabs serialize senders and propagate logout and account switches', async ({ page, context }) => {
     expect((await page.request.post('/api/auth/register', {
         data: { username: 'browser-tabs', password: '123geheim' },
@@ -161,6 +309,8 @@ test('two tabs serialize senders and propagate logout and account switches', asy
         await gate;
         await route.continue();
     });
+    let logoutRequests = 0;
+    await context.route('**/api/auth/logout', async route => { logoutRequests++; await route.continue(); });
     try {
         await page.getByRole('button', { name: /Foundry District/ }).click();
         await page.getByRole('button', { name: 'Start workout', exact: true }).click();
@@ -169,17 +319,13 @@ test('two tabs serialize senders and propagate logout and account switches', asy
         await expect.poll(() => second.evaluate(async () =>
             (await navigator.locks.query()).pending?.some(lock => lock.name?.startsWith('sync:')) ?? false)).toBe(true);
         expect(sends).toBe(1);
+        await second.getByRole('button', { name: 'Settings', exact: true }).click();
+        await second.getByRole('button', { name: /Log out|Logout/i }).click();
+        await expect.poll(() => logoutRequests).toBe(0);
     } finally { release(); }
-    await expect(page.getByText('Pending changes: 0', { exact: true })).toBeVisible();
-    await expect(second.getByRole('button', { name: 'Resume workout', exact: true })).toBeVisible();
-    await context.unroute('**/api/sync');
-    await context.route('**/api/sync', route => route.abort());
-    page.once('dialog', dialog => dialog.accept());
-    await page.getByRole('button', { name: 'Cancel workout', exact: true }).click();
-    await expect(page.getByText('Pending changes: 1', { exact: true })).toBeVisible();
-    await second.getByRole('button', { name: 'Settings', exact: true }).click();
-    await second.getByRole('button', { name: /Log out|Logout/i }).click();
+    await expect.poll(() => logoutRequests).toBe(1);
     await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
+    await context.unroute('**/api/sync');
     await second.locator('input[autocomplete=username]').fill('admin');
     await second.locator('input[autocomplete=current-password]').fill('123geheim');
     await second.getByRole('button', { name: 'Log in', exact: true }).click();
@@ -192,10 +338,11 @@ test('two tabs serialize senders and propagate logout and account switches', asy
     await second.locator('input[autocomplete=username]').fill('browser-tabs');
     await second.locator('input[autocomplete=current-password]').fill('123geheim');
     await second.getByRole('button', { name: 'Log in', exact: true }).click();
-    await expect(second.getByText('Pending changes: 1', { exact: true })).toBeVisible();
-    await context.unroute('**/api/sync');
     await expect(second.getByText('Pending changes: 0', { exact: true })).toBeVisible();
-    const snapshot = await (await second.request.get('/api/sync/snapshot')).json();
-    expect(snapshot.workouts).toEqual([]);
+    await expect(second.getByRole('button', { name: 'Resume workout', exact: true })).toBeVisible();
+    second.once('dialog', dialog => dialog.accept());
+    await second.getByRole('button', { name: 'Resume workout', exact: true }).click();
+    await second.getByRole('button', { name: 'Cancel workout', exact: true }).click();
+    await expect.poll(async () => (await (await second.request.get('/api/sync/snapshot')).json()).workouts).toEqual([]);
     await second.close();
 });

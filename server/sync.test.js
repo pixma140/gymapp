@@ -90,9 +90,18 @@ describe('replacement sync contract', () => {
         }
     });
     it('applies private commands once, detects revision conflicts, and isolates snapshots', async () => {
-        const start = command('workout.start', { gymId, startTime: 10 }); workoutId = start.targetId;
-        const result = await send(start);
+        const starts = [10, 11].map(startTime => command('workout.start', { gymId, startTime }));
+        const results = await Promise.all(starts.map(start => send(start)));
+        expect(results.map(result => result.status).sort()).toEqual([200, 409]);
+        const winner = results.findIndex(result => result.status === 200);
+        const result = results[winner];
+        const start = starts[winner];
+        workoutId = start.targetId;
         expect(result.status).toBe(200); expect(result.body.revision).toBe(1);
+        expect(results[1 - winner].body).toEqual({ ok: false, error: 'active_workout_exists' });
+        expect(await database.getSql('SELECT COUNT(*) AS count FROM workouts WHERE userId = ? AND endTime IS NULL', [userId]))
+            .toEqual({ count: 1 });
+        expect((await database.getSql('SELECT id FROM workouts WHERE userId = ? AND endTime IS NULL', [userId])).id).toBe(workoutId);
         expect((await send(start)).body).toEqual(result.body);
         expect((await send({ ...start, payload: { gymId, startTime: 11 } })).body.error).toBe('mutation_id_reused');
         const measurement = command('measurement.create', { weight: 80, bodyFat: 20, timestamp: 10 });
@@ -107,7 +116,7 @@ describe('replacement sync contract', () => {
         expect((await send({ ...profile, mutationId: randomUUID() })).body.error).toBe('revision_conflict');
         expect((await snapshot(userCookie)).body.accountGeneration).toBe(3);
     });
-    it('rejects concurrent active sessions and allows finishing at an archived gym', async () => {
+    it('rejects another active session and allows finishing at an archived gym', async () => {
         expect((await send(command('workout.start', { gymId, startTime: 11 }))).body.error).toBe('active_workout_exists');
         const archive = command('gym.archive', { archived: true }, { targetId: gymId, expectedRevision: 1, accountId: adminId });
         expect((await send(archive, adminCookie)).status).toBe(200);

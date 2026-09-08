@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AccountDatabase, clearLegacyCacheOnce } from '@/db/db';
-import { hydrateFromServer, prepareAccountCache } from '@/db/hydrate';
+import { discardPendingChanges, hydrateFromServer, prepareAccountCache } from '@/db/hydrate';
 import { applyOperation } from '@/db/operations';
 import { flushPendingMutations } from '@/db/sqliteSync';
 import type { Snapshot } from '@shared/commands';
@@ -43,6 +43,53 @@ describe('account caches and transactional intent', () => {
         expect(await db.outbox.count()).toBe(1);
         await expect(hydrateFromServer(db, snapshot)).rejects.toThrow('pending_work');
         expect((await db.users.get(1))?.name).toBe('Offline edit');
+    });
+    it('atomically discards pending intent into a validated authoritative snapshot for only one account', async () => {
+        const first = fixture();
+        const second = fixture(2, first.snapshot.installationId);
+        await hydrateFromServer(first.db, first.snapshot);
+        await hydrateFromServer(second.db, second.snapshot);
+        await applyOperation(first.db, 'profile.update', null, { name: 'Discard me' });
+        await applyOperation(second.db, 'profile.update', null, { name: 'Keep me' });
+        const authoritative = { ...first.snapshot, accountGeneration: 3,
+            profile: { ...first.snapshot.profile, revision: 2, name: 'Server name' }, workouts: [{
+                id: crypto.randomUUID(), revision: 1, gymId: first.snapshot.gyms[0].id, startTime: 10, endTime: 20,
+            }] };
+        const expected = (await first.db.outbox.toArray()).map(entry => entry.command.mutationId);
+        await discardPendingChanges(first.db, authoritative, expected);
+        expect(await first.db.outbox.count()).toBe(0);
+        expect((await first.db.users.get(1))?.name).toBe('Server name');
+        expect(await first.db.workouts.toArray()).toEqual(authoritative.workouts);
+        expect(await first.db.syncMetadata.get('state')).toMatchObject({ accountGeneration: 3, catalogGeneration: 1 });
+        expect((await second.db.users.get(2))?.name).toBe('Keep me');
+        expect(await second.db.outbox.count()).toBe(1);
+    });
+    it('leaves optimistic rows and commands untouched when discard validation or replacement fails', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await applyOperation(db, 'profile.update', null, { name: 'Keep local' });
+        const before = await db.outbox.toArray();
+        const expected = before.map(entry => entry.command.mutationId);
+        await expect(discardPendingChanges(db, { ...snapshot, gyms: [{ ...snapshot.gyms[0], archived: 'false' }] } as unknown as Snapshot, expected))
+            .rejects.toThrow('invalid_snapshot');
+        await expect(discardPendingChanges(db, { ...snapshot, accountId: 2, profile: { ...snapshot.profile, id: 2 } }, expected))
+            .rejects.toThrow('account_binding_mismatch');
+        const put = vi.spyOn(db.users, 'put').mockRejectedValueOnce(new Error('replacement_failed'));
+        await expect(discardPendingChanges(db, snapshot, expected)).rejects.toThrow('replacement_failed');
+        put.mockRestore();
+        expect((await db.users.get(1))?.name).toBe('Keep local');
+        expect(await db.outbox.toArray()).toEqual(before);
+    });
+    it('aborts discard if another tab adds pending intent after confirmation', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await applyOperation(db, 'profile.update', null, { name: 'Originally confirmed' });
+        const expected = (await db.outbox.toArray()).map(entry => entry.command.mutationId);
+        await applyOperation(db, 'profile.update', null, { weight: 80 });
+        await expect(discardPendingChanges(db, snapshot, expected)).rejects.toThrow('pending_work_changed');
+        expect((await db.users.get(1))?.name).toBe('Originally confirmed');
+        expect((await db.users.get(1))?.weight).toBe(80);
+        expect(await db.outbox.count()).toBe(2);
     });
     it('rolls back both local state and outgoing intent on transaction failure', async () => {
         const { db, snapshot } = fixture();
@@ -115,6 +162,34 @@ describe('account caches and transactional intent', () => {
         await flushPendingMutations(db, () => active);
         expect(fetch).not.toHaveBeenCalled();
         expect((await db.outbox.toArray())[0].attempts).toBe(0);
+    });
+    it('applies a confirmed acknowledgement to the detached account cache', async () => {
+        const { db, snapshot } = fixture();
+        const next = fixture(2, snapshot.installationId);
+        await hydrateFromServer(db, snapshot);
+        await hydrateFromServer(next.db, next.snapshot);
+        await applyOperation(db, 'profile.update', null, { name: 'Confirmed edit' });
+        let active = true;
+        let release!: () => void;
+        const responseGate = new Promise<void>(resolve => { release = resolve; });
+        vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) =>
+            (args.at(-1) as () => Promise<void>)() } });
+        vi.stubGlobal('fetch', vi.fn(async (_url, options) => {
+            const sent = JSON.parse(String(options?.body));
+            active = false;
+            await responseGate;
+            return new Response(JSON.stringify({ ok: true, ...db.binding, mutationId: sent.mutationId,
+                revision: 2, accountGeneration: 1, catalogGeneration: 1 }));
+        }));
+        const sending = flushPendingMutations(db, () => active);
+        await vi.waitFor(() => expect(active).toBe(false));
+        release();
+        await sending;
+        expect(await db.outbox.count()).toBe(0);
+        expect((await db.users.get(1))?.revision).toBe(2);
+        expect((await db.syncMetadata.get('state'))?.accountGeneration).toBe(1);
+        expect(await next.db.outbox.count()).toBe(0);
+        expect(await next.db.users.get(2)).toEqual(next.snapshot.profile);
     });
     it.each([
         [401, 'unauthorized', 'paused'], [403, 'forbidden', 'failed'],

@@ -4,7 +4,7 @@ import { AUTHORIZATION_FAILURE, ApiError } from '@/lib/api';
 import { getBootstrap, logoutSession, type Capabilities, type SessionUser } from '@/auth/session';
 import { readSession, subscribeSession, notifySession, sessionEpoch } from '@/auth/tabs';
 import { AccountDatabase, clearLegacyCacheOnce } from '@/db/db';
-import { prepareAccountCache } from '@/db/hydrate';
+import { discardPendingChanges, prepareAccountCache } from '@/db/hydrate';
 import { flushPendingMutations } from '@/db/sqliteSync';
 
 type Status = 'loading' | 'setup' | 'signedOut' | 'preparing' | 'ready' | 'failed';
@@ -100,19 +100,38 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         }
     }, [stop]);
     const discardLocalChanges = useCallback(async () => {
-        const binding = current.current?.binding;
-        if (!binding) return;
+        const attached = current.current;
+        if (!attached) return;
+        const binding = attached.binding;
+        const expectedMutationIds = (await attached.outbox.orderBy('sequence').toArray()).map(entry => entry.command.mutationId);
         const version = await stop();
         if (version !== generation.current) return;
-        await readSession(async () => {
-            if (version !== generation.current) return;
-            const database = new AccountDatabase(binding);
-            try { await database.outbox.clear(); } finally { database.close(); }
-        }, true);
-        if (version === generation.current) await refresh();
-    }, [refresh, stop]);
+        let database: AccountDatabase | null = null;
+        try {
+            await readSession(async () => {
+                if (version !== generation.current) return;
+                const preparingEpoch = sessionEpoch();
+                const bootstrap = await getBootstrap();
+                if (version !== generation.current) return;
+                if (bootstrap.status !== 'authenticated' || bootstrap.user.id !== binding.accountId
+                    || bootstrap.installationId !== binding.installationId) throw new Error('account_binding_mismatch');
+                database = new AccountDatabase(binding);
+                await database.open();
+                await discardPendingChanges(database, bootstrap.snapshot, expectedMutationIds);
+                if (version !== generation.current || preparingEpoch !== sessionEpoch()) { database.close(); return; }
+                readyRole.current = bootstrap.user.isAdmin;
+                epoch.current = preparingEpoch;
+                current.current = database;
+                setState({ status: 'ready', user: bootstrap.user, capabilities: bootstrap.capabilities, database, error: null });
+            }, true);
+        } catch (error) {
+            if (database) (database as AccountDatabase).close();
+            if (version === generation.current) setState(detached('failed', error instanceof Error ? error : new Error('discard_failed')));
+            throw error;
+        }
+    }, [stop]);
     useEffect(() => {
-        void refresh();
+        const initialRefresh = window.setTimeout(() => void refresh(), 0);
         const unsubscribe = subscribeSession(message => {
             if (message === 'changing') void stop();
             else void refresh();
@@ -142,6 +161,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             notifySession('changed');
         }
         return () => {
+            clearTimeout(initialRefresh);
             unsubscribe();
             window.removeEventListener(AUTHORIZATION_FAILURE, revalidate);
             document.removeEventListener('visibilitychange', resume);

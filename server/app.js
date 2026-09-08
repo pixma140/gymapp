@@ -7,6 +7,12 @@ import { verifyIdToken } from './lib/oidc.js';
 import { createAccountService } from './services/accounts.js';
 import { createSyncService, readSnapshot } from './services/sync.js';
 
+function hasExactKeys(value, required, optional = []) {
+    if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+    const allowed = new Set([...required, ...optional]);
+    return required.every(key => Object.hasOwn(value, key)) && Object.keys(value).every(key => allowed.has(key));
+}
+
 export function createApp({ database, cookieSecure = false, adminUsername = '', publicUrl = '', distDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist') }) {
     const { runSql, getSql, allSql } = database;
     const accounts = createAccountService(database);
@@ -274,11 +280,18 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
             return;
         }
 
-        const username = String(req.body?.username ?? '').trim();
-        const password = String(req.body?.password ?? '');
-        const name = String(req.body?.name ?? '').trim();
-        const email = req.body?.email ? String(req.body.email).trim() : null;
-        const language = req.body?.language === 'de' ? 'de' : 'en';
+        if (!hasExactKeys(req.body, ['username', 'password', 'name'], ['email', 'language'])
+            || typeof req.body.username !== 'string' || typeof req.body.password !== 'string'
+            || typeof req.body.name !== 'string' || (Object.hasOwn(req.body, 'email') && typeof req.body.email !== 'string')
+            || (Object.hasOwn(req.body, 'language') && !['en', 'de'].includes(req.body.language))) {
+            res.status(400).json({ ok: false, error: 'invalid_payload' });
+            return;
+        }
+        const username = req.body.username.trim();
+        const password = req.body.password;
+        const name = req.body.name.trim();
+        const email = req.body.email?.trim() || null;
+        const language = req.body.language ?? 'en';
 
         if (username.length < 3 || password.length < 8 || name.length < 1) {
             res.status(400).json({ ok: false, error: 'invalid_input' });
@@ -306,8 +319,13 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
             return;
         }
 
-        const username = String(req.body?.username ?? '').trim();
-        const password = String(req.body?.password ?? '');
+        if (!hasExactKeys(req.body, ['username', 'password'])
+            || typeof req.body.username !== 'string' || typeof req.body.password !== 'string') {
+            res.status(400).json({ ok: false, error: 'invalid_payload' });
+            return;
+        }
+        const username = req.body.username.trim();
+        const password = req.body.password;
 
         if (username.length < 3 || password.length < 8) {
             res.status(400).json({ ok: false, error: 'invalid_credentials' });
@@ -327,8 +345,13 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
     });
 
     app.post('/api/auth/login', async (req, res) => {
-        const username = String(req.body?.username ?? '').trim();
-        const password = String(req.body?.password ?? '');
+        if (!hasExactKeys(req.body, ['username', 'password'])
+            || typeof req.body.username !== 'string' || typeof req.body.password !== 'string') {
+            res.status(400).json({ ok: false, error: 'invalid_payload' });
+            return;
+        }
+        const username = req.body.username.trim();
+        const password = req.body.password;
 
         // Throttle both by source IP and by targeted username to slow credential
         // stuffing and per-account brute force.
@@ -443,12 +466,19 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
 
         try {
             const current = await getOidcConfig();
-            const body = req.body ?? {};
+            const body = req.body;
+            if (!hasExactKeys(body, ['enabled', 'issuer', 'clientId', 'scopes'], ['clientSecret'])
+                || typeof body.enabled !== 'boolean' || typeof body.issuer !== 'string'
+                || typeof body.clientId !== 'string' || typeof body.scopes !== 'string'
+                || (Object.hasOwn(body, 'clientSecret') && typeof body.clientSecret !== 'string')) {
+                res.status(400).json({ ok: false, error: 'invalid_payload' });
+                return;
+            }
 
-            const issuer = String(body.issuer ?? '').trim().replace(/\/$/, '');
-            const clientId = String(body.clientId ?? '').trim();
-            const scopes = String(body.scopes ?? '').trim() || DEFAULT_OIDC_CONFIG.scopes;
-            const enabled = Boolean(body.enabled);
+            const issuer = body.issuer.trim().replace(/\/$/, '');
+            const clientId = body.clientId.trim();
+            const scopes = body.scopes.trim() || DEFAULT_OIDC_CONFIG.scopes;
+            const enabled = body.enabled;
 
             // Only overwrite the secret when a new non-empty value is supplied.
             const clientSecret = typeof body.clientSecret === 'string' && body.clientSecret.length > 0
@@ -526,11 +556,18 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
             return;
         }
 
-        const username = String(req.body?.username ?? '').trim();
-        const password = String(req.body?.password ?? '');
-        const name = String(req.body?.name ?? '').trim();
-        const email = req.body?.email ? String(req.body.email).trim() : null;
-        const isAdmin = Boolean(req.body?.isAdmin);
+        if (!hasExactKeys(req.body, ['username', 'password', 'name', 'isAdmin'], ['email'])
+            || typeof req.body.username !== 'string' || typeof req.body.password !== 'string'
+            || typeof req.body.name !== 'string' || typeof req.body.isAdmin !== 'boolean'
+            || (Object.hasOwn(req.body, 'email') && typeof req.body.email !== 'string')) {
+            res.status(400).json({ ok: false, error: 'invalid_payload' });
+            return;
+        }
+        const username = req.body.username.trim();
+        const password = req.body.password;
+        const name = req.body.name.trim();
+        const email = req.body.email?.trim() || null;
+        const isAdmin = req.body.isAdmin;
 
         if (username.length < 3 || password.length < 8 || name.length < 1) {
             res.status(400).json({ ok: false, error: 'invalid_input' });
@@ -559,7 +596,11 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
             return;
         }
 
-        const password = String(req.body?.password ?? '');
+        if (!hasExactKeys(req.body, ['password']) || typeof req.body.password !== 'string') {
+            res.status(400).json({ ok: false, error: 'invalid_payload' });
+            return;
+        }
+        const password = req.body.password;
         if (password.length < 8) {
             res.status(400).json({ ok: false, error: 'invalid_password' });
             return;
@@ -587,7 +628,7 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
             return;
         }
 
-        if (typeof req.body?.isAdmin !== 'boolean') {
+        if (!hasExactKeys(req.body, ['isAdmin']) || typeof req.body.isAdmin !== 'boolean') {
             res.status(400).json({ ok: false, error: 'invalid_payload' });
             return;
         }

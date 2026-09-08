@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Database, Moon, Trash, Dumbbell, Earth, Bell, Palette, Github, LogOut, Shield } from 'lucide-react';
 import { useDatabase } from '@/context/SessionContext';
 import { applyOperation } from '@/db/operations';
@@ -19,6 +20,8 @@ export function SettingsPage() {
     const { t, language, setLanguage } = useLanguage();
     const { theme, setTheme, mainColor, setColor } = useTheme();
     const { isAdmin, logout, discardLocalChanges } = useSession();
+    const pendingCount = useLiveQuery(() => db.outbox.count(), [db]);
+    const [discarding, setDiscarding] = useState(false);
 
     const colors = [
         { name: t('color.blue'), value: '#2563eb' },
@@ -32,9 +35,10 @@ export function SettingsPage() {
     ];
 
     const handleClearData = async () => {
-        if (confirm(t('sync.discardConfirm'))) {
-            await discardLocalChanges();
-        }
+        if (!confirm(t('sync.discardConfirm'))) return;
+        setDiscarding(true);
+        try { await discardLocalChanges(); } catch { /* Session error view offers a safe retry. */ }
+        finally { setDiscarding(false); }
     };
 
     const handleFrequencyChange = async (freq: User['reminderFrequency']) => {
@@ -170,16 +174,17 @@ export function SettingsPage() {
                 <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
                     <button
                         onClick={async () => {
-                            const data = {
+                            const data = await db.transaction('r', db.tables, async () => ({
                                 binding: db.binding,
                                 pending: await db.outbox.toArray(),
                                 users: await db.users.toArray(),
                                 gyms: await db.gyms.toArray(),
                                 workouts: await db.workouts.toArray(),
                                 userMeasurements: await db.userMeasurements.toArray(),
+                                syncMetadata: await db.syncMetadata.toArray(),
                                 exportDate: new Date().toISOString(),
                                 version: 1
-                            };
+                            }));
 
                             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                             const url = URL.createObjectURL(blob);
@@ -219,7 +224,8 @@ export function SettingsPage() {
                 <div className="bg-red-500/10 border border-red-500/20 rounded-2xl overflow-hidden">
                     <button
                         onClick={handleClearData}
-                        className="w-full flex items-center justify-between p-4 hover:bg-red-500/20 transition-colors text-red-500"
+                        disabled={discarding || !pendingCount}
+                        className="w-full flex items-center justify-between p-4 hover:bg-red-500/20 transition-colors text-red-500 disabled:opacity-50"
                     >
                         <div className="flex items-center gap-3">
                             <Trash className="size-5" />

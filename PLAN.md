@@ -1,6 +1,6 @@
 # Implementation plan
 
-Status: Phase D implemented and verified. A single transactional bootstrap supplies session/setup state, installation/account identity, capabilities, and account data. The client uses shared typed request handling, preserves ready offline caches during identity checks, and coordinates account senders and login/logout across tabs. The development database was last explicitly reset and seeded during Phase B on 2026-09-08; Phase D required no reset. Resume with the unchecked Phase E durable-envelope, retry, snapshot-write-freeze, and conflict-resolution work. See `docs/implementation-baseline.md` for checkpoint details.
+Status: Phase D.5 remediation is implemented and verified. Discard/reload is failure-atomic and account-scoped, privileged request bodies are strictly validated, and direct regressions cover deterministic reset fixtures, concurrent starts, stale lifecycle callbacks, installation-reset replay, and external cookie changes. Resume with the unchecked Phase E durable-envelope, retry, snapshot-write-freeze, and conflict-resolution work. The development database was last explicitly reset and seeded during Phase B on 2026-09-08; Phase D.5 required no development reset. See `docs/implementation-baseline.md` for checkpoint details.
 
 Sources: [SUGGESTIONS.md](SUGGESTIONS.md), [ARCHITECTURE.md](ARCHITECTURE.md), and the user's appendix. The appendix takes precedence: this is a work-in-progress reset, default test users and shared gyms are required, and the existing exercise implementation must be removed. External exercise integration belongs to a later task.
 
@@ -127,6 +127,21 @@ Each phase should be a reviewable change with relevant tests. Existing uncommitt
 - [x] Let the initial session bootstrap hydrate empty caches. Existing caches with pending work must not be wiped. Provide a separately confirmed local-discard/reset action that explains pending-work loss.
 
 **Exit:** queued edits for A cannot be sent as B, erased by B's login, or replayed after a server reset. Failed bootstrap offers retry and preserves local data.
+
+### Phase D.5 — Close audited A-D gaps before Phase E
+
+The 2026-09-08 repository audit re-ran all Vitest tests, lint, and the production build successfully (86 tests in eight files). Phase A had no implementation gap. The remediation below was subsequently verified with 95 Vitest tests in nine files, lint, a production build, and eight browser workflows.
+
+- [x] Make discard/reload failure-atomic. Fetch and validate an authoritative snapshot before deleting pending intent, then clear the outbox and replace the current account's domain tables and generation metadata in one Dexie transaction. A network, server, or malformed-response failure must leave both optimistic rows and commands untouched. Keep the action account-scoped and label it consistently as pending-change discard rather than an application-wide reset.
+- [x] Enforce strict request shapes and primitive types on setup, registration/login where applicable, administrator user creation/password/role changes, and OIDC settings. Reject arrays, unexpected properties, non-boolean `isAdmin`/`enabled` values, and unsupported setup languages instead of coercing them. Add direct HTTP regression tests proving malformed payloads cannot create an administrator or enable OIDC accidentally.
+- [x] Complete the deterministic fixture/reset proof: assert the exact `Administrator` and `User` profile names through normal authentication, and test reset-and-seed as one operation for exact accounts/roles, stable shared gyms, zero private activity, absent exercise tables, and preservation of unrelated files. Exercise configured WAL/SHM cleanup explicitly.
+- [x] Add a genuinely concurrent two-device workout-start test. Send two distinct valid commands simultaneously and prove exactly one succeeds, one returns the deliberate `active_workout_exists` conflict, and only one unfinished row exists without leaking a SQLite error.
+- [x] Add lifecycle tests for logout/account switch during an in-flight send, superseded bootstrap/refresh completion, and acknowledgement after detachment. Prove stale callbacks cannot publish or mutate the next account's state while confirmed acknowledgements leave the old account cache consistent.
+- [x] Add an end-to-end server-reset replay test: queue a command under installation X, reset to installation Y, and prove the stale command is rejected and retained/paused, creates no Y data, and the Y bootstrap opens a separate clean cache.
+- [x] Add a browser test for a cookie/account change outside the initiating tab's normal notification path. Prove the stale visible tab cannot mutate the new account, pauses and revalidates on binding mismatch, and preserves the original account's queue.
+- [x] Add discard UX/regression coverage for cancel, successful authoritative replacement, failed snapshot retrieval, export-before-discard, and account scoping. Verify another account's cache is never cleared.
+
+**Exit:** the A-D implementation claims are backed by direct regression coverage; malformed privileged requests are rejected without coercion; discard cannot orphan optimistic state or lose intent on refresh failure; concurrent starts resolve deterministically; and account/installation changes cannot publish stale state or replay old commands.
 
 ### Phase E — Implement durable commands, revisions, and refresh
 
