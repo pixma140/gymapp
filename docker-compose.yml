@@ -1,12 +1,35 @@
+x-defaults: &def
+  restart: "always"
+  networks:
+    - "traefik_network"
+
 services:
+
   gymapp:
     build: .
     container_name: gymapp
     image: gymapp:latest
     environment:
       - NODE_ENV=production
-    ports:
-      - "8080:80"
+      # Promote this username to admin on startup (first OIDC/admin setup).
+      # - ADMIN_USERNAME=myadmin
+      # Public base URL used to build the OIDC redirect URI.
+      # Only needed if the auto-detected host header is wrong (e.g. behind some proxies).
+      # - PUBLIC_URL=https://gym.example.com
+      # Set to "true" when served over HTTPS so the session cookie is marked Secure.
+      # - COOKIE_SECURE=true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gymapp.entrypoints=web"
+      - "traefik.http.routers.gymapp.rule=Host(`gym.localhost`)"
+#      - "traefik.http.routers.gymapp.service=gymapp"
+#      - "traefik.http.services.gymapp.loadbalancer.server.port=3000"
+#    ports:
+#      - "8080:80"
     volumes:
       - ./db:/app/data
-    restart: unless-stopped
+    <<: *def
+
+networks:
+  traefik_network:
+    external: true

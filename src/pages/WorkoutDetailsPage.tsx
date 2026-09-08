@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
 import { ArrowLeft, Calendar, Dumbbell, Edit2, Trash2, Clock, Timer } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { getExerciseDisplayName } from '@/lib/utils';
 
 export function WorkoutDetailsPage() {
     const { workoutId } = useParams();
@@ -119,7 +120,7 @@ export function WorkoutDetailsPage() {
                         return (
                             <div key={exercise.id} className="space-y-3">
                                 <h3 className="text-lg font-semibold text-[var(--foreground)] flex items-center gap-2">
-                                    {exercise.name}
+                                    {getExerciseDisplayName(exercise, t)}
                                     <span className="text-xs font-normal text-[var(--muted-foreground)] px-2 py-0.5 rounded-full border border-[var(--border)]">
                                         {sets.length} {t('workoutDetails.sets')}
                                     </span>

@@ -5,6 +5,7 @@ import type { Exercise } from '@/db/db';
 import { ArrowLeft, Trash2, Edit2, Save, X, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { getExerciseDisplayName, translateValue } from '@/lib/utils';
 
 export function ManageExercisesPage() {
     const navigate = useNavigate();
@@ -12,9 +13,13 @@ export function ManageExercisesPage() {
     const [search, setSearch] = useState('');
     const exercises = useLiveQuery(
         () => db.exercises
-            .filter(e => e.name.toLowerCase().includes(search.toLowerCase()))
+            .filter(e => {
+                const displayName = getExerciseDisplayName(e, t);
+                return displayName.toLowerCase().includes(search.toLowerCase()) ||
+                    e.name.toLowerCase().includes(search.toLowerCase());
+            })
             .toArray(),
-        [search]
+        [search, t]
     );
 
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -25,19 +30,19 @@ export function ManageExercisesPage() {
     const [newMuscleGroup, setNewMuscleGroup] = useState('');
 
     const muscleGroups = [
-        { id: 'chest', label: t('addExercise.muscle.chest') },
-        { id: 'back', label: t('addExercise.muscle.back') },
-        { id: 'legs', label: t('addExercise.muscle.legs') },
-        { id: 'shoulders', label: t('addExercise.muscle.shoulders') },
-        { id: 'arms', label: t('addExercise.muscle.arms') },
-        { id: 'core', label: t('addExercise.muscle.core') },
-        { id: 'cardio', label: t('addExercise.muscle.cardio') },
-        { id: 'fullBody', label: t('addExercise.muscle.fullBody') },
+        { key: 'addExercise.muscle.chest', label: t('addExercise.muscle.chest') },
+        { key: 'addExercise.muscle.back', label: t('addExercise.muscle.back') },
+        { key: 'addExercise.muscle.legs', label: t('addExercise.muscle.legs') },
+        { key: 'addExercise.muscle.shoulders', label: t('addExercise.muscle.shoulders') },
+        { key: 'addExercise.muscle.arms', label: t('addExercise.muscle.arms') },
+        { key: 'addExercise.muscle.core', label: t('addExercise.muscle.core') },
+        { key: 'addExercise.muscle.cardio', label: t('addExercise.muscle.cardio') },
+        { key: 'addExercise.muscle.fullBody', label: t('addExercise.muscle.fullBody') },
     ];
 
     const startEdit = (ex: Exercise) => {
         setEditingId(ex.id);
-        setEditName(ex.name);
+        setEditName(getExerciseDisplayName(ex, t));
         setEditMuscleGroup(ex.muscleGroup || '');
     };
 
@@ -113,10 +118,10 @@ export function ManageExercisesPage() {
                             <div className="flex flex-wrap gap-2">
                                 {muscleGroups.map(mg => (
                                     <button
-                                        key={mg.id}
+                                        key={mg.key}
                                         type="button"
-                                        onClick={() => setNewMuscleGroup(mg.label === newMuscleGroup ? '' : mg.label)}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${newMuscleGroup === mg.label
+                                        onClick={() => setNewMuscleGroup(mg.key === newMuscleGroup ? '' : mg.key)}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${newMuscleGroup === mg.key
                                                 ? 'bg-blue-600 border-blue-500 text-white'
                                                 : 'bg-[var(--background)] border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--primary)]/40 hover:text-[var(--foreground)]'
                                             }`}
@@ -151,10 +156,10 @@ export function ManageExercisesPage() {
                                         <div className="flex flex-wrap gap-2">
                                             {muscleGroups.map(mg => (
                                                 <button
-                                                    key={mg.id}
+                                                    key={mg.key}
                                                     type="button"
-                                                    onClick={() => setEditMuscleGroup(mg.label === editMuscleGroup ? '' : mg.label)}
-                                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${editMuscleGroup === mg.label
+                                                    onClick={() => setEditMuscleGroup(mg.key === editMuscleGroup ? '' : mg.key)}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${editMuscleGroup === mg.key
                                                             ? 'bg-blue-600 border-blue-500 text-white'
                                                             : 'bg-[var(--background)] border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--primary)]/40 hover:text-[var(--foreground)]'
                                                         }`}
@@ -173,8 +178,8 @@ export function ManageExercisesPage() {
                         ) : (
                             <>
                                 <div>
-                                    <h3 className="font-bold text-[var(--foreground)]">{ex.name}</h3>
-                                    <p className="text-xs text-[var(--muted-foreground)]">{ex.muscleGroup || t('manageExercises.general')}</p>
+                                    <h3 className="font-bold text-[var(--foreground)]">{getExerciseDisplayName(ex, t)}</h3>
+                                    <p className="text-xs text-[var(--muted-foreground)]">{ex.muscleGroup ? translateValue(ex.muscleGroup, t) : t('manageExercises.general')}</p>
                                 </div>
                                 <div className="flex gap-2">
                                     <button onClick={() => startEdit(ex)} className="p-2 text-[var(--muted-foreground)] hover:text-[var(--primary)]"><Edit2 className="size-4" /></button>

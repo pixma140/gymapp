@@ -1,13 +1,15 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
+import { useSession } from '@/context/SessionContext';
 
 export function useActiveWorkout() {
+    const { userId } = useSession();
+
     return useLiveQuery(async () => {
-        const user = await db.users.orderBy('id').first();
-        if (!user) return null;
+        if (!userId) return null;
 
         const activeWorkouts = await db.workouts
-            .where('userId').equals(user.id)
+            .where('userId').equals(userId)
             .filter(w => !w.endTime)
             .toArray();
 
@@ -18,5 +20,5 @@ export function useActiveWorkout() {
 
         const gym = await db.gyms.get(activeWorkout.gymId);
         return { ...activeWorkout, gymName: gym?.name };
-    }, []);
+    }, [userId]);
 }

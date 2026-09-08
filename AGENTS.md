@@ -18,9 +18,18 @@ Keep changes consistent with existing patterns and scripts.
 - Preview build: `npm run preview`
 
 ## Tests
-- No test runner or `test` script is configured yet.
-- Single-test command: not available until tests are added.
-- If adding tests, document the runner and single-test command here.
+- Runner: Vitest (`vitest`).
+- Run all tests: `npm test` (alias for `vitest run`).
+- Watch mode: `npm run test:watch`.
+- Run a single test file: `npx vitest run server/lib/crypto.test.js`.
+- Run tests matching a name: `npx vitest run -t "rejects an expired token"`.
+- Config: `vitest.config.ts` (node environment, `@`/`@shared` aliases, `NODE_ENV=test`).
+- Layout:
+  - `server/lib/*.test.js`: pure server helpers (password hashing, cookies, column whitelist, OIDC verify).
+  - `server/sync.test.js`: HTTP integration test of `/api/sync` authz/scoping (boots the Express app on an ephemeral port against a temp SQLite DB).
+  - `server/adminUsers.test.js`: HTTP integration test of `/api/admin/users` routes (list/create/promote/demote/password-reset/delete authz and guards).
+  - `test/*.test.ts`: client-side logic (Dexie hydration via `fake-indexeddb`).
+- The server is importable without binding a port when `NODE_ENV=test`; it exports `{ app, db, initDatabase, bootstrapAdmin }`.
 
 ## Cursor/Copilot Rules
 - No `.cursor/rules/`, `.cursorrules`, or `.github/copilot-instructions.md` found.
@@ -94,14 +103,26 @@ Keep changes consistent with existing patterns and scripts.
 
 ## Database Schema Notes
 - Entities: User, Gym, Exercise, GymEquipment, Workout, WorkoutSet, UserMeasurement.
-- Schema versions: currently `version(2)` and `version(3)` in `db.ts`.
+- Schema versions: currently a single `version(1)` in `db.ts`.
 - Update schema carefully; Dexie migrations must be explicit.
+- Unless explicitly stated otherwise, make all database changes as if there is
+  no application already running in production. Do not use `ALTER TABLE` or add
+  a new Dexie version; instead add new fields directly to the `CREATE TABLE`
+  statements or to the initial Dexie `version(1)` schema.
 
 ## Adding Features
 - Match current UI patterns (card layout, bold headers, muted text).
 - Keep layouts mobile-first; many screens center on `max-w-md`.
 - Prefer lightweight hooks for stateful flows.
 - Reuse existing forms/components before creating new ones.
+- Add tests for new features alongside the code:
+  - New/changed server routes: add or extend an HTTP integration test (mirror
+    `server/sync.test.js` / `server/adminUsers.test.js`).
+  - New server helpers: add a focused unit test under `server/lib/*.test.js`.
+  - New client logic (Dexie/state/hydration): add a `test/*.test.ts` test.
+  - Cover authz/guards, validation/error codes, and the happy path.
+  - Run `npm test` before finishing; keep the suite green.
+  - Document any new test file in the Tests section above.
 
 ## Linting
 - ESLint config is in `eslint.config.js` (flat config).
@@ -111,8 +132,10 @@ Keep changes consistent with existing patterns and scripts.
 - Do keep imports tidy and consistent with local file style.
 - Do use `@/` alias for app modules.
 - Do keep changes scoped; avoid refactors unless requested.
+- Do add tests for new features (see "Adding Features") and keep `npm test` green.
 - Don't add new tooling without user request.
-- Don't introduce tests without documenting commands here.
+- Don't ship a new feature or route without test coverage.
+- Don't introduce a new test file without documenting it in the Tests section.
 
 ## Quick File Pointers
 - App routes: `src/App.tsx`
@@ -120,9 +143,8 @@ Keep changes consistent with existing patterns and scripts.
 - Utilities: `src/lib/utils.ts`
 - Main entry: `src/main.tsx`
 
-## Single-Test Guidance (Placeholder)
-- Currently no test runner.
-- When tests exist, add:
-  - How to run all tests.
-  - How to run a single test file.
-  - How to run a single test by name.
+## Single-Test Guidance
+- Run all tests: `npm test`.
+- Run a single test file: `npx vitest run server/lib/crypto.test.js`.
+- Run a single test by name: `npx vitest run -t "rejects an expired token"`.
+- Watch mode: `npm run test:watch`.

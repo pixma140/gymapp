@@ -1,5 +1,6 @@
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Dumbbell, LineChart, User, Settings, AlertCircle, Timer } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useMeasurementReminder } from '@/hooks/useMeasurementReminder';
 import { useActiveWorkout } from '@/hooks/useActiveWorkout';
@@ -11,6 +12,15 @@ export function Layout() {
     const showReminder = useMeasurementReminder();
     const activeWorkout = useActiveWorkout();
     const { t } = useLanguage();
+    const mainRef = useRef<HTMLElement>(null);
+
+    // The <main> element is the scroll container and is reused across route
+    // changes. Reset its scroll position on navigation so the new page's
+    // content is visible from the top instead of staying scrolled where the
+    // previous (e.g. long workout) page left it.
+    useEffect(() => {
+        mainRef.current?.scrollTo({ top: 0, left: 0 });
+    }, [location.pathname]);
 
     const navItems = [
         { path: '/', icon: Dumbbell, label: t('nav.training') },
@@ -22,6 +32,18 @@ export function Layout() {
     const handleResumeWorkout = () => {
         if (activeWorkout) {
             navigate(`/workout/${activeWorkout.gymId}`);
+        }
+    };
+
+    // Navigate programmatically on both pointer-up and click. Plain <Link>
+    // click events don't reliably fire on touch in this environment (see the
+    // same onClick/onPointerUp pattern used by the "Add Exercise" button),
+    // which previously left an active workout "stuck on top" because tapping a
+    // tab never triggered a route change. Going to a tab keeps the workout
+    // running in the background (it reappears as the banner above).
+    const handleNavigate = (path: string) => {
+        if (location.pathname !== path) {
+            navigate(path);
         }
     };
 
@@ -38,11 +60,12 @@ export function Layout() {
     const isOnWorkoutPage = isWorkoutGymPage || isWorkoutEditViewPage;
 
     return (
-        <div className="flex flex-col h-screen bg-[var(--background)] text-[var(--foreground)] font-sans transition-colors duration-300">
-            <main className="flex-1 overflow-y-auto p-4 safe-area-top relative pb-20">
+        <div className="flex flex-col h-dvh bg-[var(--background)] text-[var(--foreground)] font-sans transition-colors duration-300">
+            <main ref={mainRef} className="flex-1 overflow-y-auto p-4 safe-area-top relative pb-[calc(5rem+env(safe-area-inset-bottom))]">
                 {activeWorkout && !isOnWorkoutPage && (
                     <div
                         onClick={handleResumeWorkout}
+                        onPointerUp={handleResumeWorkout}
                         className="mb-4 bg-green-500/10 border border-green-500/50 rounded-xl p-3 flex items-center gap-3 animate-in slide-in-from-top-4 backdrop-blur-md cursor-pointer hover:bg-green-500/20 transition-colors shadow-lg shadow-green-900/10"
                     >
                         <div className="bg-green-500 rounded-full p-1.5 animate-pulse">
@@ -64,19 +87,26 @@ export function Layout() {
                             <h4 className="text-sm font-bold text-blue-100">{t('reminder.title')}</h4>
                             <p className="text-xs text-blue-200/70 mt-0.5">{t('reminder.subtitle')}</p>
                         </div>
-                        <Link to="/profile" className="text-xs font-bold bg-blue-500 text-white px-3 py-1.5 rounded-lg">
+                        <button
+                            type="button"
+                            onClick={() => handleNavigate('/profile')}
+                            onPointerUp={() => handleNavigate('/profile')}
+                            className="text-xs font-bold bg-blue-500 text-white px-3 py-1.5 rounded-lg"
+                        >
                             {t('reminder.action')}
-                        </Link>
+                        </button>
                     </div>
                 )}
                 <Outlet />
             </main>
-            <nav className="border-t border-[var(--border)] bg-[var(--background)]/90 backdrop-blur-lg safe-area-bottom">
+            <nav className="fixed bottom-0 inset-x-0 z-50 border-t border-[var(--border)] bg-[var(--background)]/90 backdrop-blur-lg pb-[env(safe-area-inset-bottom)]">
                 <div className="flex justify-around items-center h-16">
                     {navItems.map(({ path, icon: Icon, label }) => (
-                        <Link
+                        <button
                             key={path}
-                            to={path}
+                            type="button"
+                            onClick={() => handleNavigate(path)}
+                            onPointerUp={() => handleNavigate(path)}
                             className={cn(
                                 "flex flex-col items-center justify-center w-full h-full text-xs font-medium transition-colors active:scale-95",
                                 location.pathname === path
@@ -86,7 +116,7 @@ export function Layout() {
                         >
                             <Icon className="size-6 mb-1" strokeWidth={2.5} />
                             {label}
-                        </Link>
+                        </button>
                     ))}
                 </div>
             </nav>

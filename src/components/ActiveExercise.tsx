@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Exercise, WorkoutSet } from '@/db/db';
 import { Trash2, Plus, History } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { getExerciseDisplayName, translateValue } from '@/lib/utils';
 
 export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
     exercise: Exercise,
@@ -26,8 +27,8 @@ export function ActiveExercise({ exercise, sets, onAddSet, onRemoveSet }: {
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 space-y-4">
             <div className="flex justify-between items-start">
                 <div>
-                    <h3 className="text-xl font-bold text-[var(--foreground)]">{exercise.name}</h3>
-                    <p className="text-[var(--muted-foreground)] text-sm">{exercise.muscleGroup || t('manageExercises.general')}</p>
+                    <h3 className="text-xl font-bold text-[var(--foreground)]">{getExerciseDisplayName(exercise, t)}</h3>
+                    <p className="text-[var(--muted-foreground)] text-sm">{exercise.muscleGroup ? translateValue(exercise.muscleGroup, t) : t('manageExercises.general')}</p>
                 </div>
                 <button className="text-[var(--primary)] text-sm flex items-center gap-1">
                     <History className="size-3" /> {t('exercise.history')}

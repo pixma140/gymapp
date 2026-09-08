@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
 import { useState } from 'react';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { getExerciseDisplayName } from '@/lib/utils';
 
 export function ProgressChart({ rangeDays }: { rangeDays: number }) {
     const [exerciseId, setExerciseId] = useState<number | null>(null);
@@ -52,7 +53,7 @@ export function ProgressChart({ rangeDays }: { rangeDays: number }) {
                             : 'bg-[var(--card)] border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:border-[var(--primary)]/50 hover:bg-[var(--accent)]'
                             }`}
                     >
-                        {ex.name}
+                        {getExerciseDisplayName(ex, t)}
                     </button>
                 ))}
             </div>

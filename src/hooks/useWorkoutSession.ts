@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { db } from '@/db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useSession } from '@/context/SessionContext';
 
 export function useWorkoutSession(gymId?: number, existingWorkoutId?: number) {
     const [workoutId, setWorkoutId] = useState<number | null>(existingWorkoutId || null);
@@ -8,8 +9,7 @@ export function useWorkoutSession(gymId?: number, existingWorkoutId?: number) {
 
     const initializing = useRef(false);
     const suppressAutoCreate = useRef(false);
-    const user = useLiveQuery(() => db.users.orderBy('id').first());
-    const userId = user?.id;
+    const { userId } = useSession();
 
     const findActiveWorkoutId = useCallback(async (allowFallback = true): Promise<number | null> => {
         if (workoutId) return workoutId;
@@ -130,16 +130,19 @@ export function useWorkoutSession(gymId?: number, existingWorkoutId?: number) {
     };
 
     const cancelWorkout = async () => {
-        const targetWorkoutId = await findActiveWorkoutId(false);
+        // Prefer the known workoutId state; fall back to DB lookup
+        const targetWorkoutId = workoutId ?? await findActiveWorkoutId(false);
         if (!targetWorkoutId) return;
+
+        // Suppress auto-creation BEFORE clearing state so the useEffect
+        // that watches workoutId never re-creates a workout for this gym.
+        suppressAutoCreate.current = true;
+        setWorkoutId(null);
 
         await db.transaction('rw', db.workouts, db.workoutSets, async () => {
             await db.workoutSets.where('workoutId').equals(targetWorkoutId).delete();
             await db.workouts.delete(targetWorkoutId);
         });
-
-        suppressAutoCreate.current = true;
-        setWorkoutId(null);
     };
 
     return {

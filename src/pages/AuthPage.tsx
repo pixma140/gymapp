@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { db } from '@/db/db';
-import { getSessionUser, loginWithUsername, registerWithUsername } from '@/auth/session';
+import { getOidcStatus, getSessionUser, loginWithUsername, registerWithUsername, startOidcLogin } from '@/auth/session';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { useSession } from '@/context/SessionContext';
 import type { TranslationKey } from '@/i18n/translations';
 
 type AuthMode = 'login' | 'register';
@@ -11,10 +11,34 @@ export function AuthPage() {
     const [mode, setMode] = useState<AuthMode>('login');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [oidcEnabled, setOidcEnabled] = useState(false);
     const navigate = useNavigate();
     const { t, language, setLanguage } = useLanguage();
+    const { refresh } = useSession();
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('oidc_error')) {
+            setErrorKey('auth.oidc.error');
+        }
+    }, []);
+
+    useEffect(() => {
+        let mounted = true;
+
+        void getOidcStatus().then((enabled) => {
+            if (mounted) {
+                setOidcEnabled(enabled);
+            }
+        });
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
     useEffect(() => {
         let mounted = true;
@@ -37,6 +61,12 @@ export function AuthPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorKey(null);
+
+        if (mode === 'register' && password !== confirmPassword) {
+            setErrorKey('auth.error.passwordMismatch');
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
@@ -49,26 +79,15 @@ export function AuthPage() {
                 return;
             }
 
-            await db.delete();
-            await db.open();
-
-            if (mode === 'register') {
-                navigate('/onboarding', { replace: true });
-                return;
-            }
-
-            await db.users.put({
-                id: result.user.id,
-                name: result.user.name || result.user.username,
-                language: result.user.language,
-                theme: result.user.theme
-            });
+            // Make the new session known to the app, then let RequireAuth
+            // reconcile/hydrate the local database for this account.
+            await refresh();
 
             if (result.user.language) {
                 await setLanguage(result.user.language);
             }
 
-            navigate('/', { replace: true });
+            navigate(mode === 'register' ? '/onboarding' : '/', { replace: true });
         } catch {
             setErrorKey('auth.error.generic');
         } finally {
@@ -126,6 +145,21 @@ export function AuthPage() {
                         />
                     </div>
 
+                    {mode === 'register' && (
+                        <div className="space-y-2">
+                            <label className="text-xs uppercase tracking-wider text-[var(--muted-foreground)]">{t('auth.confirmPassword')}</label>
+                            <input
+                                required
+                                minLength={8}
+                                type="password"
+                                value={confirmPassword}
+                                onChange={(event) => setConfirmPassword(event.target.value)}
+                                className="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)]"
+                                autoComplete="new-password"
+                            />
+                        </div>
+                    )}
+
                     {errorKey && (
                         <p className="text-sm text-red-500">{t(errorKey)}</p>
                     )}
@@ -138,6 +172,24 @@ export function AuthPage() {
                         {isSubmitting ? t('auth.submitting') : mode === 'login' ? t('auth.login') : t('auth.register')}
                     </button>
 
+                    {oidcEnabled && (
+                        <>
+                            <div className="flex items-center gap-3">
+                                <span className="h-px flex-1 bg-[var(--border)]" />
+                                <span className="text-xs uppercase tracking-wider text-[var(--muted-foreground)]">{t('auth.oidc.divider')}</span>
+                                <span className="h-px flex-1 bg-[var(--border)]" />
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => startOidcLogin()}
+                                className="w-full border border-[var(--border)] bg-[var(--input)] hover:bg-[var(--accent)] text-[var(--foreground)] py-3 rounded-xl font-semibold transition-colors"
+                            >
+                                {t('auth.oidc.login')}
+                            </button>
+                        </>
+                    )}
+
                     <p className="w-full text-sm text-center text-[var(--muted-foreground)]">
                         <span>{mode === 'login' ? t('auth.switchToRegister.prompt') : t('auth.switchToLogin.prompt')} </span>
                         <button
@@ -146,6 +198,7 @@ export function AuthPage() {
                             onClick={() => {
                                 setMode(prev => prev === 'login' ? 'register' : 'login');
                                 setErrorKey(null);
+                                setConfirmPassword('');
                             }}
                         >
                             {mode === 'login' ? t('auth.register') : t('auth.login')}

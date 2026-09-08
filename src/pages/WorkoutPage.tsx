@@ -26,7 +26,7 @@ export function WorkoutPage() {
     } = useWorkoutSession(id);
 
     const workout = useLiveQuery(() => workoutId ? db.workouts.get(workoutId) : undefined, [workoutId]);
-    const [now, setNow] = useState(Date.now());
+    const [now, setNow] = useState(() => Date.now());
 
     // Group sets by exercise
     const exerciseIds = [...new Set(workoutSets?.map(s => s.exerciseId))];
@@ -47,7 +47,11 @@ export function WorkoutPage() {
     const handleCancel = async () => {
         if (!confirm(t('workout.cancelConfirm'))) return;
 
-        await cancelWorkout();
+        try {
+            await cancelWorkout();
+        } catch (err) {
+            console.error('Failed to cancel workout:', err);
+        }
         navigate('/');
     };
 

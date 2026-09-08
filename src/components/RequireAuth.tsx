@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { getSessionUser } from '@/auth/session';
+import { db } from '@/db/db';
+import { hydrateFromServer } from '@/db/hydrate';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 export function RequireAuth() {
@@ -14,6 +16,20 @@ export function RequireAuth() {
         const checkAuth = async () => {
             try {
                 const user = await getSessionUser();
+
+                if (user) {
+                    const localUser = await db.users.orderBy('id').first();
+
+                    // If the local cache is empty (fresh device) or belongs to a
+                    // different account (shared device / re-login), wipe it and
+                    // pull this user's data back down from the server.
+                    if (!localUser || localUser.id !== user.id) {
+                        await db.delete();
+                        await db.open();
+                        await hydrateFromServer();
+                    }
+                }
+
                 if (mounted) {
                     setIsAuthenticated(Boolean(user));
                 }

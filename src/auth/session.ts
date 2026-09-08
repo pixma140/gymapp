@@ -4,6 +4,7 @@ export interface SessionUser {
     name?: string;
     language?: 'en' | 'de';
     theme?: 'light' | 'dark' | 'oled' | 'system';
+    isAdmin?: boolean;
 }
 
 interface AuthResponse {
@@ -44,6 +45,42 @@ export async function registerWithUsername(username: string, password: string): 
     return sendAuthRequest('/api/auth/register', { username, password });
 }
 
+export interface SetupInput {
+    username: string;
+    password: string;
+    name: string;
+    email?: string;
+    language?: 'en' | 'de';
+}
+
+export async function getSetupStatus(): Promise<boolean> {
+    try {
+        const response = await fetch('/api/setup/status', { credentials: 'include' });
+        const payload = (await response.json()) as { ok: boolean; needsSetup?: boolean };
+        return Boolean(payload.ok && payload.needsSetup);
+    } catch {
+        return false;
+    }
+}
+
+export async function setupInitialAdmin(input: SetupInput): Promise<AuthResponse> {
+    return sendAuthRequest('/api/setup', { ...input });
+}
+
 export async function logoutSession(): Promise<void> {
     await sendAuthRequest('/api/auth/logout', {});
+}
+
+export async function getOidcStatus(): Promise<boolean> {
+    try {
+        const response = await fetch('/api/auth/oidc/status', { credentials: 'include' });
+        const payload = (await response.json()) as { ok: boolean; enabled?: boolean };
+        return Boolean(payload.ok && payload.enabled);
+    } catch {
+        return false;
+    }
+}
+
+export function startOidcLogin(): void {
+    window.location.href = '/api/auth/oidc/login';
 }

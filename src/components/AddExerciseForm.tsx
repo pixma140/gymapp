@@ -28,14 +28,14 @@ export function AddExerciseForm({ initialName = '', onCancel, onComplete }: { in
     };
 
     const muscleGroups = [
-        { id: 'chest', label: t('addExercise.muscle.chest') },
-        { id: 'back', label: t('addExercise.muscle.back') },
-        { id: 'legs', label: t('addExercise.muscle.legs') },
-        { id: 'shoulders', label: t('addExercise.muscle.shoulders') },
-        { id: 'arms', label: t('addExercise.muscle.arms') },
-        { id: 'core', label: t('addExercise.muscle.core') },
-        { id: 'cardio', label: t('addExercise.muscle.cardio') },
-        { id: 'fullBody', label: t('addExercise.muscle.fullBody') },
+        { key: 'addExercise.muscle.chest', label: t('addExercise.muscle.chest') },
+        { key: 'addExercise.muscle.back', label: t('addExercise.muscle.back') },
+        { key: 'addExercise.muscle.legs', label: t('addExercise.muscle.legs') },
+        { key: 'addExercise.muscle.shoulders', label: t('addExercise.muscle.shoulders') },
+        { key: 'addExercise.muscle.arms', label: t('addExercise.muscle.arms') },
+        { key: 'addExercise.muscle.core', label: t('addExercise.muscle.core') },
+        { key: 'addExercise.muscle.cardio', label: t('addExercise.muscle.cardio') },
+        { key: 'addExercise.muscle.fullBody', label: t('addExercise.muscle.fullBody') },
     ];
 
     return (
@@ -69,10 +69,10 @@ export function AddExerciseForm({ initialName = '', onCancel, onComplete }: { in
                     <div className="flex flex-wrap gap-2">
                         {muscleGroups.map(mg => (
                             <button
-                                key={mg.id}
+                                key={mg.key}
                                 type="button"
-                                onClick={() => setMuscleGroup(mg.label === muscleGroup ? '' : mg.label)}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${muscleGroup === mg.label
+                                onClick={() => setMuscleGroup(mg.key === muscleGroup ? '' : mg.key)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${muscleGroup === mg.key
                                         ? 'bg-blue-600 border-blue-500 text-white'
                                         : 'bg-[var(--background)] border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--primary)]/40 hover:text-[var(--foreground)]'
                                     }`}

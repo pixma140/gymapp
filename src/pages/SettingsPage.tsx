@@ -1,4 +1,4 @@
-import { Database, Moon, Trash, Dumbbell, Earth, BicepsFlexed, Bell, Palette, Github, LogOut } from 'lucide-react';
+import { Database, Moon, Trash, Dumbbell, Earth, BicepsFlexed, Bell, Palette, Github, LogOut, Shield } from 'lucide-react';
 import { db } from '@/db/db';
 import type { Theme } from '@/context/ThemeContext';
 import type { Language } from '@/i18n/translations';
@@ -10,12 +10,14 @@ import { useTheme } from '@/context/ThemeContext';
 import { cn } from '@/lib/utils';
 import { APP_COMMIT, APP_RELEASE_URL, APP_VERSION } from '@/lib/constants';
 import { logoutSession } from '@/auth/session';
+import { useSession } from '@/context/SessionContext';
 
 export function SettingsPage() {
     const user = useLiveQuery(() => db.users.orderBy('id').first());
     const navigate = useNavigate();
     const { t, language, setLanguage } = useLanguage();
     const { theme, setTheme, mainColor, setColor } = useTheme();
+    const { isAdmin, refresh } = useSession();
 
     const colors = [
         { name: t('color.blue'), value: '#2563eb' },
@@ -46,6 +48,7 @@ export function SettingsPage() {
         await logoutSession();
         await db.delete();
         await db.open();
+        await refresh();
         navigate('/auth', { replace: true });
     };
 
@@ -163,6 +166,20 @@ export function SettingsPage() {
                         </div>
                     </Link>
                 </div>
+
+                {isAdmin && (
+                    <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
+                        <Link to="/admin" className="w-full flex items-center justify-between p-4 hover:bg-[var(--accent)] transition-colors">
+                            <div className="flex items-center gap-3">
+                                <Shield className="size-5 text-[var(--muted-foreground)]" />
+                                <div className="text-left">
+                                    <h3 className="text-sm font-medium text-[var(--foreground)]">{t('admin.nav')}</h3>
+                                    <p className="text-xs text-[var(--muted-foreground)]">{t('admin.nav.desc')}</p>
+                                </div>
+                            </div>
+                        </Link>
+                    </div>
+                )}
 
                 <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
                     <button

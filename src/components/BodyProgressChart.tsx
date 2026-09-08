@@ -5,20 +5,20 @@ import { useLanguage } from '@/i18n/LanguageContext';
 
 export function BodyProgressChart({ rangeDays }: { rangeDays: number }) {
     const { t } = useLanguage();
-    const data = useLiveQuery(async () => {
+    const filteredData = useLiveQuery(async () => {
+        const cutoff = Date.now() - (rangeDays * 24 * 60 * 60 * 1000);
         const measurements = await db.userMeasurements.orderBy('timestamp').toArray();
-        return measurements.map(m => ({
-            date: new Date(m.timestamp).toLocaleDateString(),
-            weight: m.weight,
-            bodyFat: m.bodyFat,
-            timestamp: m.timestamp
-        }));
-    });
+        return measurements
+            .filter(m => m.timestamp >= cutoff)
+            .map(m => ({
+                date: new Date(m.timestamp).toLocaleDateString(),
+                weight: m.weight,
+                bodyFat: m.bodyFat,
+                timestamp: m.timestamp
+            }));
+    }, [rangeDays]);
 
-    if (!data) return <div className="text-[var(--muted-foreground)]">{t('charts.loading')}</div>;
-
-    const cutoff = Date.now() - (rangeDays * 24 * 60 * 60 * 1000);
-    const filteredData = data.filter(point => point.timestamp >= cutoff);
+    if (!filteredData) return <div className="text-[var(--muted-foreground)]">{t('charts.loading')}</div>;
 
     return (
         <div className="space-y-6">

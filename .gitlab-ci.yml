@@ -1,0 +1,31 @@
+workflow:
+  name: Build and publish Docker image
+  rules:
+    - if: '$CI_COMMIT_TAG == "latest" || $CI_COMMIT_TAG =~ /^v.*$/'
+    - when: never
+
+stages:
+  - publish
+
+publish-image:
+  stage: publish
+  image: docker:27-cli
+  services:
+    - name: docker:27-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ''
+  before_script:
+    - printf '%s' "$CI_REGISTRY_PASSWORD" | docker login --username "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker run --privileged --rm tonistiigi/binfmt --install amd64,arm64
+    - docker buildx create --use --name multiarch-builder
+  script:
+    - >-
+      docker buildx build
+      --file Dockerfile
+      --platform linux/amd64,linux/arm64
+      --tag "$CI_REGISTRY_IMAGE:latest"
+      --tag "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+      --push
+      .
