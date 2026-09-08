@@ -29,3 +29,10 @@ dist-ssr
 # my files
 tbd.md
 .gitconfig
+
+# Local workout-history export and exercise-catalog extraction artifacts.
+# history.csv: source workout export; exercises.txt: extracted unique exercise names.
+# extract_exercises.sh: local helper that generates exercises.txt from history.csv.
+/history.csv
+/exercises.txt
+/extract_exercises.sh
