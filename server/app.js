@@ -2,7 +2,7 @@ import express from 'express';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { hashPassword, verifyPassword, parseCookies, base64UrlEncode } from './lib/crypto.js';
+import { verifyPassword, parseCookies, base64UrlEncode } from './lib/crypto.js';
 import { verifyIdToken } from './lib/oidc.js';
 import { createAccountService } from './services/accounts.js';
 import { createSyncService } from './services/sync.js';
@@ -293,27 +293,11 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
         }
 
         try {
-            const userCount = await getUserCount();
-            if (userCount === 0) {
-                res.status(409).json({ ok: false, error: 'setup_required' });
-                return;
-            }
-
-            const existing = await getSql('SELECT id FROM users WHERE username = ? COLLATE NOCASE', [username]);
-            if (existing) {
-                res.status(409).json({ ok: false, error: 'username_taken' });
-                return;
-            }
-
-            const passwordHash = hashPassword(password);
-            const result = await runSql(
-                'INSERT INTO users (username, passwordHash, name, language, theme, createdAt) VALUES (?, ?, ?, ?, ?, ?)',
-                [username, passwordHash, username, 'en', 'dark', Date.now()]
-            );
-
-            const user = await getSql('SELECT id, username, name, language, theme FROM users WHERE id = ?', [result.lastID]);
-            await createSession(result.lastID, res);
-            res.json({ ok: true, user });
+            const result = await accounts.create({ username, password });
+            if (result.error) return res.status(result.status).json({ ok: false, error: result.error });
+            const user = await getSql('SELECT id, username, name, language, theme, isAdmin FROM users WHERE id = ?', [result.id]);
+            await createSession(result.id, res);
+            res.json({ ok: true, user: { ...user, isAdmin: Boolean(user.isAdmin) } });
         } catch (error) {
             console.error('register_failed', error);
             res.status(500).json({ ok: false, error: 'register_failed' });
@@ -532,19 +516,9 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
         }
 
         try {
-            const existing = await getSql('SELECT id FROM users WHERE username = ? COLLATE NOCASE', [username]);
-            if (existing) {
-                res.status(409).json({ ok: false, error: 'username_taken' });
-                return;
-            }
-
-            const passwordHash = hashPassword(password);
-            const result = await runSql(
-                'INSERT INTO users (username, passwordHash, name, email, isAdmin, language, theme, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [username, passwordHash, name, email, isAdmin ? 1 : 0, 'en', 'dark', Date.now()]
-            );
-
-            res.json({ ok: true, id: result.lastID });
+            const result = await accounts.create({ username, password, name, email, isAdmin }, admin.id);
+            if (result.error) return res.status(result.status).json({ ok: false, error: result.error });
+            res.json({ ok: true, id: result.id });
         } catch (error) {
             console.error('user_create_failed', error);
             res.status(500).json({ ok: false, error: 'create_failed' });
@@ -570,22 +544,8 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
         }
 
         try {
-            const target = await getSql('SELECT id, username FROM users WHERE id = ?', [userId]);
-            if (!target) {
-                res.status(404).json({ ok: false, error: 'user_not_found' });
-                return;
-            }
-
-            // Password login requires a username; OIDC-only accounts have none.
-            if (!target.username) {
-                res.status(400).json({ ok: false, error: 'no_password_auth' });
-                return;
-            }
-
-            const passwordHash = hashPassword(password);
-            await runSql('UPDATE users SET passwordHash = ? WHERE id = ?', [passwordHash, userId]);
-            // Invalidate existing sessions so the new password takes full effect.
-            await runSql('DELETE FROM sessions WHERE userId = ?', [userId]).catch(() => {});
+            const result = await accounts.resetPassword(admin.id, userId, password);
+            if (result.error) return res.status(result.status).json({ ok: false, error: result.error });
             res.json({ ok: true });
         } catch (error) {
             console.error('password_reset_failed', error);
@@ -766,18 +726,11 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
             const issuer = config.issuer.replace(/\/$/, '');
             const subject = String(claims.sub);
 
-            let user = await getSql('SELECT id FROM users WHERE oidcIssuer = ? AND oidcSubject = ?', [issuer, subject]);
-
-            if (!user) {
-                const displayName = String(claims.name ?? claims.preferred_username ?? claims.email ?? 'User');
-                const email = claims.email ? String(claims.email) : null;
-                const inserted = await runSql(
-                    'INSERT INTO users (name, email, oidcIssuer, oidcSubject, language, theme, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [displayName, email, issuer, subject, 'en', 'dark', Date.now()]
-                );
-                user = { id: inserted.lastID };
-                await bootstrapAdmin();
-            }
+            const user = await accounts.resolveOidc({
+                issuer, subject,
+                name: String(claims.name ?? claims.preferred_username ?? claims.email ?? 'User'),
+                email: claims.email ? String(claims.email) : null
+            });
 
             await createSession(user.id, res);
             res.redirect('/');

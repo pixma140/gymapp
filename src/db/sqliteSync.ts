@@ -1,3 +1,4 @@
+import { authorizedFetch } from '@/auth/authorization';
 import type { Receipt } from '@shared/commands';
 import type { AccountDatabase } from './db';
 
@@ -11,7 +12,7 @@ export async function flushPendingMutations(db: AccountDatabase, active: () => b
             await db.outbox.update(entry.sequence, { state: 'sending', attempts: entry.attempts + 1 });
             let response: Response;
             try {
-                response = await fetch('/api/sync', { method: 'POST', credentials: 'include',
+                response = await authorizedFetch('/api/sync', { method: 'POST', credentials: 'include',
                     headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry.command) });
             } catch {
                 // Sending state keeps the immutable envelope for ambiguous retries.

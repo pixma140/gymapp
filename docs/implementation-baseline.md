@@ -93,3 +93,24 @@ extend this to reconnect delivery. Export/discard/reload is the current conflict
 resolution. Do not mark these requirements complete merely because the initial
 worker/snapshot plumbing exists. Phase G CI publication gates and Docker image
 verification remain, as does the future external exercise integration.
+
+## Phase C checkpoint — 2026-09-08
+
+- Setup and password-account creation share one insert operation. Registration
+  checks initialization and case-insensitive uniqueness transactionally and cannot
+  grant administrator status. Admin creation, role changes, deletion, and password
+  reset check the actor's current role inside their serialized transaction.
+- Password changes and session invalidation commit or roll back together.
+  Verified OIDC identities resolve/create transactionally; login no longer calls
+  the startup administrator bootstrap. Token signature/issuer/audience/nonce
+  verification remains unchanged.
+- Admin API and outbox 401/403 responses notify SessionProvider to quiesce its
+  sender and refresh session/role state. Pending intent survives this refresh;
+  forbidden commands retain their actionable failed state.
+- Regression coverage includes competing registrations, direct access to every
+  admin endpoint after demotion, service authorization, password-reset rollback,
+  concurrent OIDC identity resolution, and browser removal of stale admin access.
+- Validation: 63 Vitest tests in seven files, lint, build, and all three Playwright
+  workflows passed. HTTP/browser tests ran outside the sandbox for local port
+  binding. Initial JS: 446.79 kB / gzip 137.94 kB; admin and analysis remain separate
+  chunks. Phase D/E's broader request classification and conflict work remain open.

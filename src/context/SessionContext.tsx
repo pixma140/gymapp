@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { AUTHORIZATION_FAILURE } from '@/auth/authorization';
 import { getSessionUser, getSetupStatus, logoutSession, type SessionUser } from '@/auth/session';
 import { AccountDatabase, clearLegacyCacheOnce } from '@/db/db';
 import { hydrateFromServer } from '@/db/hydrate';
@@ -100,8 +101,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         void refresh();
         const channel = new BroadcastChannel('gymapp-session');
-        channel.onmessage = () => void refresh();
-        return () => { channel.close(); void stop(); };
+        const revalidate = () => void refresh();
+        channel.onmessage = revalidate;
+        window.addEventListener(AUTHORIZATION_FAILURE, revalidate);
+        return () => {
+            window.removeEventListener(AUTHORIZATION_FAILURE, revalidate);
+            channel.close();
+            void stop();
+        };
     }, [refresh, stop]);
     useEffect(() => {
         if (state.status !== 'ready' || !state.database) return;

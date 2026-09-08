@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import { createApp } from './app.js';
 import { openDatabase } from './db.js';
+import { createAccountService } from './services/accounts.js';
 
 const DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'gymapp-test-'));
 const database = openDatabase(path.join(DATA_DIR, 'gymapp.db'));
@@ -234,6 +235,48 @@ describe('admin user management', () => {
         bobCookie = newLogin.cookie;
     });
 
+    it('rolls back the password if session invalidation fails', async () => {
+        const before = await database.getSql('SELECT passwordHash FROM users WHERE id = ?', [bobId]);
+        await database.runSql("CREATE TRIGGER reject_session_delete BEFORE DELETE ON sessions BEGIN SELECT RAISE(ABORT, 'test session failure'); END");
+        try {
+            const result = await request('POST', `/api/admin/users/${bobId}/password`, {
+                cookie: adminCookie, body: { password: 'rollbackpassword' },
+            });
+            expect(result.status).toBe(500);
+            expect(await database.getSql('SELECT passwordHash FROM users WHERE id = ?', [bobId])).toEqual(before);
+            expect((await request('GET', '/api/auth/me', { cookie: bobCookie })).status).toBe(200);
+        } finally {
+            await database.runSql('DROP TRIGGER reject_session_delete');
+        }
+    });
+
+    it('uses current roles for existing sessions across every admin endpoint', async () => {
+        await request('PATCH', `/api/admin/users/${bobId}`, { cookie: adminCookie, body: { isAdmin: true } });
+        expect((await request('GET', '/api/admin/users', { cookie: bobCookie })).status).toBe(200);
+        await request('PATCH', `/api/admin/users/${bobId}`, { cookie: adminCookie, body: { isAdmin: false } });
+        const me = await request('GET', '/api/auth/me', { cookie: bobCookie });
+        expect(me.body.user.isAdmin).toBe(false);
+        for (const [method, route, body] of [
+            ['GET', '/api/admin/users'],
+            ['POST', '/api/admin/users', { username: 'denied', password: 'longpassword', name: 'Denied' }],
+            ['PATCH', `/api/admin/users/${adminId}`, { isAdmin: false }],
+            ['DELETE', `/api/admin/users/${adminId}`],
+            ['POST', `/api/admin/users/${adminId}/password`, { password: 'longpassword' }],
+            ['GET', '/api/admin/oidc'],
+            ['PUT', '/api/admin/oidc', { enabled: false }],
+        ]) {
+            expect((await request(method, route, { cookie: bobCookie, body })).status).toBe(403);
+        }
+    });
+
+    it('serializes competing registrations and never accepts an admin role from registration', async () => {
+        const results = await Promise.all(['Concurrent', 'concurrent'].map(username =>
+            request('POST', '/api/auth/register', { body: { username, password: 'longpassword', isAdmin: true } })));
+        expect(results.map(result => result.status).sort()).toEqual([200, 409]);
+        const created = results.find(result => result.status === 200);
+        expect(created.body.user.isAdmin).toBe(false);
+    });
+
     it('rejects a password reset that is too short', async () => {
         const res = await request('POST', `/api/admin/users/${bobId}/password`, {
             cookie: adminCookie,
@@ -260,6 +303,30 @@ describe('admin user management', () => {
         const res = await request('DELETE', `/api/admin/users/${adminId}`, { cookie: adminCookie });
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('cannot_delete_self');
+    });
+
+    it('converges concurrent verified OIDC identities without granting roles or password auth', async () => {
+        const accounts = createAccountService(database);
+        const profile = { issuer: 'https://issuer.example', subject: 'same-subject', name: 'OIDC User', email: null };
+        const [first, second] = await Promise.all([accounts.resolveOidc(profile), accounts.resolveOidc(profile)]);
+        expect(first.id).toBe(second.id);
+        expect(await database.getSql('SELECT isAdmin, passwordHash FROM users WHERE id = ?', [first.id]))
+            .toEqual({ isAdmin: 0, passwordHash: null });
+        const reset = await request('POST', `/api/admin/users/${first.id}/password`, {
+            cookie: adminCookie, body: { password: 'longpassword' },
+        });
+        expect(reset.status).toBe(400);
+        expect(reset.body.error).toBe('no_password_auth');
+        await accounts.delete(adminId, first.id);
+    });
+
+    it('rechecks a demoted actor inside account service transactions', async () => {
+        const accounts = createAccountService(database);
+        const forbidden = { status: 403, error: 'forbidden' };
+        expect(await accounts.create({ username: 'service-denied', password: 'longpassword' }, bobId)).toEqual(forbidden);
+        expect(await accounts.resetPassword(bobId, adminId, 'longpassword')).toEqual(forbidden);
+        expect(await accounts.changeRole(bobId, bobId, true)).toEqual(forbidden);
+        expect(await accounts.delete(bobId, adminId)).toEqual(forbidden);
     });
 
     it('rolls back account cleanup if any private-data deletion fails', async () => {

@@ -86,3 +86,29 @@ test('offline timed intent, cancellation, profile measurements, and catalog edit
     const renamed = await (await page.request.get('/api/sync/snapshot')).json();
     expect(renamed.gyms.some((gym: { name: string }) => gym.name === 'Iron Odyssey Updated')).toBe(true);
 });
+
+test('authorization failure refreshes a demoted administrator role', async ({ page, playwright }) => {
+    const admin = await playwright.request.newContext({ baseURL: 'http://127.0.0.1:4173' });
+    try {
+        expect((await admin.post('/api/auth/login', { data: { username: 'admin', password: '123geheim' } })).ok()).toBe(true);
+        const created = await admin.post('/api/admin/users', {
+            data: { username: 'role-refresh', password: 'testpassword', name: 'Role Refresh', isAdmin: true },
+        });
+        const { id } = await created.json();
+        expect(created.ok()).toBe(true);
+        await page.goto('/auth');
+        await page.locator('input[autocomplete=username]').fill('role-refresh');
+        await page.locator('input[autocomplete=current-password]').fill('testpassword');
+        await page.getByRole('button', { name: 'Log in', exact: true }).click();
+        await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+        expect((await admin.patch(`/api/admin/users/${id}`, { data: { isAdmin: false } })).ok()).toBe(true);
+        await page.getByRole('button', { name: 'Settings', exact: true }).click();
+        await page.locator('a[href="/admin"]').click();
+        await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+        await page.getByRole('button', { name: 'Settings', exact: true }).click();
+        await expect(page.locator('a[href="/admin"]')).toHaveCount(0);
+        expect((await admin.delete(`/api/admin/users/${id}`)).ok()).toBe(true);
+    } finally {
+        await admin.dispose();
+    }
+});

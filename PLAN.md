@@ -1,6 +1,6 @@
 # Implementation plan
 
-Status: Phase B implemented and verified, including the client/API changes required by the new schemas. The development database was explicitly reset and seeded on 2026-09-08. Some dependent Phase C–F work was brought forward; unchecked items remain. Resume with Phase C account-service consolidation and authorization-failure role refresh, then the remaining Phase D/E lifecycle and conflict work. See `docs/implementation-baseline.md` for checkpoint details.
+Status: Phase C implemented and verified. Account creation, OIDC identity resolution, deletion, role changes, and atomic password reset now use shared account services. Authorization failures refresh client session/role state. The development database was explicitly reset and seeded on 2026-09-08 during Phase B; no further reset was needed for Phase C. Resume with the unchecked Phase D bootstrap/request/tab-coordination work, then Phase E lifecycle and conflict work. See `docs/implementation-baseline.md` for checkpoint details.
 
 Sources: [SUGGESTIONS.md](SUGGESTIONS.md), [ARCHITECTURE.md](ARCHITECTURE.md), and the user's appendix. The appendix takes precedence: this is a work-in-progress reset, default test users and shared gyms are required, and the existing exercise implementation must be removed. External exercise integration belongs to a later task.
 
@@ -106,9 +106,9 @@ Each phase should be a reviewable change with relevant tests. Existing uncommitt
 
 ### Phase C — Enforce account and shared-gym authorization
 
-- [ ] Move account creation/deletion and role changes into shared service operations. Remove account deletion and role/credential changes from profile sync.
+- [x] Move account creation/deletion and role changes into shared service operations. Remove account deletion and role/credential changes from profile sync.
 - [x] Keep self-deletion/self-demotion prohibited in this iteration. Check the last-admin invariant and cleanup inside the same serialized transaction. Keep regular registration non-admin and first-admin setup atomic.
-- [ ] Preserve password-reset session invalidation and OIDC verification behavior. Refresh role state on authorization failure; always enforce current roles server-side.
+- [x] Preserve password-reset session invalidation and OIDC verification behavior. Refresh role state on authorization failure; always enforce current roles server-side.
 - [x] Expose catalog reads to authenticated users; expose create/edit/archive operations only to administrators. Archive gyms instead of deleting referenced records, preserving history. Prevent new workouts at archived gyms while allowing existing sessions to finish.
 - [x] Move shared-gym management into the protected admin experience. Remove ordinary-user Add Gym controls and redirect/guard the old settings management route consistently.
 - [x] Validate object shapes, UUIDs, finite measurements/timestamps, allowed command names, required fields, ownership, and revisions. Unknown/inherited property names must never select a handler. Reject removed exercise commands explicitly.
