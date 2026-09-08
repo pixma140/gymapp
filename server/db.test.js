@@ -7,7 +7,7 @@ describe('database lifecycle and serialization', () => {
         const first = openDatabase(':memory:');
         const second = openDatabase(':memory:');
         try {
-            await Promise.all([first.initDatabase(), second.initDatabase()]);
+            await Promise.all([first.initDatabase({ seedDevData: false }), second.initDatabase({ seedDevData: false })]);
             expect(createApp({ database: first }).app).not.toBe(createApp({ database: second }).app);
             await first.runSql("INSERT INTO users (name) VALUES ('First')");
             expect(await second.allSql('SELECT * FROM users')).toEqual([]);

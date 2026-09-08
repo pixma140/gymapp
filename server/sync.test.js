@@ -1,222 +1,113 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-
+import { randomUUID } from 'node:crypto';
 import { createApp } from './app.js';
 import { openDatabase } from './db.js';
 
-const DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'gymapp-test-'));
-const database = openDatabase(path.join(DATA_DIR, 'gymapp.db'));
+const database = openDatabase(':memory:');
 const { app } = createApp({ database });
-
-let server;
-let baseUrl;
-
-function jsonHeaders(extra = {}) {
-    return { 'Content-Type': 'application/json', ...extra };
-}
-
-// Minimal cookie-jar request helper that captures and replays Set-Cookie.
+let server, baseUrl, adminCookie, userCookie, adminId, userId, installationId;
 async function request(method, route, { body, cookie } = {}) {
-    const headers = jsonHeaders(cookie ? { Cookie: cookie } : {});
     const res = await fetch(`${baseUrl}${route}`, {
-        method,
-        headers,
+        method, headers: { 'Content-Type': 'application/json', ...(cookie ? { Cookie: cookie } : {}) },
         body: body === undefined ? undefined : JSON.stringify(body),
     });
-    const setCookie = res.headers.get('set-cookie');
-    let sessionCookie = cookie;
-    if (setCookie) {
-        sessionCookie = setCookie.split(';')[0];
-    }
-    let payload = null;
-    try {
-        payload = await res.json();
-    } catch {
-        payload = null;
-    }
-    return { status: res.status, body: payload, cookie: sessionCookie };
+    return { status: res.status, body: await res.json(), cookie: res.headers.get('set-cookie')?.split(';')[0] ?? cookie };
 }
+const command = (operation, payload, options = {}) => ({
+    accountId: userId, installationId, mutationId: randomUUID(), operation,
+    targetId: operation === 'profile.update' ? null : randomUUID(), expectedRevision: null, payload, ...options,
+});
+const send = (body, cookie = userCookie) => request('POST', '/api/sync', { body, cookie });
+const snapshot = cookie => request('GET', '/api/sync/snapshot', { cookie });
 
 beforeAll(async () => {
-    await database.initDatabase();
-    await new Promise((resolve, reject) => {
-        server = app.listen(0, () => resolve());
-        server.on('error', reject);
-    });
-    const { port } = server.address();
-    baseUrl = `http://127.0.0.1:${port}`;
+    await database.initDatabase({ seedDevData: false });
+    ({ id: installationId } = await database.getSql('SELECT id FROM installation'));
+    await new Promise((resolve, reject) => { server = app.listen(0, resolve); server.once('error', reject); });
+    baseUrl = `http://127.0.0.1:${server.address().port}`;
 });
-
 afterAll(async () => {
-    await new Promise((resolve) => server.close(resolve));
+    await new Promise(resolve => server.close(resolve));
     await database.close();
-    fs.rmSync(DATA_DIR, { recursive: true, force: true });
 });
 
-describe('sync authorization and scoping', () => {
-    let adminCookie;
-    let userCookie;
-    let adminId;
-    let userId;
-
-    it('bootstraps the first admin via setup', async () => {
+describe('replacement sync contract', () => {
+    let gymId, workoutId;
+    it('serializes concurrent first-admin setup', async () => {
         const results = await Promise.all(['admin', 'otheradmin'].map(username => request('POST', '/api/setup', {
             body: { username, password: 'adminpassword', name: 'Admin' },
         })));
         expect(results.map(result => result.status).sort()).toEqual([200, 409]);
-        expect(results.find(result => result.status === 409).body.error).toBe('already_setup');
         expect(await database.getSql('SELECT COUNT(*) AS count FROM users')).toEqual({ count: 1 });
-        const res = results.find(result => result.status === 200);
-        expect(res.status).toBe(200);
-        expect(res.body.ok).toBe(true);
-        adminCookie = res.cookie;
-        adminId = res.body.user.id;
-        expect(adminCookie).toBeTruthy();
+        const result = results.find(result => result.status === 200);
+        adminCookie = result.cookie; adminId = result.body.user.id;
+        const user = await request('POST', '/api/auth/register', { body: { username: 'regular', password: 'userpassword' } });
+        userCookie = user.cookie; userId = user.body.user.id;
     });
-
-    it('registers and logs in a second user', async () => {
-        const reg = await request('POST', '/api/auth/register', {
-            body: { username: 'bob', password: 'bobpassword' },
-        });
-        expect(reg.status).toBe(200);
-        userCookie = reg.cookie;
-        userId = reg.body.user.id;
-        expect(userId).not.toBe(adminId);
+    it('authenticates before dispatch and rejects legacy/inherited commands', async () => {
+        expect((await request('POST', '/api/sync', { body: {} })).status).toBe(401);
+        for (const body of [{ table: 'users', operation: 'delete', id: userId }, { operation: 'constructor' }, { operation: '__proto__' }, { operation: 'exercise.create' }]) {
+            expect((await send(body)).status).toBe(400);
+        }
+        expect((await request('GET', '/api/auth/me', { cookie: userCookie })).status).toBe(200);
     });
-
-    it('rejects unauthenticated sync mutations', async () => {
-        const res = await request('POST', '/api/sync', {
-            body: { table: 'gyms', operation: 'upsert', data: { id: 1, name: 'X', lastVisited: 0, visitCount: 0 } },
-        });
-        expect(res.status).toBe(401);
-    });
-
-    it('rejects unknown tables', async () => {
-        const res = await request('POST', '/api/sync', {
-            cookie: adminCookie,
-            body: { table: 'sessions', operation: 'upsert', data: { id: 1 } },
-        });
-        expect(res.status).toBe(400);
-    });
-
-    it('scopes upserts to the authenticated user even if a foreign userId is sent', async () => {
-        // Bob tries to write a gym claiming it belongs to the admin.
-        const res = await request('POST', '/api/sync', {
-            cookie: userCookie,
-            body: {
-                table: 'gyms',
-                operation: 'upsert',
-                data: { id: 1, userId: adminId, name: "Bob's Gym", lastVisited: 1, visitCount: 1 },
-            },
-        });
-        expect(res.status).toBe(200);
-
-        // The admin's snapshot must not contain Bob's row.
-        const adminSnap = await request('GET', '/api/sync/snapshot', { cookie: adminCookie });
-        expect(adminSnap.body.tables.gyms).toHaveLength(0);
-
-        // Bob's snapshot owns it, attributed to Bob (not the admin).
-        const bobSnap = await request('GET', '/api/sync/snapshot', { cookie: userCookie });
-        expect(bobSnap.body.tables.gyms).toHaveLength(1);
-        expect(bobSnap.body.tables.gyms[0].userId).toBe(userId);
-        expect(bobSnap.body.tables.gyms[0].name).toBe("Bob's Gym");
-    });
-
-    it('allows the same id for different users without collision', async () => {
-        const res = await request('POST', '/api/sync', {
-            cookie: adminCookie,
-            body: {
-                table: 'gyms',
-                operation: 'upsert',
-                data: { id: 1, name: "Admin's Gym", lastVisited: 2, visitCount: 2 },
-            },
-        });
-        expect(res.status).toBe(200);
-
-        const adminSnap = await request('GET', '/api/sync/snapshot', { cookie: adminCookie });
-        expect(adminSnap.body.tables.gyms).toHaveLength(1);
-        expect(adminSnap.body.tables.gyms[0].name).toBe("Admin's Gym");
-
-        const bobSnap = await request('GET', '/api/sync/snapshot', { cookie: userCookie });
-        expect(bobSnap.body.tables.gyms[0].name).toBe("Bob's Gym");
-    });
-
-    it('does not let a user delete another user\'s row', async () => {
-        // Bob deletes gym id=1; must only affect Bob's own copy.
-        const del = await request('POST', '/api/sync', {
-            cookie: userCookie,
-            body: { table: 'gyms', operation: 'delete', id: 1 },
-        });
-        expect(del.status).toBe(200);
-
-        const bobSnap = await request('GET', '/api/sync/snapshot', { cookie: userCookie });
-        expect(bobSnap.body.tables.gyms).toHaveLength(0);
-
-        // Admin's row survives.
-        const adminSnap = await request('GET', '/api/sync/snapshot', { cookie: adminCookie });
-        expect(adminSnap.body.tables.gyms).toHaveLength(1);
-    });
-
-    it('forbids workoutSets that reference a workout the user does not own', async () => {
-        // Admin creates a workout (id=1).
-        await request('POST', '/api/sync', {
-            cookie: adminCookie,
-            body: {
-                table: 'workouts',
-                operation: 'upsert',
-                data: { id: 1, gymId: 1, startTime: 1, endTime: 2, duration: 1 },
-            },
-        });
-
-        // Bob tries to attach a set to the admin's workout id=1.
-        const res = await request('POST', '/api/sync', {
-            cookie: userCookie,
-            body: {
-                table: 'workoutSets',
-                operation: 'upsert',
-                data: {
-                    id: 1,
-                    workoutId: 1,
-                    exerciseId: 1,
-                    type: 'working',
-                    setNumber: 1,
-                    weight: 100,
-                    reps: 5,
-                    timestamp: 1,
-                },
-            },
-        });
-        expect(res.status).toBe(403);
-    });
-
-    it('blocks a user from updating another user\'s profile', async () => {
-        const res = await request('POST', '/api/sync', {
-            cookie: userCookie,
-            body: { table: 'users', operation: 'update', id: adminId, changes: { name: 'Hacked' } },
-        });
-        expect(res.status).toBe(403);
-    });
-
-    it('rejects profile-sync deletion for both roles without deleting either account', async () => {
-        for (const [cookie, id] of [[adminCookie, adminId], [userCookie, userId]]) {
-            const result = await request('POST', '/api/sync', {
-                cookie, body: { table: 'users', operation: 'delete', id },
-            });
-            expect(result.status).toBe(403);
-            expect(result.body.error).toBe('account_delete_requires_admin');
-            expect((await request('GET', '/api/auth/me', { cookie })).status).toBe(200);
+    it('binds delivery to both the installation and authenticated account', async () => {
+        for (const options of [{ accountId: adminId }, { installationId: randomUUID() }]) {
+            const result = await send(command('profile.update', { name: 'Wrong' }, { expectedRevision: 1, ...options }));
+            expect(result.body.error).toBe('account_binding_mismatch');
         }
     });
-
-    it('rejects inherited table names before dispatch', async () => {
-        for (const table of ['constructor', '__proto__', 'toString']) {
-            const result = await request('POST', '/api/sync', {
-                cookie: adminCookie, body: { table, operation: 'delete', id: adminId },
-            });
-            expect(result.status).toBe(400);
-            expect(result.body.error).toBe('unsupported_table');
+    it('restricts shared gym writes to current administrators', async () => {
+        const create = command('gym.create', { name: 'Shared Gym', location: 'City' });
+        expect((await send(create)).status).toBe(403);
+        const result = await send({ ...create, accountId: adminId }, adminCookie);
+        expect(result.status).toBe(200); gymId = create.targetId;
+        const [admin, user] = await Promise.all([snapshot(adminCookie), snapshot(userCookie)]);
+        expect(user.body.gyms).toEqual(admin.body.gyms);
+        expect(user.body.gyms[0].id).toBe(gymId);
+        expect(user.body).not.toHaveProperty('exercises');
+        for (const [operation, payload] of [['gym.update', { name: 'Hacked' }], ['gym.archive', { archived: true }]]) {
+            expect((await send(command(operation, payload, { targetId: gymId, expectedRevision: 1 }))).status).toBe(403);
         }
+    });
+    it('applies private commands once, detects revision conflicts, and isolates snapshots', async () => {
+        const start = command('workout.start', { gymId, startTime: 10 }); workoutId = start.targetId;
+        const result = await send(start);
+        expect(result.status).toBe(200); expect(result.body.revision).toBe(1);
+        expect((await send(start)).body).toEqual(result.body);
+        expect((await send({ ...start, payload: { gymId, startTime: 11 } })).body.error).toBe('mutation_id_reused');
+        const measurement = command('measurement.create', { weight: 80, bodyFat: 20, timestamp: 10 });
+        expect((await send(measurement)).status).toBe(200);
+        expect((await snapshot(adminCookie)).body.workouts).toEqual([]);
+        expect((await snapshot(adminCookie)).body.measurements).toEqual([]);
+        expect((await snapshot(userCookie)).body.workouts).toHaveLength(1);
+        const foreign = command('workout.finish', { endTime: 20 }, { targetId: workoutId, expectedRevision: 1, accountId: adminId });
+        expect((await send(foreign, adminCookie)).status).toBe(404);
+        const profile = command('profile.update', { name: 'New name' }, { expectedRevision: 1 });
+        expect((await send(profile)).body.revision).toBe(2);
+        expect((await send({ ...profile, mutationId: randomUUID() })).body.error).toBe('revision_conflict');
+        expect((await snapshot(userCookie)).body.accountGeneration).toBe(3);
+    });
+    it('rejects concurrent active sessions and allows finishing at an archived gym', async () => {
+        expect((await send(command('workout.start', { gymId, startTime: 11 }))).body.error).toBe('active_workout_exists');
+        const archive = command('gym.archive', { archived: true }, { targetId: gymId, expectedRevision: 1, accountId: adminId });
+        expect((await send(archive, adminCookie)).status).toBe(200);
+        expect((await send(command('workout.finish', { endTime: 9 }, { targetId: workoutId, expectedRevision: 1 }))).status).toBe(409);
+        expect((await send(command('workout.finish', { endTime: 20 }, { targetId: workoutId, expectedRevision: 1 }))).body.revision).toBe(2);
+        expect((await send(command('workout.start', { gymId, startTime: 30 }))).body.error).toBe('gym_unavailable');
+    });
+    it('replays deletes and never recreates deleted records through update', async () => {
+        const deletion = command('workout.delete', {}, { targetId: workoutId, expectedRevision: 2 });
+        const result = await send(deletion);
+        expect(result.status).toBe(200);
+        expect((await send(deletion)).body).toEqual(result.body);
+        expect((await send(command('workout.finish', { endTime: 40 }, { targetId: workoutId, expectedRevision: 2 }))).status).toBe(404);
+    });
+    it('rejects invalid values and privilege changes without advancing generations', async () => {
+        const before = (await snapshot(userCookie)).body.accountGeneration;
+        for (const payload of [{ weight: -1 }, { bodyFat: 101 }, { language: 'xx' }, { theme: 'unknown' }, { name: '' }, { isAdmin: true }, { passwordHash: 'hacked' }]) {
+            expect((await send(command('profile.update', payload, { expectedRevision: 2 }))).status).toBe(400);
+        }
+        expect((await snapshot(userCookie)).body.accountGeneration).toBe(before);
     });
 });

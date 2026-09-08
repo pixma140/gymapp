@@ -2,15 +2,15 @@ import express from 'express';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { TABLE_COLUMNS, SNAPSHOT_TABLES } from '../shared/syncSchema.js';
 import { hashPassword, verifyPassword, parseCookies, base64UrlEncode } from './lib/crypto.js';
-import { pickAllowedColumns } from './lib/columns.js';
 import { verifyIdToken } from './lib/oidc.js';
 import { createAccountService } from './services/accounts.js';
+import { createSyncService } from './services/sync.js';
 
 export function createApp({ database, cookieSecure = false, adminUsername = '', publicUrl = '', distDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist') }) {
     const { runSql, getSql, allSql } = database;
     const accounts = createAccountService(database);
+    const sync = createSyncService(database);
     const SESSION_COOKIE = 'gymapp_session';
     const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
     const COOKIE_SECURE = cookieSecure;
@@ -55,11 +55,6 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
         }
 
         return { ...row, isAdmin: Boolean(row.isAdmin) };
-    }
-
-    async function ensureWorkoutBelongsToUser(workoutId, userId) {
-        const row = await getSql('SELECT id FROM workouts WHERE id = ? AND userId = ?', [workoutId, userId]);
-        return Boolean(row);
     }
 
     async function getUserCount() {
@@ -167,6 +162,8 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
 
     async function bootstrapAdmin() {
         try {
+            const installation = await getSql('SELECT initializationMode FROM installation WHERE singleton = 1');
+            if (installation?.initializationMode === 'fixtures') return;
             if (ADMIN_USERNAME) {
                 const target = await getSql('SELECT id FROM users WHERE username = ? COLLATE NOCASE', [ADMIN_USERNAME]);
                 if (target) {
@@ -342,7 +339,7 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
         }
 
         try {
-            const user = await getSql('SELECT id, username, name, language, theme, passwordHash FROM users WHERE username = ? COLLATE NOCASE', [username]);
+            const user = await getSql('SELECT id, username, name, language, theme, isAdmin, passwordHash FROM users WHERE username = ? COLLATE NOCASE', [username]);
             if (!user || !verifyPassword(password, user.passwordHash)) {
                 res.status(401).json({ ok: false, error: 'invalid_credentials' });
                 return;
@@ -356,7 +353,8 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
                     username: user.username,
                     name: user.name,
                     language: user.language,
-                    theme: user.theme
+                    theme: user.theme,
+                    isAdmin: Boolean(user.isAdmin)
                 }
             });
         } catch (error) {
@@ -789,176 +787,25 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
     });
 
     app.post('/api/sync', async (req, res) => {
-        const authUser = await resolveSessionUser(req);
-        if (!authUser) {
-            res.status(401).json({ ok: false, error: 'unauthorized' });
-            return;
-        }
-
-        const { table, operation } = req.body ?? {};
-        if (!table || !Object.hasOwn(TABLE_COLUMNS, table)) {
-            res.status(400).json({ ok: false, error: 'unsupported_table' });
-            return;
-        }
-
-        const userId = authUser.id;
-
+        const user = await resolveSessionUser(req);
+        if (!user) return res.status(401).json({ ok: false, error: 'unauthorized' });
         try {
-            if (operation === 'upsert') {
-                const payload = pickAllowedColumns(table, req.body.data ?? {});
-
-                if (table === 'users') {
-                    payload.id = userId;
-
-                    const updatableColumns = Object.keys(payload).filter((column) => column !== 'id');
-                    if (updatableColumns.length === 0) {
-                        await runSql('INSERT OR IGNORE INTO users (id, name) VALUES (?, ?)', [userId, authUser.username ?? authUser.name ?? 'User']);
-                    } else {
-                        const setClause = updatableColumns.map((column) => `${column} = ?`).join(', ');
-                        const updateValues = updatableColumns.map((column) => payload[column]);
-                        await runSql(`UPDATE users SET ${setClause} WHERE id = ?`, [...updateValues, userId]);
-                    }
-
-                    res.json({ ok: true });
-                    return;
-                }
-
-                // All remaining synced tables are user-scoped with composite (userId, id) keys.
-                payload.userId = userId;
-
-                if (payload.id === undefined) {
-                    res.status(400).json({ ok: false, error: 'missing_id' });
-                    return;
-                }
-
-                if (table === 'workoutSets') {
-                    const workoutId = Number(payload.workoutId);
-                    if (!Number.isFinite(workoutId) || !(await ensureWorkoutBelongsToUser(workoutId, userId))) {
-                        res.status(403).json({ ok: false, error: 'forbidden' });
-                        return;
-                    }
-                }
-
-                const columns = Object.keys(payload);
-                const values = columns.map((column) => payload[column]);
-                const placeholders = columns.map(() => '?').join(', ');
-                const updatableColumns = columns.filter((column) => column !== 'id' && column !== 'userId');
-                const setClause = updatableColumns.map((column) => `${column} = excluded.${column}`).join(', ');
-
-                const conflictAction = updatableColumns.length > 0
-                    ? `DO UPDATE SET ${setClause}`
-                    : 'DO NOTHING';
-
-                await runSql(
-                    `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${placeholders}) ON CONFLICT(userId, id) ${conflictAction}`,
-                    values
-                );
-
-                res.json({ ok: true });
-                return;
-            }
-
-            if (operation === 'update') {
-                const id = Number(req.body.id);
-                if (!Number.isFinite(id)) {
-                    res.json({ ok: true });
-                    return;
-                }
-
-                const changes = pickAllowedColumns(table, req.body.changes ?? {});
-                delete changes.id;
-                delete changes.userId;
-
-                if (table === 'users') {
-                    if (id !== userId) {
-                        res.status(403).json({ ok: false, error: 'forbidden' });
-                        return;
-                    }
-
-                    const columns = Object.keys(changes);
-                    if (columns.length === 0) {
-                        res.json({ ok: true });
-                        return;
-                    }
-
-                    const setClause = columns.map((column) => `${column} = ?`).join(', ');
-                    const values = columns.map((column) => changes[column]);
-                    await runSql(`UPDATE users SET ${setClause} WHERE id = ?`, [...values, userId]);
-                    res.json({ ok: true });
-                    return;
-                }
-
-                if (table === 'workoutSets' && changes.workoutId !== undefined) {
-                    const nextWorkoutId = Number(changes.workoutId);
-                    if (!Number.isFinite(nextWorkoutId) || !(await ensureWorkoutBelongsToUser(nextWorkoutId, userId))) {
-                        res.status(403).json({ ok: false, error: 'forbidden' });
-                        return;
-                    }
-                }
-
-                const columns = Object.keys(changes);
-                if (columns.length === 0) {
-                    res.json({ ok: true });
-                    return;
-                }
-
-                const setClause = columns.map((column) => `${column} = ?`).join(', ');
-                const values = columns.map((column) => changes[column]);
-                await runSql(`UPDATE ${table} SET ${setClause} WHERE id = ? AND userId = ?`, [...values, id, userId]);
-                res.json({ ok: true });
-                return;
-            }
-
-            if (operation === 'delete') {
-                const id = Number(req.body.id);
-                if (!Number.isFinite(id)) {
-                    res.json({ ok: true });
-                    return;
-                }
-
-                if (table === 'users') {
-                    res.status(403).json({ ok: false, error: 'account_delete_requires_admin' });
-                    return;
-                }
-
-                await runSql(`DELETE FROM ${table} WHERE id = ? AND userId = ?`, [id, userId]);
-                res.json({ ok: true });
-                return;
-            }
-
-            res.status(400).json({ ok: false, error: 'unsupported_operation' });
+            const result = await sync.apply(user.id, req.body);
+            if (result.error) return res.status(result.status).json({ ok: false, error: result.error });
+            res.json({ ok: true, ...result });
         } catch (error) {
             console.error('sync_failed', error);
             res.status(500).json({ ok: false, error: 'sync_failed' });
         }
     });
 
-    // Returns the full server-side dataset for the authenticated user so a fresh
-    // device (or a re-login) can hydrate its local IndexedDB.
     app.get('/api/sync/snapshot', async (req, res) => {
-        const authUser = await resolveSessionUser(req);
-        if (!authUser) {
-            res.status(401).json({ ok: false, error: 'unauthorized' });
-            return;
-        }
-
-        const userId = authUser.id;
-
+        const user = await resolveSessionUser(req);
+        if (!user) return res.status(401).json({ ok: false, error: 'unauthorized' });
         try {
-            const profile = await getSql(
-                `SELECT ${TABLE_COLUMNS.users.join(', ')} FROM users WHERE id = ?`,
-                [userId]
-            );
-
-            const tables = {};
-            for (const table of SNAPSHOT_TABLES) {
-                tables[table] = await allSql(
-                    `SELECT ${TABLE_COLUMNS[table].join(', ')} FROM ${table} WHERE userId = ?`,
-                    [userId]
-                );
-            }
-
-            res.json({ ok: true, user: profile, tables });
+            const result = await sync.snapshot(user.id);
+            if (result.error) return res.status(result.status).json({ ok: false, error: result.error });
+            res.json({ ok: true, ...result });
         } catch (error) {
             console.error('snapshot_failed', error);
             res.status(500).json({ ok: false, error: 'snapshot_failed' });

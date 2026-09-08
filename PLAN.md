@@ -1,6 +1,6 @@
 # Implementation plan
 
-Status: implementation in progress. Phase A test seams, serialized database access, account regressions, and replacement type declarations are complete. The legacy HTTP sync contract remains active until the schema/client switch. No database reset has been performed. See `docs/implementation-baseline.md` for baseline and inventory.
+Status: implementation in progress. Phase A test seams, serialized database access, account regressions, and replacement type declarations are complete. Phase B server schemas, fixtures, reset, and replacement HTTP commands are implemented. The client transition is the next commit in this checkpoint. The development database was explicitly reset and seeded on 2026-09-08. See `docs/implementation-baseline.md` for baseline and inventory.
 
 Sources: [SUGGESTIONS.md](SUGGESTIONS.md), [ARCHITECTURE.md](ARCHITECTURE.md), and the user's appendix. The appendix takes precedence: this is a work-in-progress reset, default test users and shared gyms are required, and the existing exercise implementation must be removed. External exercise integration belongs to a later task.
 
@@ -86,20 +86,20 @@ Each phase should be a reviewable change with relevant tests. Existing uncommitt
 - [x] Extract `createApp` and database lifecycle without changing existing behavior first. Adapt HTTP tests to inject and close temporary databases explicitly.
 - [x] Add a serialized transaction helper: asynchronous statements inside one transaction must not interleave with another request's writes on the shared SQLite connection.
 - [x] Define explicit command and snapshot types for profiles, measurements, timed workouts, and shared gyms (`shared/commands.d.ts`).
-- [ ] Remove arbitrary table mutation as the public write contract when switching implementations (phases B–E).
+- [x] Remove arbitrary table mutation as the public write contract when switching implementations (phases B–E).
 - [x] Add focused regression coverage for alternate account deletion, orphan cleanup, and concurrent setup. Tests for the replacement contract can land with the corresponding implementation; do not retain old exercise behavior as a compatibility requirement.
 
 **Exit:** test resources are isolated and the replacement contract is concrete enough for the schema/client work below.
 
 ### Phase B — Replace initial schemas and implement deterministic reset/seeding
 
-- [ ] Define accounts, sessions, OIDC state/settings, installation identity, global gyms, private workouts/measurements, revisions, and mutation receipts in initial SQLite DDL.
-- [ ] Use foreign keys with enforcement enabled. Account deletion cascades private data, sessions, and mutation receipts. Workouts reference shared gyms; account deletion never deletes shared gyms.
-- [ ] Remove persisted gym visit counters. Derive visits/last visit from the active user's completed workouts.
-- [ ] Add a revision to mutable synchronized records and an account data-generation counter. Every private mutation increments its account generation; shared catalog changes increment a catalog generation.
+- [x] Define accounts, sessions, OIDC state/settings, installation identity, global gyms, private workouts/measurements, revisions, and mutation receipts in initial SQLite DDL.
+- [x] Use foreign keys with enforcement enabled. Account deletion cascades private data, sessions, and mutation receipts. Workouts reference shared gyms; account deletion never deletes shared gyms.
+- [x] Remove persisted gym visit counters. Derive visits/last visit from the active user's completed workouts.
+- [x] Add a revision to mutable synchronized records and an account data-generation counter. Every private mutation increments its account generation; shared catalog changes increment a catalog generation.
 - [ ] Create account-local Dexie `version(1)` stores for profile, shared gym cache, workouts, measurements, outbox, and sync metadata. Domain keys are UUIDs, local outbox order uses an auto-increment sequence, and all records bind to the account/installation cache.
-- [ ] Implement the fixture mode and one-time marker described above. Check exact roles and names in seed tests, and run normal password authentication to verify both credentials.
-- [ ] Add a scoped reset command that closes connections and recreates only this app's configured database, including its WAL/SHM companions. Stop the running server first. Reset generates a new installation identity and reseeds only when requested.
+- [x] Implement the fixture mode and one-time marker described above. Check exact roles and names in seed tests, and run normal password authentication to verify both credentials.
+- [x] Add a scoped reset command that closes connections and recreates only this app's configured database, including its WAL/SHM companions. Stop the running server first. Reset generates a new installation identity and reseeds only when requested.
 - [ ] During this authorized WIP reset, clear the known legacy `GymAppDB` cache once and document the reset. Do not delete unrelated browser storage or repeat a destructive reset on ordinary startup.
 
 **Exit:** reset-and-seed produces exactly two accounts, two shared gyms, and zero workout/exercise data; a restart leaves existing application data unchanged.

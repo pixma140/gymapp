@@ -1,5 +1,4 @@
 import { hashPassword } from '../lib/crypto.js';
-import { SNAPSHOT_TABLES } from '../../shared/syncSchema.js';
 
 export function createAccountService(database) {
     return {
@@ -21,12 +20,6 @@ export function createAccountService(database) {
         delete: (actorId, targetId) => database.transaction(async tx => {
             const guard = await checkAdminChange(tx, actorId, targetId, 'cannot_delete_self');
             if (guard) return guard;
-            // Transitional legacy cleanup; fresh-schema foreign keys will replace
-            // this table list when private data and shared gyms are separated.
-            for (const table of [...SNAPSHOT_TABLES].reverse()) {
-                await tx.runSql(`DELETE FROM ${table} WHERE userId = ?`, [targetId]);
-            }
-            await tx.runSql('DELETE FROM sessions WHERE userId = ?', [targetId]);
             await tx.runSql('DELETE FROM users WHERE id = ?', [targetId]);
             return { ok: true };
         }),

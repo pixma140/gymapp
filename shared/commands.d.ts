@@ -84,3 +84,8 @@ export interface Snapshot extends AccountBinding {
     workouts: Workout[];
     measurements: Measurement[];
 }
+
+export const PROFILE_COLUMNS: readonly (keyof ProfileFields)[];
+export const COMMAND_FIELDS: Readonly<Record<Operation, readonly string[]>>;
+export function isUuid(value: unknown): value is UUID;
+export function validateCommand(value: unknown): string | null;
