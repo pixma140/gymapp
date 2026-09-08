@@ -3,13 +3,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-// A throwaway data dir must be configured before importing the server, since
-// the module opens its SQLite database at import time.
-const DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'gymapp-admin-test-'));
-process.env.NODE_ENV = 'test';
-process.env.DATA_DIR = DATA_DIR;
+import { createApp } from './app.js';
+import { openDatabase } from './db.js';
 
-const { app, initDatabase } = await import('./index.js');
+const DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'gymapp-test-'));
+const database = openDatabase(path.join(DATA_DIR, 'gymapp.db'));
+const { app } = createApp({ database });
 
 let server;
 let baseUrl;
@@ -41,9 +40,10 @@ async function request(method, route, { body, cookie } = {}) {
 }
 
 beforeAll(async () => {
-    await initDatabase();
-    await new Promise((resolve) => {
+    await database.initDatabase();
+    await new Promise((resolve, reject) => {
         server = app.listen(0, () => resolve());
+        server.on('error', reject);
     });
     const { port } = server.address();
     baseUrl = `http://127.0.0.1:${port}`;
@@ -51,6 +51,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await new Promise((resolve) => server.close(resolve));
+    await database.close();
     fs.rmSync(DATA_DIR, { recursive: true, force: true });
 });
 

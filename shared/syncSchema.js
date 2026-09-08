@@ -3,7 +3,7 @@
 // TypeScript types; this file provides the runtime values.
 //
 // Keep this in lockstep with the Dexie schema in `src/db/db.ts` and the SQLite
-// table definitions in `server/index.js`.
+// table definitions in `server/db.js`.
 
 // Column whitelist per table. The server uses this to validate and project
 // incoming/outgoing rows so clients can never write arbitrary columns.

@@ -29,7 +29,8 @@ Keep changes consistent with existing patterns and scripts.
   - `server/sync.test.js`: HTTP integration test of `/api/sync` authz/scoping (boots the Express app on an ephemeral port against a temp SQLite DB).
   - `server/adminUsers.test.js`: HTTP integration test of `/api/admin/users` routes (list/create/promote/demote/password-reset/delete authz and guards).
   - `test/*.test.ts`: client-side logic (Dexie hydration via `fake-indexeddb`).
-- The server is importable without binding a port when `NODE_ENV=test`; it exports `{ app, db, initDatabase, bootstrapAdmin }`.
+- `server/app.js` exports `createApp({ database, ...config })` without opening a database or binding a port. Tests explicitly initialize and close handles from `server/db.js`; `server/index.js` owns process startup.
+- `server/db.test.js`: database isolation, transaction serialization, rollback isolation, and closed-handle guards.
 
 ## Cursor/Copilot Rules
 - No `.cursor/rules/`, `.cursorrules`, or `.github/copilot-instructions.md` found.
