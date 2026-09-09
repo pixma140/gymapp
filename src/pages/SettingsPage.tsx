@@ -170,6 +170,8 @@ export function SettingsPage() {
                                 users: await db.users.toArray(),
                                 gyms: await db.gyms.toArray(),
                                 workouts: await db.workouts.toArray(),
+                                workoutExercises: await db.workoutExercises.toArray(),
+                                customExercises: await db.customExercises.toArray(),
                                 userMeasurements: await db.userMeasurements.toArray(),
                                 syncMetadata: await db.syncMetadata.toArray(),
                                 exportDate: new Date().toISOString(),

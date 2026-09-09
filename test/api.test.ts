@@ -13,7 +13,7 @@ describe('typed API and bootstrap failures', () => {
         const profile = { id, revision: 1, name: 'Test', email: null, weight: null, height: null, bodyFat: null,
             age: null, gender: null, reminderFrequency: 'never', language: 'en', theme: 'dark', mainColor: null };
         const user = { id, username: 'test', name: 'Test', language: 'en', theme: 'dark', isAdmin: false };
-        const snapshot = { accountId: id, installationId, accountGeneration: 0, catalogGeneration: 0, profile, gyms: [], workouts: [], workoutExercises: [], measurements: [] };
+        const snapshot = { accountId: id, installationId, accountGeneration: 0, catalogGeneration: 0, profile, gyms: [], workouts: [], workoutExercises: [], customExercises: [], measurements: [] };
         const response = { status: 'authenticated', installationId, user, snapshot,
             capabilities: { manageUsers: false, manageOidc: false, manageGyms: false } };
         expect(isBootstrap(response)).toBe(true);

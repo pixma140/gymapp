@@ -8,6 +8,9 @@ export const COMMAND_FIELDS = Object.freeze({
     'workout.finish': ['endTime'],
     'workout.delete': [],
     'workoutExercise.create': ['workoutId', 'exerciseId'],
+    'workoutExercise.update': ['sets'],
+    'workoutExercise.delete': [],
+    'customExercise.create': ['name', 'muscleGroup'],
     'gym.create': ['name', 'location'],
     'gym.update': ['name', 'location'],
     'gym.archive': ['archived'],
@@ -22,7 +25,7 @@ export function validateCommand(command) {
     if (Object.keys(command).length !== keys.length || keys.some(key => !Object.hasOwn(command, key))) return 'invalid_command';
     if (!isUuid(command.mutationId) || !isUuid(command.installationId) || !isUuid(command.accountId)) return 'invalid_binding';
     if (command.operation === 'profile.update' ? command.targetId !== null : !isUuid(command.targetId)) return 'invalid_target';
-    const create = ['measurement.create', 'workout.start', 'workoutExercise.create', 'gym.create'].includes(command.operation);
+    const create = ['measurement.create', 'workout.start', 'workoutExercise.create', 'customExercise.create', 'gym.create'].includes(command.operation);
     if (create ? command.expectedRevision !== null : !Number.isSafeInteger(command.expectedRevision) || command.expectedRevision < 1) return 'invalid_revision';
     const payload = command.payload;
     if (!object(payload) || Object.keys(payload).some(key => !COMMAND_FIELDS[command.operation].includes(key))) return 'invalid_payload';
@@ -30,6 +33,11 @@ export function validateCommand(command) {
     const required = create || ['workout.finish', 'gym.archive'].includes(command.operation) ? COMMAND_FIELDS[command.operation] : [];
     if (required.some(key => !Object.hasOwn(payload, key))) return 'invalid_payload';
     for (const [key, value] of Object.entries(payload)) {
+        if (key === 'muscleGroup' && !['chest', 'shoulders', 'traps', 'lats', 'middleBack', 'lowerBack', 'biceps', 'triceps', 'forearms', 'abs', 'quadriceps', 'hamstrings', 'glutes', 'abductors', 'adductors', 'calves', 'cardio'].includes(value)) return 'invalid_payload';
+        if (key === 'sets' && (!Array.isArray(value) || value.length > 200 || new Set(value.map(set => set?.id)).size !== value.length
+            || !value.every(set => object(set) && Object.keys(set).sort().join(',') === 'id,reps,type,weight' && isUuid(set.id)
+                && typeof set.weight === 'number' && Number.isFinite(set.weight) && set.weight >= 0 && set.weight <= 10000
+                && Number.isSafeInteger(set.reps) && set.reps > 0 && set.reps <= 10000 && ['warmup', 'working'].includes(set.type)))) return 'invalid_payload';
         if (['weight', 'height'].includes(key) && value !== null && (typeof value !== 'number' || !Number.isFinite(value) || value <= 0)) return 'invalid_payload';
         if (key === 'bodyFat' && value !== null && (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100)) return 'invalid_payload';
         if (key === 'age' && value !== null && (!Number.isSafeInteger(value) || value <= 0)) return 'invalid_payload';

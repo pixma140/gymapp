@@ -77,11 +77,20 @@ the account/installation binding checked by the server.
 The read-only exercise catalog is generated into `shared/exercises.js` from a pinned
 `exercises-dataset` revision. Runtime exercise selection is offline; only private
 workout-to-catalog usage rows are persisted and synchronized. Licensed media is not imported.
+Private `customExercises` add account-owned UUID v7 catalog entries. Workout exercise
+rows reference either a bundled source ID or an owned custom exercise. Each row
+contains an ordered `sets` array (UUID v7, weight, reps, warmup/working type), stored
+as validated JSON in SQLite and as an array in Dexie. Set edits replace the array
+under the exercise row's revision; local read-modify-write is transactional to avoid
+lost additions across tabs. Workout deletion cascades its exercise rows and sets,
+while custom catalog entries remain reusable. Completed workouts support the same
+exercise and set operations as active workouts.
 
 ## Commands and account lifecycle
 
 Commands are profile update, measurement create/update/delete, timed workout
-start/finish/delete, workout exercise create, and gym create/update/archive. Input allowlists exclude
+start/finish/delete, workout exercise create/update/delete, custom exercise create,
+and gym create/update/archive. Input allowlists exclude
 account roles and credentials. Server revisions detect stale writes. Receipts
 are stored atomically with successful mutations; a reused mutation UUID with
 different content is rejected. Updates never resurrect deleted records.

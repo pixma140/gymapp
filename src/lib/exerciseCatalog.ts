@@ -11,10 +11,11 @@ export const MUSCLE_GROUP_SECTIONS: readonly Readonly<{
     { label: 'exercise.group.cardio', groups: ['cardio'] },
 ];
 
-export function rankExercises(uses: readonly WorkoutExercise[], muscleGroup?: MuscleGroup): CatalogExercise[] {
+export function rankExercises(uses: readonly WorkoutExercise[], muscleGroup?: MuscleGroup, custom: readonly CatalogExercise[] = [], search = ''): CatalogExercise[] {
     const counts = new Map<string, number>();
     for (const use of uses) counts.set(use.exerciseId, (counts.get(use.exerciseId) ?? 0) + 1);
-    return EXERCISES.filter(exercise => !muscleGroup || exercise.muscleGroup === muscleGroup)
+    return [...EXERCISES, ...custom].filter(exercise => (!muscleGroup || exercise.muscleGroup === muscleGroup)
+        && exercise.name.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()))
         .slice()
         .sort((left, right) => (counts.get(right.id) ?? 0) - (counts.get(left.id) ?? 0)
             || left.name.localeCompare(right.name));

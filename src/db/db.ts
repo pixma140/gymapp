@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie';
 import { isUuid } from '@shared/commands';
-import type { AccountBinding, Command, CommandPayloads, Operation, Profile, Gym, Workout, WorkoutExercise, Measurement } from '@shared/commands';
+import type { AccountBinding, Command, CommandPayloads, Operation, Profile, Gym, Workout, WorkoutExercise, CustomExercise, Measurement } from '@shared/commands';
 
 export type User = Profile;
 export type { Gym, Workout, WorkoutExercise };
@@ -38,6 +38,7 @@ export class AccountDatabase extends Dexie {
     gyms!: EntityTable<Gym, 'id'>;
     workouts!: EntityTable<Workout, 'id'>;
     workoutExercises!: EntityTable<WorkoutExercise, 'id'>;
+    customExercises!: EntityTable<CustomExercise, 'id'>;
     userMeasurements!: EntityTable<UserMeasurement, 'id'>;
     outbox!: EntityTable<PendingMutation, 'sequence'>;
     syncMetadata!: EntityTable<SyncMetadata, 'key'>;
@@ -47,6 +48,7 @@ export class AccountDatabase extends Dexie {
         super(`GymApp:${binding.installationId}:${binding.accountId}`);
         this.binding = Object.freeze({ ...binding });
         this.version(1).stores({
+            customExercises: 'id, name',
             users: 'id', gyms: 'id, name', workouts: 'id, gymId, startTime', workoutExercises: 'id, workoutId, exerciseId, &[workoutId+exerciseId]',
             userMeasurements: 'id, timestamp', outbox: '++sequence, state', syncMetadata: 'key',
         });

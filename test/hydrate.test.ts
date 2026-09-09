@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { v7 as uuidv7 } from 'uuid';
 import { AccountDatabase } from '@/db/db';
 import { discardPendingChanges, hydrateFromServer, prepareAccountCache, resolvePendingConflict } from '@/db/hydrate';
-import { applyOperation, updateProfileWithMeasurement } from '@/db/operations';
+import { applyOperation, updateProfileWithMeasurement, createAndSelectExercise, editWorkoutSets } from '@/db/operations';
 import { flushPendingMutations } from '@/db/sqliteSync';
 import type { Snapshot } from '@shared/commands';
 import { isUuid } from '@shared/commands';
@@ -16,7 +16,7 @@ function fixture(accountId = ACCOUNT_A, installationId = uuidv7()): { db: Accoun
     return { db, snapshot: { accountId, installationId, accountGeneration: 0, catalogGeneration: 1,
         profile: { id: accountId, revision: 1, name: 'Test', email: null, weight: null, height: null, bodyFat: null, age: null, gender: null,
             reminderFrequency: 'never', language: 'en', theme: 'dark', mainColor: null },
-        gyms: [{ id: uuidv7(), revision: 1, name: 'Shared', location: 'City', archived: false }], workouts: [], workoutExercises: [], measurements: [] } };
+        gyms: [{ id: uuidv7(), revision: 1, name: 'Shared', location: 'City', archived: false }], workouts: [], workoutExercises: [], customExercises: [], measurements: [] } };
 }
 afterEach(async () => {
     vi.unstubAllGlobals();
@@ -24,6 +24,50 @@ afterEach(async () => {
 });
 
 describe('account caches and transactional intent', () => {
+    it('persists custom exercises and concurrent set additions, then cascades workout deletion', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        const workoutId = (await applyOperation(db, 'workout.start', null, { gymId: snapshot.gyms[0].id, startTime: 10 }))!;
+        await createAndSelectExercise(db, workoutId, { name: 'Custom press', muscleGroup: 'chest' });
+        const exercise = (await db.workoutExercises.toArray())[0];
+        const first = { id: uuidv7(), weight: 20, reps: 12, type: 'warmup' as const };
+        const second = { id: uuidv7(), weight: 80, reps: 8, type: 'working' as const };
+        await Promise.all([
+            editWorkoutSets(db, exercise.id, sets => [...sets, first]),
+            editWorkoutSets(db, exercise.id, sets => [...sets, second]),
+        ]);
+        db.close(); await db.open();
+        expect((await db.workoutExercises.get(exercise.id))?.sets).toEqual([first, second]);
+        const entries = await db.outbox.orderBy('sequence').toArray();
+        expect(entries.map(entry => entry.intent.operation)).toEqual(['workout.start', 'customExercise.create', 'workoutExercise.create', 'workoutExercise.update', 'workoutExercise.update']);
+        expect(entries[3].dependency).toBe(entries[2].sequence);
+        expect(entries[4].dependency).toBe(entries[3].sequence);
+        await expect(editWorkoutSets(db, exercise.id, sets => [...sets, { ...first, id: uuidv7(), reps: 0 }])).rejects.toThrow('invalid_payload');
+        expect(await db.outbox.count()).toBe(5);
+        await applyOperation(db, 'workout.delete', workoutId, {});
+        expect(await db.workoutExercises.count()).toBe(0);
+        expect(await db.customExercises.count()).toBe(1);
+    });
+    it('rolls back custom catalog creation when selecting it fails', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await expect(createAndSelectExercise(db, uuidv7(), { name: 'Orphan', muscleGroup: 'chest' })).rejects.toThrow('workout_unavailable');
+        expect(await db.customExercises.count()).toBe(0);
+        expect(await db.outbox.count()).toBe(0);
+    });
+    it('hydrates custom exercises and sets and rejects malformed or dangling set data', async () => {
+        const { db, snapshot } = fixture();
+        const workoutId = uuidv7(), exerciseId = uuidv7();
+        snapshot.workouts = [{ id: workoutId, gymId: snapshot.gyms[0].id, startTime: 10, endTime: 20, revision: 1 }];
+        snapshot.customExercises = [{ id: exerciseId, name: 'Custom press', muscleGroup: 'chest', revision: 1 }];
+        snapshot.workoutExercises = [{ id: uuidv7(), workoutId, exerciseId, revision: 1, sets: [{ id: uuidv7(), weight: 20, reps: 12, type: 'warmup' }] }];
+        await hydrateFromServer(db, snapshot);
+        expect(await db.workoutExercises.toArray()).toEqual(snapshot.workoutExercises);
+        await expect(hydrateFromServer(db, { ...snapshot, customExercises: [] })).rejects.toThrow('invalid_snapshot');
+        snapshot.workoutExercises[0].sets[0].reps = 0;
+        await expect(hydrateFromServer(db, snapshot)).rejects.toThrow('invalid_snapshot');
+        expect((await db.workoutExercises.toArray())[0].sets[0].reps).toBe(12);
+    });
     it('creates time-ordered UUID v7 domain and mutation IDs and renews them on reapplication', async () => {
         const { db, snapshot } = fixture();
         await hydrateFromServer(db, snapshot);
@@ -72,7 +116,7 @@ describe('account caches and transactional intent', () => {
         await hydrateFromServer(first.db, first.snapshot);
         expect(await second.db.users.count()).toBe(0);
         expect(await reset.db.gyms.count()).toBe(0);
-        expect(first.db.tables.map(table => table.name).sort()).toEqual(['gyms', 'outbox', 'syncMetadata', 'userMeasurements', 'users', 'workoutExercises', 'workouts']);
+        expect(first.db.tables.map(table => table.name).sort()).toEqual(['customExercises', 'gyms', 'outbox', 'syncMetadata', 'userMeasurements', 'users', 'workoutExercises', 'workouts']);
         expect(first.db.verno).toBe(1);
         expect(first.db.gyms.schema.primKey.auto).toBeFalsy();
         expect(first.db.outbox.schema.primKey.auto).toBe(true);
@@ -165,7 +209,7 @@ describe('account caches and transactional intent', () => {
     it('rolls back both local state and outgoing intent on transaction failure', async () => {
         const { db, snapshot } = fixture();
         await hydrateFromServer(db, snapshot);
-        await expect(db.transaction('rw', [db.users, db.gyms, db.workouts, db.workoutExercises, db.userMeasurements, db.outbox], async () => {
+        await expect(db.transaction('rw', [db.users, db.gyms, db.workouts, db.workoutExercises, db.customExercises, db.userMeasurements, db.outbox], async () => {
             await applyOperation(db, 'profile.update', null, { name: 'Must roll back' });
             throw new Error('abort');
         })).rejects.toThrow('abort');

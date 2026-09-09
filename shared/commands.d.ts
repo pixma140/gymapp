@@ -44,6 +44,19 @@ export interface WorkoutExercise {
     workoutId: UUID;
     exerciseId: string;
     revision: Revision;
+    sets: WorkoutSet[];
+}
+export interface WorkoutSet {
+    id: UUID;
+    weight: number;
+    reps: number;
+    type: 'warmup' | 'working';
+}
+export interface CustomExercise {
+    id: UUID;
+    name: string;
+    muscleGroup: import('./exercises').MuscleGroup;
+    revision: Revision;
 }
 export interface GymFields {
     name: string;
@@ -63,6 +76,9 @@ export interface CommandPayloads {
     'workout.finish': { endTime: number };
     'workout.delete': Record<string, never>;
     'workoutExercise.create': { workoutId: UUID; exerciseId: string };
+    'workoutExercise.update': { sets: WorkoutSet[] };
+    'workoutExercise.delete': Record<string, never>;
+    'customExercise.create': { name: string; muscleGroup: import('./exercises').MuscleGroup };
     'gym.create': GymFields;
     'gym.update': Partial<GymFields>;
     'gym.archive': { archived: boolean };
@@ -91,6 +107,7 @@ export interface Snapshot extends AccountBinding {
     gyms: Gym[];
     workouts: Workout[];
     workoutExercises: WorkoutExercise[];
+    customExercises: CustomExercise[];
     measurements: Measurement[];
 }
 

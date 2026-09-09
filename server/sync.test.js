@@ -174,6 +174,37 @@ describe('replacement sync contract', () => {
         expect(result.status).toBe(200);
         expect((await send(deletion)).body).toEqual(result.body);
         expect((await send(command('workout.finish', { endTime: 40 }, { targetId: workoutId, expectedRevision: 2 }))).status).toBe(404);
+        expect((await snapshot(userCookie)).body.workoutExercises).toEqual([]);
+    });
+    it('creates private custom exercises and validates revisioned sets in completed workouts', async () => {
+        const custom = command('customExercise.create', { name: 'My press', muscleGroup: 'chest' });
+        expect((await send(command('customExercise.create', { name: 'Bad', muscleGroup: 'unknown' }))).body.error).toBe('invalid_payload');
+        expect((await send(custom)).status).toBe(200);
+        expect((await snapshot(adminCookie)).body.customExercises).toEqual([]);
+        const gym = command('gym.create', { name: 'Set test gym', location: '' }, { accountId: adminId });
+        await send(gym, adminCookie);
+        const start = command('workout.start', { gymId: gym.targetId, startTime: 100 });
+        expect((await send(start)).status).toBe(200);
+        await send(command('workout.finish', { endTime: 200 }, { targetId: start.targetId, expectedRevision: 1 }));
+        const use = command('workoutExercise.create', { workoutId: start.targetId, exerciseId: custom.targetId });
+        expect((await send(use)).status).toBe(200);
+        const sets = [{ id: uuidv7(), weight: 20, reps: 12, type: 'warmup' }, { id: uuidv7(), weight: 80, reps: 8, type: 'working' }];
+        const update = command('workoutExercise.update', { sets }, { targetId: use.targetId, expectedRevision: 1 });
+        expect((await send({ ...update, accountId: adminId }, adminCookie)).status).toBe(404);
+        for (const invalid of [{ ...sets[0], weight: -1 }, { ...sets[0], reps: 0 }, { ...sets[0], reps: 1.5 }, { ...sets[0], type: 'invalid' }, { ...sets[0], id: randomUUID() }]) {
+            expect((await send({ ...update, payload: { sets: [invalid] } })).body.error).toBe('invalid_payload');
+        }
+        expect((await send({ ...update, payload: { sets: [sets[0], sets[0]] } })).body.error).toBe('invalid_payload');
+        const result = await send(update);
+        expect(result.body.revision).toBe(2);
+        expect((await send(update)).body).toEqual(result.body);
+        expect((await send({ ...update, mutationId: uuidv7() })).body.error).toBe('revision_conflict');
+        expect((await snapshot(userCookie)).body.workoutExercises).toEqual([expect.objectContaining({ sets })]);
+        const adminStart = command('workout.start', { gymId: gym.targetId, startTime: 100 }, { accountId: adminId });
+        await send(adminStart, adminCookie);
+        expect((await send(command('workoutExercise.create', { workoutId: adminStart.targetId, exerciseId: custom.targetId }, { accountId: adminId }), adminCookie)).body.error).toBe('exercise_unavailable');
+        expect((await send(command('workoutExercise.delete', {}, { targetId: use.targetId, expectedRevision: 2 }))).status).toBe(200);
+        expect((await snapshot(userCookie)).body.workoutExercises).toEqual([]);
     });
     it('rejects invalid values and privilege changes without advancing generations', async () => {
         const before = (await snapshot(userCookie)).body.accountGeneration;

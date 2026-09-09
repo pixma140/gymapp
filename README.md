@@ -1,13 +1,23 @@
 # gymapp
 
-A local-first timed-workout tracker built with React, TypeScript, Tailwind,
+A local-first workout tracker built with React, TypeScript, Tailwind,
 Dexie, Express, and SQLite. Accounts require server authentication. Once an
 account cache is ready, local edits and their outgoing commands are stored
 atomically in IndexedDB and survive connectivity interruptions.
 
-Exercise logging is temporarily unavailable. Gym selection, timed workout
-start/resume/finish/cancel, private history, profiles, and body measurements
-remain available. External exercise integration is a future task.
+Select a gym, start a workout, and add exercises through a searchable modal.
+Exercises are ordered by your usage frequency and filterable by grouped muscle
+categories. Log weight/reps as warmup or working sets, create private custom
+exercises, and finish the session. Analysis shows completed workouts with exercise
+and set summaries; open a workout to view or edit its sets. Exercise History shows
+sets from previous completed sessions. Changes save locally as you go and sync
+automatically, including custom exercises. Settings exports include these records.
+
+The bundled catalog is imported from a pinned `exercises-dataset` revision using
+`npm run exercises:import`; no runtime GitHub request is needed. See
+`THIRD_PARTY_NOTICES.md` for attribution. The workout flow uses compact headers,
+bordered exercise cards, warmup badges, and modal selection inspired by the demo
+screenshots. Gym management remains restricted to administrators.
 
 ## Development
 

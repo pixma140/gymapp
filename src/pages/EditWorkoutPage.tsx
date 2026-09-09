@@ -1,5 +1,4 @@
-import { Navigate, useParams } from 'react-router-dom';
+import { WorkoutDetailsPage } from '@/pages/WorkoutDetailsPage';
 export function EditWorkoutPage() {
-    const { workoutId } = useParams();
-    return <Navigate to={`/workout/${workoutId}/view`} replace />;
+    return <WorkoutDetailsPage editable />;
 }

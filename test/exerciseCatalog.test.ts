@@ -18,10 +18,17 @@ describe('exercise catalog', () => {
         const chest = EXERCISES.filter(exercise => exercise.muscleGroup === 'chest').slice(0, 3);
         const use = (exerciseId: string, index: number): WorkoutExercise => ({
             id: `00000000-0000-7000-8000-${String(index).padStart(12, '0')}`,
-            workoutId: '00000000-0000-7000-8000-000000000099', exerciseId, revision: 1,
+            workoutId: '00000000-0000-7000-8000-000000000099', exerciseId, revision: 1, sets: [],
         });
         const ranked = rankExercises([use(chest[1].id, 1), use(chest[1].id, 2), use(chest[0].id, 3)], 'chest');
         expect(ranked.slice(0, 2).map(exercise => exercise.id)).toEqual([chest[1].id, chest[0].id]);
         expect(ranked.every(exercise => exercise.muscleGroup === 'chest')).toBe(true);
+    });
+    it('searches custom exercises alongside the bundled catalog without losing usage order', () => {
+        const custom = { id: 'custom', name: 'My Bench Press', muscleGroup: 'chest' as const, equipment: '' };
+        const ranked = rankExercises([{ id: 'use', workoutId: 'workout', exerciseId: custom.id, revision: 1, sets: [] }], 'chest', [custom], ' BENCH ');
+        expect(ranked[0]).toEqual(custom);
+        expect(ranked.every(exercise => exercise.name.toLowerCase().includes('bench'))).toBe(true);
+        expect(rankExercises([], 'calves', [custom], 'My Bench')).toEqual([]);
     });
 });

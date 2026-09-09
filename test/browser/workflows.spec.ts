@@ -8,6 +8,78 @@ const fixtureCredentials = {
 };
 const testPassword = crypto.randomUUID();
 
+test('demo workout flow logs sets, creates exercises, and edits completed history', async ({ page, context }, testInfo) => {
+    const errors: string[] = [];
+    page.on('pageerror', error => errors.push(error.message));
+    expect((await page.request.post('/api/auth/register', {
+        data: { username: `sets-${uuidv7()}`, password: testPassword },
+    })).ok()).toBe(true);
+    await page.goto('/');
+    await page.getByRole('link', { name: /Foundry District/ }).click();
+    await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+    await expectPendingChanges(page, 0);
+    await context.setOffline(true);
+    await page.getByRole('button', { name: 'Add Exercise', exact: true }).click();
+    const modal = page.getByRole('dialog');
+    await modal.getByLabel('Muscle group', { exact: true }).selectOption('chest');
+    await modal.getByRole('textbox', { name: 'Search exercises…' }).fill('barbell bench press');
+    await modal.getByRole('button', { name: 'barbell bench press Chest', exact: true }).click();
+    await expect(modal).toHaveCount(0);
+    const first = page.getByRole('article').first();
+    await first.getByLabel('Weight (kg)', { exact: true }).fill('20');
+    await first.getByLabel('Reps', { exact: true }).fill('12');
+    await first.getByRole('button', { name: 'Toggle warmup set' }).click();
+    await first.getByRole('button', { name: 'Add set', exact: true }).click();
+    await expect(first.getByRole('listitem')).toHaveCount(1);
+    await first.getByRole('button', { name: 'Toggle warmup set' }).click();
+    await first.getByLabel('Weight (kg)', { exact: true }).fill('80');
+    await first.getByLabel('Reps', { exact: true }).fill('8');
+    await first.getByRole('button', { name: 'Add set', exact: true }).click();
+    await expect(first.getByRole('listitem')).toHaveCount(2);
+    await page.getByRole('button', { name: 'Add Exercise', exact: true }).click();
+    await modal.getByRole('textbox', { name: 'Search exercises…' }).fill('My custom press');
+    await modal.getByRole('button', { name: 'Can’t find it? Add New' }).click();
+    await modal.getByLabel('Muscle group', { exact: true }).selectOption('shoulders');
+    await modal.getByRole('button', { name: 'Save Exercise' }).click();
+    await expect(page.getByRole('article')).toHaveCount(2);
+    await context.setOffline(false);
+    await expectPendingChanges(page, 0);
+    await page.reload();
+    await expect(first.getByRole('listitem')).toHaveCount(2);
+    await page.screenshot({ path: testInfo.outputPath('workout-mobile.png'), fullPage: true });
+    await page.setViewportSize({ width: 1260, height: 844 });
+    await page.screenshot({ path: testInfo.outputPath('workout-desktop.png'), fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.getByRole('button', { name: 'Finish workout', exact: true }).click();
+    await expectPendingChanges(page, 0);
+    await page.getByRole('link', { name: 'Analysis', exact: true }).click();
+    await expect(page.getByText('barbell bench press · 2 sets', { exact: true })).toBeVisible();
+    await page.getByRole('link', { name: 'View details' }).click();
+    await expect(first.getByRole('listitem')).toHaveCount(2);
+    await page.getByRole('link', { name: 'Edit', exact: true }).click();
+    page.once('dialog', dialog => dialog.accept());
+    await first.getByRole('button', { name: 'Delete set' }).first().click();
+    await expect(first.getByRole('listitem')).toHaveCount(1);
+    await page.getByRole('link', { name: 'Save', exact: true }).click();
+    await expectPendingChanges(page, 0);
+    const snapshot = await (await page.request.get('/api/sync/snapshot')).json();
+    expect(snapshot.customExercises).toHaveLength(1);
+    expect(snapshot.workoutExercises[0].sets).toEqual([expect.objectContaining({ weight: 80, reps: 8, type: 'working' })]);
+    // Reusing the exercise in a second workout puts it first and exposes its history.
+    await page.getByRole('link', { name: 'Training', exact: true }).click();
+    await page.getByRole('link', { name: /Foundry District/ }).click();
+    await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+    await page.getByRole('button', { name: 'Add Exercise', exact: true }).click();
+    await expect(modal.getByRole('listitem').first()).toContainText('barbell bench press');
+    await modal.getByRole('listitem').first().getByRole('button').click();
+    await first.getByRole('button', { name: 'History', exact: true }).click();
+    await expect(modal).toContainText('80');
+    await expect(modal).toContainText('8');
+    await modal.getByRole('button', { name: 'Close' }).click();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    expect(errors).toEqual([]);
+});
+
 async function expectPendingChanges(page: Page, count: number) {
     await expect.poll(() => page.evaluate(async () => {
         const accountId = await fetch('/api/bootstrap').then(response => response.json())

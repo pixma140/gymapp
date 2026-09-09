@@ -2,7 +2,7 @@ import { PROFILE_COLUMNS, validateCommand } from '../../shared/commands.js';
 import { EXERCISE_IDS } from '../../shared/exercises.js';
 
 const failure = (status, error) => ({ status, error });
-const tables = Object.freeze({ profile: 'users', measurement: 'userMeasurements', workout: 'workouts', workoutExercise: 'workoutExercises', gym: 'gyms' });
+const tables = Object.freeze({ profile: 'users', measurement: 'userMeasurements', workout: 'workouts', workoutExercise: 'workoutExercises', customExercise: 'customExercises', gym: 'gyms' });
 const canonical = value => JSON.stringify(value, (_key, entry) => entry && typeof entry === 'object' && !Array.isArray(entry)
     ? Object.fromEntries(Object.keys(entry).sort().map(key => [key, entry[key]])) : entry);
 
@@ -23,7 +23,7 @@ export function createSyncService(database) {
             if (previous) return previous.command === serialized ? JSON.parse(previous.result) : failure(409, 'mutation_id_reused');
             const table = tables[domain];
             const id = domain === 'profile' ? accountId : command.targetId;
-            const privateRecord = ['measurement', 'workout', 'workoutExercise'].includes(domain);
+            const privateRecord = ['measurement', 'workout', 'workoutExercise', 'customExercise'].includes(domain);
             const current = await tx.getSql(`SELECT * FROM ${table} WHERE id = ?${privateRecord ? ' AND userId = ?' : ''}`, privateRecord ? [id, accountId] : [id]);
             const create = ['create', 'start'].includes(operation);
             if (create && current) return failure(409, 'record_exists');
@@ -38,13 +38,15 @@ export function createSyncService(database) {
             if (domain === 'workout' && operation === 'finish' && (current.endTime !== null || payload.endTime < current.startTime)) return failure(409, 'invalid_workout_finish');
             if (domain === 'workoutExercise' && operation === 'create') {
                 const workout = await tx.getSql('SELECT endTime FROM workouts WHERE id = ? AND userId = ?', [payload.workoutId, accountId]);
-                if (!workout || workout.endTime !== null) return failure(409, 'workout_unavailable');
-                if (!EXERCISE_IDS.has(payload.exerciseId)) return failure(409, 'exercise_unavailable');
+                if (!workout) return failure(409, 'workout_unavailable');
+                if (!EXERCISE_IDS.has(payload.exerciseId)
+                    && !await tx.getSql('SELECT id FROM customExercises WHERE id = ? AND userId = ?', [payload.exerciseId, accountId])) return failure(409, 'exercise_unavailable');
                 if (await tx.getSql('SELECT id FROM workoutExercises WHERE workoutId = ? AND exerciseId = ?', [payload.workoutId, payload.exerciseId])) {
                     return failure(409, 'exercise_already_selected');
                 }
             }
             if (typeof payload.archived === 'boolean') payload.archived = Number(payload.archived);
+            if (payload.sets) payload.sets = JSON.stringify(payload.sets);
             if (create) {
                 const columns = ['id', ...(privateRecord ? ['userId'] : []), ...Object.keys(payload)];
                 const values = [id, ...(privateRecord ? [accountId] : []), ...Object.values(payload)];
@@ -81,7 +83,9 @@ export async function readSnapshot(tx, accountId) {
         catalogGeneration: installation.catalogGeneration, profile,
         gyms: (await tx.allSql('SELECT * FROM gyms ORDER BY name, id')).map(gym => ({ ...gym, archived: Boolean(gym.archived) })),
         workouts: await tx.allSql('SELECT id, gymId, startTime, endTime, revision FROM workouts WHERE userId = ?', [accountId]),
-        workoutExercises: await tx.allSql('SELECT id, workoutId, exerciseId, revision FROM workoutExercises WHERE userId = ?', [accountId]),
+        workoutExercises: (await tx.allSql('SELECT id, workoutId, exerciseId, sets, revision FROM workoutExercises WHERE userId = ?', [accountId]))
+            .map(row => ({ ...row, sets: JSON.parse(row.sets) })),
+        customExercises: await tx.allSql('SELECT id, name, muscleGroup, revision FROM customExercises WHERE userId = ?', [accountId]),
         measurements: await tx.allSql('SELECT id, weight, bodyFat, timestamp, revision FROM userMeasurements WHERE userId = ?', [accountId]),
     };
 }
