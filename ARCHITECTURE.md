@@ -149,7 +149,8 @@ External exercise integration is a separate future task: there is no provider
 credential, request, adapter, or placeholder table in the codebase. Old
 installations have no migration path; a fresh database is required.
 
-GitHub Actions runs tests, lint, the production build, and Chromium workflows
-before any image work. Branch and pull-request runs build amd64/arm64 images
-without publishing; only release tags publish to GHCR, and only after
-verification passes. GitLab CI was removed; GitHub is the single release path.
+GitHub Actions runs only on release tags and manual dispatch: tests, lint, the
+production build, and the Chromium workflows gate the amd64/arm64 image build
+and its GHCR push, which is followed by GitHub release creation. Ordinary
+commits run no pipeline, so local verification before tagging is the working
+agreement. GitLab CI was removed; GitHub is the single release path.

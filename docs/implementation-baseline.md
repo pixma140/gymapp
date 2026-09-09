@@ -296,3 +296,13 @@ acceptance matrix moved to the "Behavior contract" section of
 `ARCHITECTURE.md`; fixtures, reset, permissions, sync limits, and CI behavior
 were already documented in `README.md` and `ARCHITECTURE.md`. This log keeps the
 per-phase history.
+
+## CI scope change — 2026-09-09
+
+Per-commit pipelines were removed: the workflow now triggers only on `v*`/
+`latest` tags and manual dispatch, and the branch-only multi-architecture
+image-build job was deleted because the publish job already builds both
+architectures. Verification still gates publication, so an untested tag cannot
+reach GHCR; the accepted tradeoff is that a broken commit surfaces at tag time
+instead of at push time, and local `npm test`/`lint`/`build`/`test:browser` runs
+are the pre-tag safety net.
