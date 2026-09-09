@@ -14,7 +14,7 @@ export function Layout() {
     const db = useDatabase();
     const showReminder = useMeasurementReminder();
     const activeWorkout = useActiveWorkout();
-    const { t } = useLanguage();
+    const { language, t } = useLanguage();
     const mainRef = useRef<HTMLElement>(null);
     const [dismissedSyncIssue, setDismissedSyncIssue] = useState<string | null>(null);
     const actionableChanges = useLiveQuery(
@@ -70,6 +70,11 @@ export function Layout() {
                         </div>
                         <div className="flex-1 min-w-0">
                             <h4 className="text-sm font-bold text-green-100 truncate">{t('layout.workoutActiveTitle')}</h4>
+                            <p className="mt-0.5 text-xs text-green-200/80">
+                                {t('workout.startedAt')} <time dateTime={new Date(activeWorkout.startTime).toISOString()}>
+                                    {new Date(activeWorkout.startTime).toLocaleString(language, { dateStyle: 'medium', timeStyle: 'short' })}
+                                </time>
+                            </p>
                             <p className="text-xs text-green-200/70 truncate">
                                 {activeWorkout.gymName || t('common.unknownGym')} • {t('layout.tapToResume')}
                             </p>

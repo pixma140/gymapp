@@ -42,6 +42,12 @@ export async function applyIntent(db: AccountDatabase, intent: MutationIntent): 
         const current = await db.table(table.name).get(id);
         if (!create && !current) throw new Error('record_not_found');
         if (create && current) throw new Error('record_exists');
+        if (operation === 'workout.update') {
+            const times = payload as CommandPayloads['workout.update'];
+            if (current.endTime === null ? times.endTime !== undefined : (times.endTime ?? current.endTime) < times.startTime) {
+                throw new Error('invalid_workout_times');
+            }
+        }
         if (operation === 'workout.start') {
             if (await db.workouts.filter(workout => workout.endTime === null).count()) throw new Error('active_workout_exists');
             const start = payload as CommandPayloads['workout.start'];
@@ -93,6 +99,15 @@ export async function createAndSelectExercise(db: AccountDatabase, workoutId: st
     await db.transaction('rw', [db.users, db.gyms, db.workouts, db.workoutExercises, db.customExercises, db.userMeasurements, db.outbox], async () => {
         const exerciseId = await applyOperation(db, 'customExercise.create', null, fields);
         await applyOperation(db, 'workoutExercise.create', null, { workoutId, exerciseId: exerciseId! });
+    });
+}
+
+export async function startOrResumeWorkout(db: AccountDatabase, gymId: string): Promise<string> {
+    return db.transaction('rw', [db.users, db.gyms, db.workouts, db.workoutExercises, db.customExercises, db.userMeasurements, db.outbox], async () => {
+        const active = await db.workouts.filter(workout => workout.endTime === null).first();
+        if (active) return active.gymId;
+        await applyOperation(db, 'workout.start', null, { gymId, startTime: Date.now() });
+        return gymId;
     });
 }
 

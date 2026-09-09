@@ -1,13 +1,18 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { MapPin, ChevronRight } from 'lucide-react';
 
 import { useDatabase } from '@/context/SessionContext';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { startOrResumeWorkout } from '@/db/operations';
 
 export function GymList({ activeGymId }: { activeGymId?: string }) {
     const db = useDatabase();
     const { t } = useLanguage();
+    const navigate = useNavigate();
+    const [starting, setStarting] = useState(false);
+    const [failed, setFailed] = useState(false);
     const gymsWithVisits = useLiveQuery(async () => {
         const gyms = await db.gyms.filter(gym => !gym.archived).toArray();
 
@@ -39,6 +44,7 @@ export function GymList({ activeGymId }: { activeGymId?: string }) {
 
     return (
         <div className="space-y-4">
+            {failed && <p role="alert">{t('sync.operationFailed')}</p>}
             {gyms.length === 0 ? (
                 <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--card)]">
                     <div className="size-12 bg-[var(--accent)] rounded-full flex items-center justify-center mx-auto mb-4">
@@ -74,7 +80,21 @@ export function GymList({ activeGymId }: { activeGymId?: string }) {
                                 {content}
                             </div>
                         ) : (
-                            <Link key={gym.id} to={`/workout/${gym.id}`} className={`${className} hover:border-[var(--primary)]/50 hover:bg-[var(--accent)] active:scale-[0.98]`}>
+                            <Link key={gym.id} to={`/workout/${gym.id}`} aria-disabled={starting}
+                                onClick={async event => {
+                                    event.preventDefault();
+                                    if (starting) return;
+                                    setStarting(true); setFailed(false);
+                                    try {
+                                        const activeGymId = await startOrResumeWorkout(db, gym.id);
+                                        navigate(`/workout/${activeGymId}`);
+                                    } catch {
+                                        setFailed(true);
+                                    } finally {
+                                        setStarting(false);
+                                    }
+                                }}
+                                className={`${className} hover:border-[var(--primary)]/50 hover:bg-[var(--accent)] active:scale-[0.98]`}>
                                 {content}
                             </Link>
                         );

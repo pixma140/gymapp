@@ -89,7 +89,7 @@ exercise and set operations as active workouts.
 ## Commands and account lifecycle
 
 Commands are profile update, measurement create/update/delete, timed workout
-start/finish/delete, workout exercise create/update/delete, custom exercise create,
+start/finish/update/delete, workout exercise create/update/delete, custom exercise create,
 and gym create/update/archive. Input allowlists exclude
 account roles and credentials. Server revisions detect stale writes. Receipts
 are stored atomically with successful mutations; a reused mutation UUID with

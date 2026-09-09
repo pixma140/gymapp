@@ -5,13 +5,17 @@ Dexie, Express, and SQLite. Accounts require server authentication. Once an
 account cache is ready, local edits and their outgoing commands are stored
 atomically in IndexedDB and survive connectivity interruptions.
 
-Select a gym, start a workout, and add exercises through a searchable modal.
+Select a gym to start a workout immediately, then add exercises through a searchable modal.
 Exercises are ordered by your usage frequency and filterable by grouped muscle
 categories. Log weight/reps as warmup or working sets, create private custom
 exercises, and finish the session. Analysis shows completed workouts with exercise
 and set summaries; open a workout to view or edit its sets. Exercise History shows
 sets from previous completed sessions. Changes save locally as you go and sync
 automatically, including custom exercises. Settings exports include these records.
+The active-workout banner shows its start date and time. In the workout editor,
+start/end date-time fields use your local timezone; Save applies time changes.
+Active workouts allow adjusting the start without ending the session. Completed
+workouts require an end at or after their start.
 
 The bundled catalog is imported from a pinned `exercises-dataset` revision using
 `npm run exercises:import`; no runtime GitHub request is needed. See

@@ -14,7 +14,7 @@ export function WorkoutPage() {
     const { t } = useLanguage();
     const navigate = useNavigate();
     const gym = useLiveQuery(() => db.gyms.get(gymId), [db, gymId]);
-    const { workout, startWorkout, finishWorkout, cancelWorkout } = useWorkoutSession(gymId);
+    const { workout, finishWorkout, cancelWorkout } = useWorkoutSession();
     const [now, setNow] = useState(Date.now());
     const [busy, setBusy] = useState(false);
     const [failed, setFailed] = useState(false);
@@ -38,6 +38,6 @@ export function WorkoutPage() {
         {failed && <p role="alert">{t('sync.operationFailed')}</p>}
         {workout ? workout.gymId === gymId ? <WorkoutExercises workoutId={workout.id} />
             : <Link to={`/workout/${workout.gymId}`}>{t('timed.resume')}</Link>
-            : <button disabled={busy || !gym || gym.archived} className="w-full rounded-2xl border border-dashed border-[var(--border)] p-8 font-semibold text-[var(--primary)] disabled:opacity-50" onClick={() => void act(startWorkout)}>{t('timed.start')}</button>}
+            : <Link to="/" className="block rounded-2xl border border-dashed border-[var(--border)] p-8 text-center text-[var(--primary)]">{t('training.subtitle.select')}</Link>}
     </div>;
 }

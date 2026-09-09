@@ -6,6 +6,7 @@ export const COMMAND_FIELDS = Object.freeze({
     'measurement.delete': [],
     'workout.start': ['gymId', 'startTime'],
     'workout.finish': ['endTime'],
+    'workout.update': ['startTime', 'endTime'],
     'workout.delete': [],
     'workoutExercise.create': ['workoutId', 'exerciseId'],
     'workoutExercise.update': ['sets'],
@@ -32,6 +33,8 @@ export function validateCommand(command) {
     if (!command.operation.endsWith('.delete') && Object.keys(payload).length === 0) return 'invalid_payload';
     const required = create || ['workout.finish', 'gym.archive'].includes(command.operation) ? COMMAND_FIELDS[command.operation] : [];
     if (required.some(key => !Object.hasOwn(payload, key))) return 'invalid_payload';
+    if (command.operation === 'workout.update' && (!Object.hasOwn(payload, 'startTime')
+        || (Object.hasOwn(payload, 'endTime') && payload.endTime < payload.startTime))) return 'invalid_payload';
     for (const [key, value] of Object.entries(payload)) {
         if (key === 'muscleGroup' && !['chest', 'shoulders', 'traps', 'lats', 'middleBack', 'lowerBack', 'biceps', 'triceps', 'forearms', 'abs', 'quadriceps', 'hamstrings', 'glutes', 'abductors', 'adductors', 'calves', 'cardio'].includes(value)) return 'invalid_payload';
         if (key === 'sets' && (!Array.isArray(value) || value.length > 200 || new Set(value.map(set => set?.id)).size !== value.length

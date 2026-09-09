@@ -30,6 +30,10 @@ export function createSyncService(database) {
             if (!create && !current) return failure(404, 'record_not_found');
             if (!create && current.revision !== command.expectedRevision) return failure(409, 'revision_conflict');
             const payload = { ...command.payload };
+            if (command.operation === 'workout.update'
+                && (current.endTime === null ? payload.endTime !== undefined : (payload.endTime ?? current.endTime) < payload.startTime)) {
+                return failure(409, 'invalid_workout_times');
+            }
             if (domain === 'workout' && operation === 'start') {
                 const gym = await tx.getSql('SELECT archived FROM gyms WHERE id = ?', [payload.gymId]);
                 if (!gym || gym.archived) return failure(409, 'gym_unavailable');

@@ -74,6 +74,7 @@ export interface CommandPayloads {
     'measurement.delete': Record<string, never>;
     'workout.start': { gymId: UUID; startTime: number };
     'workout.finish': { endTime: number };
+    'workout.update': { startTime: number; endTime?: number };
     'workout.delete': Record<string, never>;
     'workoutExercise.create': { workoutId: UUID; exerciseId: string };
     'workoutExercise.update': { sets: WorkoutSet[] };

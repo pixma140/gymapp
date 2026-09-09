@@ -213,4 +213,25 @@ describe('replacement sync contract', () => {
         }
         expect((await snapshot(userCookie)).body.accountGeneration).toBe(before);
     });
+    it('edits workout timestamps with ownership, revision, and chronology guards', async () => {
+        const gym = command('gym.create', { name: 'Times gym', location: '' }, { accountId: adminId });
+        await send(gym, adminCookie);
+        const start = command('workout.start', { gymId: gym.targetId, startTime: 1000 });
+        await send(start);
+        const update = command('workout.update', { startTime: 900 }, { targetId: start.targetId, expectedRevision: 1 });
+        expect((await send({ ...update, accountId: adminId }, adminCookie)).status).toBe(404);
+        expect((await send({ ...update, payload: { startTime: 900, endTime: 1100 } })).body.error).toBe('invalid_workout_times');
+        for (const payload of [{ endTime: 1100 }, { startTime: -1 }, { startTime: 1000, endTime: 900 }, { startTime: 900, endTime: null }]) {
+            expect((await send({ ...update, payload })).body.error).toBe('invalid_payload');
+        }
+        expect((await send(update)).body.revision).toBe(2);
+        await send(command('workout.finish', { endTime: 1500 }, { targetId: start.targetId, expectedRevision: 2 }));
+        const edit = command('workout.update', { startTime: 800, endTime: 2000 }, { targetId: start.targetId, expectedRevision: 3 });
+        const result = await send(edit);
+        expect(result.body.revision).toBe(4);
+        expect((await send(edit)).body).toEqual(result.body);
+        expect((await send({ ...edit, mutationId: uuidv7() })).body.error).toBe('revision_conflict');
+        expect((await send(command('workout.update', { startTime: 2500 }, { targetId: start.targetId, expectedRevision: 4 }))).body.error).toBe('invalid_workout_times');
+        expect((await snapshot(userCookie)).body.workouts).toContainEqual(expect.objectContaining({ id: start.targetId, startTime: 800, endTime: 2000 }));
+    });
 });

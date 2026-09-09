@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { v7 as uuidv7 } from 'uuid';
 import { AccountDatabase } from '@/db/db';
 import { discardPendingChanges, hydrateFromServer, prepareAccountCache, resolvePendingConflict } from '@/db/hydrate';
-import { applyOperation, updateProfileWithMeasurement, createAndSelectExercise, editWorkoutSets } from '@/db/operations';
+import { applyOperation, updateProfileWithMeasurement, createAndSelectExercise, editWorkoutSets, startOrResumeWorkout } from '@/db/operations';
 import { flushPendingMutations } from '@/db/sqliteSync';
 import type { Snapshot } from '@shared/commands';
 import { isUuid } from '@shared/commands';
@@ -24,6 +24,41 @@ afterEach(async () => {
 });
 
 describe('account caches and transactional intent', () => {
+    it('updates workout times atomically and validates active and completed sessions', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        const id = (await applyOperation(db, 'workout.start', null, { gymId: snapshot.gyms[0].id, startTime: 100 }))!;
+        await applyOperation(db, 'workout.update', id, { startTime: 50 });
+        await expect(applyOperation(db, 'workout.update', id, { startTime: 50, endTime: 200 })).rejects.toThrow('invalid_workout_times');
+        await applyOperation(db, 'workout.finish', id, { endTime: 200 });
+        await applyOperation(db, 'workout.update', id, { startTime: 75, endTime: 300 });
+        const pending = await db.outbox.toArray();
+        await expect(applyOperation(db, 'workout.update', id, { startTime: 400 })).rejects.toThrow('invalid_workout_times');
+        await expect(applyOperation(db, 'workout.update', id, { startTime: 100, endTime: 90 })).rejects.toThrow('invalid_workout_times');
+        await expect(applyOperation(db, 'workout.update', id, { startTime: NaN })).rejects.toThrow('invalid_payload');
+        expect(await db.workouts.get(id)).toMatchObject({ startTime: 75, endTime: 300 });
+        expect(await db.outbox.toArray()).toEqual(pending);
+        expect(pending[3].dependency).toBe(pending[2].sequence);
+    });
+    it('starts only once for concurrent gym selections and resumes the existing workout', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        const gymId = snapshot.gyms[0].id;
+        expect(await Promise.all([startOrResumeWorkout(db, gymId), startOrResumeWorkout(db, gymId)])).toEqual([gymId, gymId]);
+        expect(await db.workouts.count()).toBe(1);
+        expect(await db.outbox.count()).toBe(1);
+        expect(await startOrResumeWorkout(db, uuidv7())).toBe(gymId);
+        expect(await db.outbox.count()).toBe(1);
+    });
+    it('does not queue a workout when selecting an unavailable gym', async () => {
+        const { db, snapshot } = fixture();
+        snapshot.gyms[0].archived = true;
+        await hydrateFromServer(db, snapshot);
+        await expect(startOrResumeWorkout(db, snapshot.gyms[0].id)).rejects.toThrow('gym_unavailable');
+        await expect(startOrResumeWorkout(db, uuidv7())).rejects.toThrow('gym_unavailable');
+        expect(await db.workouts.count()).toBe(0);
+        expect(await db.outbox.count()).toBe(0);
+    });
     it('persists custom exercises and concurrent set additions, then cascades workout deletion', async () => {
         const { db, snapshot } = fixture();
         await hydrateFromServer(db, snapshot);

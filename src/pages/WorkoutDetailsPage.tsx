@@ -6,6 +6,7 @@ import { useDatabase } from '@/context/SessionContext';
 import { applyOperation } from '@/db/operations';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { WorkoutExercises } from '@/components/WorkoutExercises';
+import { WorkoutTimeEditor } from '@/components/WorkoutTimeEditor';
 import { formatDuration } from '@/lib/workoutDisplay';
 
 export function WorkoutDetailsPage({ editable = false }: { editable?: boolean }) {
@@ -30,12 +31,17 @@ export function WorkoutDetailsPage({ editable = false }: { editable?: boolean })
                     </p>
                 </div>}
             </div>
-            {workout && <Link to={`/workout/${workoutId}/${editable ? 'view' : 'edit'}`} className="flex items-center gap-1 rounded-full bg-[var(--primary)] px-3 py-2 text-xs font-bold text-white">
-                {editable ? <Save className="size-3" /> : <Pencil className="size-3" />}{t(editable ? 'common.save' : 'common.edit')}
-            </Link>}
+            {workout && (editable ? <button type="submit" form="workout-times" className="flex items-center gap-1 rounded-full bg-[var(--primary)] px-3 py-2 text-xs font-bold text-white">
+                <Save className="size-3" />{t('common.save')}
+            </button> : <Link to={`/workout/${workoutId}/edit`} className="flex items-center gap-1 rounded-full bg-[var(--primary)] px-3 py-2 text-xs font-bold text-white">
+                <Pencil className="size-3" />{t('common.edit')}
+            </Link>)}
         </header>
         {!workout ? <p>{t('timed.notFound')}</p> : <>
-            {editable && <p className="text-xs text-[var(--muted-foreground)]">{t('workout.autoSaved')}</p>}
+            {editable && <>
+                <WorkoutTimeEditor key={workoutId} workout={workout} onSaved={() => navigate(`/workout/${workoutId}/view`)} />
+                <p className="text-xs text-[var(--muted-foreground)]">{t('workout.autoSaved')}</p>
+            </>}
             <WorkoutExercises workoutId={workoutId} editable={editable} />
             <button disabled={busy} className="flex items-center gap-2 p-3 text-sm text-red-500" onClick={async () => {
                 if (!window.confirm(t('history.deleteConfirm'))) return;
