@@ -36,7 +36,7 @@ export function WorkoutPage() {
             </>}
         </header>
         {failed && <p role="alert">{t('sync.operationFailed')}</p>}
-        {workout ? workout.gymId === gymId ? <WorkoutExercises workoutId={workout.id} />
+        {workout ? workout.gymId === gymId ? <WorkoutExercises workoutId={workout.id} active />
             : <Link to={`/workout/${workout.gymId}`}>{t('timed.resume')}</Link>
             : <Link to="/" className="block rounded-2xl border border-dashed border-[var(--border)] p-8 text-center text-[var(--primary)]">{t('training.subtitle.select')}</Link>}
     </div>;

@@ -7,7 +7,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { ExerciseSelector } from '@/components/ExerciseSelector';
 import { WorkoutExerciseCard } from '@/components/WorkoutExerciseCard';
 
-export function WorkoutExercises({ workoutId, editable = true }: { workoutId: string; editable?: boolean }) {
+export function WorkoutExercises({ workoutId, editable = true, active = false }: { workoutId: string; editable?: boolean; active?: boolean }) {
     const db = useDatabase();
     const { t } = useLanguage();
     const [selecting, setSelecting] = useState(false);
@@ -15,7 +15,13 @@ export function WorkoutExercises({ workoutId, editable = true }: { workoutId: st
     const custom = useLiveQuery(() => db.customExercises.toArray(), [db]);
     const catalog = new Map([...EXERCISES, ...(custom ?? []).map(exercise => ({ ...exercise, equipment: '' }))].map(exercise => [exercise.id, exercise]));
     return <div className="space-y-5">
-        {uses?.map(use => <WorkoutExerciseCard key={use.id} exercise={use} catalog={catalog.get(use.exerciseId)} editable={editable} />)}
+        {uses?.map((use, index) => <WorkoutExerciseCard
+            key={use.id}
+            exercise={use}
+            catalog={catalog.get(use.exerciseId)}
+            editable={editable}
+            initialSetType={active && index === 0 && use.sets.length === 0 ? 'warmup' : 'working'}
+        />)}
         {editable ? <button onClick={() => setSelecting(true)} className="flex w-full flex-col items-center gap-3 rounded-2xl border border-dashed border-[var(--border)] p-5 text-sm text-[var(--muted-foreground)] hover:border-[var(--primary)] hover:text-[var(--foreground)]">
             <span className="flex size-11 items-center justify-center rounded-full bg-[var(--accent)]"><Plus className="size-6" /></span>
             {t('exercise.addToWorkout')}

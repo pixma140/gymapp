@@ -10,14 +10,14 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { Modal } from '@/components/Modal';
 import { cn } from '@/lib/utils';
 
-export function WorkoutExerciseCard({ exercise, catalog, editable = true }: {
-    exercise: WorkoutExercise; catalog?: CatalogExercise; editable?: boolean;
+export function WorkoutExerciseCard({ exercise, catalog, editable = true, initialSetType = 'working' }: {
+    exercise: WorkoutExercise; catalog?: CatalogExercise; editable?: boolean; initialSetType?: WorkoutSet['type'];
 }) {
     const db = useDatabase();
     const { t, language } = useLanguage();
     const [weight, setWeight] = useState('');
     const [reps, setReps] = useState('');
-    const [type, setType] = useState<WorkoutSet['type']>('working');
+    const [type, setType] = useState<WorkoutSet['type']>(initialSetType);
     const [busy, setBusy] = useState(false);
     const [failed, setFailed] = useState(false);
     const [historyOpen, setHistoryOpen] = useState(false);

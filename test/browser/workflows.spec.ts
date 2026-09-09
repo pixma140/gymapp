@@ -27,9 +27,10 @@ test('demo workout flow logs sets, creates exercises, and edits completed histor
     const first = page.getByRole('article').first();
     await first.getByLabel('Weight (kg)', { exact: true }).fill('20');
     await first.getByLabel('Reps', { exact: true }).fill('12');
-    await first.getByRole('button', { name: 'Toggle warmup set' }).click();
+    await expect(first.getByRole('button', { name: 'Toggle warmup set' })).toHaveAttribute('aria-pressed', 'true');
     await first.getByRole('button', { name: 'Add set', exact: true }).click();
     await expect(first.getByRole('listitem')).toHaveCount(1);
+    await expect(first.getByRole('button', { name: 'Toggle warmup set' })).toHaveAttribute('aria-pressed', 'true');
     await first.getByRole('button', { name: 'Toggle warmup set' }).click();
     await first.getByLabel('Weight (kg)', { exact: true }).fill('80');
     await first.getByLabel('Reps', { exact: true }).fill('8');
@@ -41,10 +42,12 @@ test('demo workout flow logs sets, creates exercises, and edits completed histor
     await modal.getByLabel('Muscle group', { exact: true }).selectOption('shoulders');
     await modal.getByRole('button', { name: 'Save Exercise' }).click();
     await expect(page.getByRole('article')).toHaveCount(2);
+    await expect(page.getByRole('article').nth(1).getByRole('button', { name: 'Toggle warmup set' })).toHaveAttribute('aria-pressed', 'false');
     await context.setOffline(false);
     await expectPendingChanges(page, 0);
     await page.reload();
     await expect(first.getByRole('listitem')).toHaveCount(2);
+    await expect(first.getByRole('button', { name: 'Toggle warmup set' })).toHaveAttribute('aria-pressed', 'false');
     await page.screenshot({ path: testInfo.outputPath('workout-mobile.png'), fullPage: true });
     await page.setViewportSize({ width: 1260, height: 844 });
     await page.screenshot({ path: testInfo.outputPath('workout-desktop.png'), fullPage: true });
@@ -80,6 +83,7 @@ test('demo workout flow logs sets, creates exercises, and edits completed histor
     await page.getByRole('button', { name: 'Add Exercise', exact: true }).click();
     await expect(modal.getByRole('listitem').first()).toContainText('barbell bench press');
     await modal.getByRole('listitem').first().getByRole('button').click();
+    await expect(first.getByRole('button', { name: 'Toggle warmup set' })).toHaveAttribute('aria-pressed', 'true');
     await first.getByRole('button', { name: 'History', exact: true }).click();
     await expect(modal).toContainText('80');
     await expect(modal).toContainText('8');
