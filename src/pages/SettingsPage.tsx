@@ -10,7 +10,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { cn } from '@/lib/utils';
-import { APP_COMMIT, APP_RELEASE_URL, APP_VERSION } from '@/lib/constants';
+import { APP_COMMIT, APP_COMMIT_URL, APP_RELEASE_TAG, APP_RELEASE_URL } from '@/lib/constants';
 import { useSession } from '@/context/SessionContext';
 
 export function SettingsPage() {
@@ -244,7 +244,7 @@ export function SettingsPage() {
                 </div>
 
                 <div className="text-center text-xs text-[var(--muted-foreground)] pt-8">
-                    <p className="font-mono">{t('settings.appVersion')} <Github className="size-3 inline-block mb-1" /> <a href="https://github.com/pixma140/gymapp" target="_blank" rel="noopener noreferrer">v{APP_VERSION}</a> - <a href={APP_RELEASE_URL} target="_blank" rel="noopener noreferrer">{APP_COMMIT}</a></p>
+                    <p className="font-mono">{t('settings.appVersion')} <Github className="size-3 inline-block mb-1" /> <a href={APP_RELEASE_URL} target="_blank" rel="noopener noreferrer">{APP_RELEASE_TAG}</a> - <a href={APP_COMMIT_URL} target="_blank" rel="noopener noreferrer">{APP_COMMIT}</a></p>
                     <p>{t('settings.madeBy')} <a href="https://pixma140.com" target="_blank" rel="noopener noreferrer">pixma140</a></p>
                 </div>
             </div >
