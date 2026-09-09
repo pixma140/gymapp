@@ -135,6 +135,43 @@ Keep changes consistent with existing patterns and scripts.
 - Mark breaking changes with `!` and explain them in a `BREAKING CHANGE:` footer, including required setup actions. This applies during alpha too.
 - Pushes, tags, and releases require a separate user request.
 
+## Release Procedure
+Use this procedure only after the user explicitly requests a tag or release.
+
+1. Inspect `git status`, `git log --oneline -10`, local tags, and
+   `gh release list`. Treat the newest GitHub release as authoritative because a
+   release tag may exist remotely without being available locally. Resolve its
+   commit with `gh api repos/{owner}/{repo}/git/ref/tags/{tag}` and review every
+   commit from that SHA through `HEAD`.
+2. Choose the next semantic version from the unreleased commits. During alpha,
+   breaking changes or substantial features bump the minor version; fixes alone
+   bump the patch version. Keep the `-alpha` suffix until the user requests a
+   stable release.
+3. Add a `## <tag>` section at the top of `RELEASE_NOTES.md`. State breaking
+   setup/reset requirements first, then summarize user-visible changes. Set the
+   same version without the leading `v` in `package.json` and the root package
+   entries in `package-lock.json`.
+4. Run `npm test`, `npm run lint`, `npm run build`, and
+   `npm run test:browser`. A warning is non-blocking only when the command exits
+   successfully and the warning is understood and reported.
+5. Review the release diff and commit only the release-note/version files with
+   `chore(release): prepare <tag>`. Confirm the worktree is clean and the release
+   commit contains the intended files.
+6. Publish `main` before the tag. If the configured SSH remote stalls, use GitHub
+   CLI authentication over HTTPS without changing Git configuration:
+   `git -c credential.helper='!gh auth git-credential' push https://github.com/{owner}/{repo}.git main:main`.
+7. Create an annotated tag on the release commit with
+   `git tag -a <tag> -m "Release <tag>"`, then push that tag using the same
+   authenticated HTTPS form. Do not create the GitHub release manually: the tag
+   starts `.github/workflows/release.yml`, which verifies the commit, publishes
+   multi-architecture images, creates the prerelease when the tag has a suffix,
+   and moves `latest`.
+8. Find the tag run with `gh run list --workflow Release`, then wait with
+   `gh run watch <run-id> --exit-status`. Completion requires all three hosted
+   jobs to pass, `gh release view <tag>` to return the published release, and the
+   remote `latest` tag to resolve to the release commit. Refresh local remote/tag
+   refs afterward so `git status` and future release comparisons are accurate.
+
 ## Adding Features
 - Match current UI patterns (card layout, bold headers, muted text).
 - Keep layouts mobile-first; many screens center on `max-w-md`.
