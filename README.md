@@ -136,8 +136,8 @@ Playwright exercises mobile-width login, shared gyms, timed workouts,
 account switching, private history, and deletion against a throwaway server.
 `npm run test:watch` starts Vitest watch mode; `npm run preview` previews a build.
 
-See [PLAN.md](PLAN.md) for remaining work and [ARCHITECTURE.md](ARCHITECTURE.md)
-for module boundaries and persistence details.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for module boundaries, persistence
+details, and the behavior contract the test suites enforce.
 
 GitHub Actions (`.github/workflows/verify-and-publish.yml`) runs verification on
 every branch push, pull request, and release tag (`latest` or `v*`). Verification

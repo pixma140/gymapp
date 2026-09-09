@@ -1,10 +1,12 @@
 # Architecture
 
-Current implementation checkpoint: Phases A–G are implemented, including
-deterministic fixtures, account authorization, transactional bootstrap,
-account-local tab coordination, durable revisioned synchronization, timed-workout
-UI, and CI publication gates. Local checks pass; hosted verification and the
-arm64 image build run in GitHub Actions.
+The rewrite described by the former PLAN.md is complete and its plan file was
+removed: deterministic fixtures, account authorization, transactional bootstrap,
+account-local tab coordination, durable revisioned synchronization, the
+timed-workout UI without exercise logging, and gated publication all shipped in
+`v0.2.0-alpha`. Verification runs locally and in GitHub Actions, including the
+amd64/arm64 image build. `docs/implementation-baseline.md` keeps the historical
+checkpoint log.
 
 ## Runtime and modules
 
@@ -111,13 +113,41 @@ reviewed intent with new mutation IDs. Pending intent is never silently replaced
 Explicit refresh drains the tracked sender and refuses replacement while pending
 work remains.
 
+## Behavior contract
+
+These are the guarantees the test suites enforce. Treat a change that breaks a
+row as a regression, not a preference.
+
+| Scenario | Required result |
+| --- | --- |
+| Fresh reset with fixtures | Exactly `admin` and `user` authenticate with `123geheim`; roles are correct; exactly the two named gyms exist once. |
+| Restart after fixture edits | No duplicate gyms, password resets, role repairs, or recreated deleted accounts. |
+| Fixture mode disabled | Empty installation offers setup; concurrent first-admin setup is safe. |
+| Admin versus user | Admin sees Users/OIDC/Gyms; user does not. Direct user calls to each admin endpoint fail without mutation. |
+| Shared catalog | Both accounts receive the same gym IDs/names. Admin rename appears for user after refresh. User cannot create/edit/archive gyms. |
+| Private activity | A workout/measurement by one user is absent from the other's views, snapshot, and writes; gym visits are per user. |
+| Account deletion | All private rows/sessions/receipts are removed atomically; shared gyms survive; self/last-admin alternate paths are blocked. |
+| Offline edit and reload | Local state and queued command survive; eventual delivery occurs once. |
+| Transaction failure | Neither a partial local operation nor an outgoing command survives rollback. |
+| Switch/logout/session expiry | Previous account's queue is retained and paused; no cross-account delivery, including a second tab changing cookies. |
+| Server reset with an old browser | Installation mismatch prevents replay into reset accounts; legacy cache handling is explicit. |
+| Two devices, same account | New record IDs are distinct; competing active sessions or stale edits return conflicts; reviewed reapplication works. |
+| Refresh with pending/failed work | No silent data replacement; failure and resolution are visible. |
+| Exercise removal | No exercise/equipment/set stores, routes, controls, seeds, or provider network calls remain. Source export is not imported. |
+| Surviving UX | Start/resume/finish/cancel, history deletion, profile/measurements, language/theme, logout, and keyboard/mobile navigation work. |
+| Release checks | Test, lint, build, browser workflows, and the multi-architecture image build pass; publishing is gated on them. |
+
 ## Remaining limits
 
 OIDC protocol orchestration remains in app.js; identity creation and password
 reset use the account service. No offline cold start, continuous pull, or
 automatic merging is promised. Gym catalog operations share the sync service's
 authorization, revisions, and receipt transaction rather than a separate gym
-service. These are the final module placements from the proposed plan.
+service. These are the final module placements.
+
+External exercise integration is a separate future task: there is no provider
+credential, request, adapter, or placeholder table in the codebase. Old
+installations have no migration path; a fresh database is required.
 
 GitHub Actions runs tests, lint, the production build, and Chromium workflows
 before any image work. Branch and pull-request runs build amd64/arm64 images

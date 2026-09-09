@@ -2,7 +2,8 @@
 
 This is a historical checkpoint log. Each section records the state at that
 checkpoint; its pending-work statements may be superseded by later entries.
-See [PLAN.md](../PLAN.md) for current completion and remaining verification.
+The plan file it tracked was removed once every item shipped; see
+[ARCHITECTURE.md](../ARCHITECTURE.md) for the current design and behavior contract.
 
 Initial working tree was clean. Baseline: 51 tests in six files passed;
 `npm run lint` and `npm run build` passed. HTTP tests require local port binding
@@ -238,8 +239,8 @@ was introduced.
   deletion failure, no outgoing command on failure, and successful retry.
 - Removed unreferenced `src/App.css`, `src/assets/react.svg`, and `public/vite.svg`.
   Architecture and suggestions now reflect A–G completion; old checkpoint notes
-  are labeled historical. PLAN.md records OIDC orchestration in app.js and gym
-  operations in the sync service as the final module placements.
+  are labeled historical. OIDC orchestration stays in app.js and gym operations
+  in the sync service as the final module placements.
 - Validation: all 113 Vitest tests, nine Chromium workflows, lint, production
   build, and `docker build --tag gymapp:audit-followup .` pass. Initial JS remains
   461.83 kB / gzip 141.62 kB locally; admin and analysis remain separate chunks.
@@ -286,3 +287,12 @@ was introduced.
   correctly skipped. Its notes extraction and pre-release detection were checked
   locally against `v0.2.0-alpha`, `v0.1.4-alpha`, and `v0.1.0-alpha`; the next
   release tag is its first hosted execution.
+
+## Plan closure — 2026-09-09
+
+All 65 plan checkboxes were complete and the last hosted verification item was
+closed by the GitHub Actions runs recorded above, so `PLAN.md` was deleted. Its
+acceptance matrix moved to the "Behavior contract" section of
+`ARCHITECTURE.md`; fixtures, reset, permissions, sync limits, and CI behavior
+were already documented in `README.md` and `ARCHITECTURE.md`. This log keeps the
+per-phase history.
