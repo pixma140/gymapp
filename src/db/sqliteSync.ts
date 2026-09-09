@@ -99,8 +99,8 @@ export async function flushPendingMutations(db: AccountDatabase, active: () => b
                         command: next.revisionDependency ? prepareCommand(db, next, receipt.revision) : next.command });
                 }
                 await db.syncMetadata.update('state', domain === 'gym'
-                    ? { catalogGeneration: receipt.catalogGeneration }
-                    : { accountGeneration: receipt.accountGeneration });
+                    ? { catalogGeneration: receipt.catalogGeneration, lastSuccessfulSync: Date.now() }
+                    : { accountGeneration: receipt.accountGeneration, lastSuccessfulSync: Date.now() });
                 await db.outbox.delete(entry.sequence);
             });
         }

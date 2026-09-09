@@ -30,6 +30,7 @@ export interface SyncMetadata extends AccountBinding {
     accountGeneration: number;
     catalogGeneration: number;
     lastRefreshed: number;
+    lastSuccessfulSync: number;
 }
 export class AccountDatabase extends Dexie {
     readonly binding: Readonly<AccountBinding>;

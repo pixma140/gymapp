@@ -1,8 +1,9 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Dumbbell, LineChart, User, Settings, AlertCircle, Timer } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { Dumbbell, LineChart, User, Settings, AlertCircle, Timer, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 
-import { SyncStatus } from '@/components/SyncStatus';
+import { useDatabase } from '@/context/SessionContext';
 import { cn } from '@/lib/utils';
 import { useMeasurementReminder } from '@/hooks/useMeasurementReminder';
 import { useActiveWorkout } from '@/hooks/useActiveWorkout';
@@ -10,10 +11,18 @@ import { useLanguage } from '@/i18n/LanguageContext';
 
 export function Layout() {
     const location = useLocation();
+    const db = useDatabase();
     const showReminder = useMeasurementReminder();
     const activeWorkout = useActiveWorkout();
     const { t } = useLanguage();
     const mainRef = useRef<HTMLElement>(null);
+    const [dismissedSyncIssue, setDismissedSyncIssue] = useState<string | null>(null);
+    const actionableChanges = useLiveQuery(
+        () => db.outbox.where('state').anyOf(['failed', 'conflict', 'paused']).toArray(),
+        [db],
+    );
+    const syncIssue = actionableChanges?.map(change => `${change.sequence}:${change.state}`).join(',') || null;
+    const showSyncToast = Boolean(syncIssue && dismissedSyncIssue !== syncIssue && location.pathname !== '/settings');
 
     // The <main> element is the scroll container and is reused across route
     // changes. Reset its scroll position on navigation so the new page's
@@ -22,6 +31,12 @@ export function Layout() {
     useEffect(() => {
         mainRef.current?.scrollTo({ top: 0, left: 0 });
     }, [location.pathname]);
+
+    useEffect(() => {
+        if (!syncIssue || location.pathname === '/settings') return;
+        const timeout = window.setTimeout(() => setDismissedSyncIssue(syncIssue), 6000);
+        return () => clearTimeout(timeout);
+    }, [location.pathname, syncIssue]);
 
     const navItems = [
         { path: '/', icon: Dumbbell, label: t('nav.training') },
@@ -77,7 +92,6 @@ export function Layout() {
                         </Link>
                     </div>
                 )}
-                <SyncStatus />
                 <Outlet />
             </main>
             <nav className="fixed bottom-0 inset-x-0 z-50 border-t border-[var(--border)] bg-[var(--background)]/90 backdrop-blur-lg pb-[env(safe-area-inset-bottom)]">
@@ -94,12 +108,29 @@ export function Layout() {
                                     : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                             )}
                         >
-                            <Icon className="size-6 mb-1" strokeWidth={2.5} />
+                            <span className="relative">
+                                <Icon className="size-6 mb-1" strokeWidth={2.5} />
+                                {path === '/settings' && syncIssue && (
+                                    <span className="absolute -right-1 -top-1 size-2.5 rounded-full bg-red-500 ring-2 ring-[var(--background)]" aria-hidden="true" />
+                                )}
+                            </span>
                             {label}
                         </NavLink>
                     ))}
                 </div>
             </nav>
+            {showSyncToast && (
+                <div role="alert" className="fixed inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] mx-auto flex max-w-md items-center gap-3 rounded-xl border border-red-500/40 bg-[var(--card)] p-3 shadow-xl">
+                    <AlertCircle className="size-5 shrink-0 text-red-500" />
+                    <Link to="/settings" className="min-w-0 flex-1" onClick={() => setDismissedSyncIssue(syncIssue)}>
+                        <span className="block text-sm font-semibold">{t('sync.attention')}</span>
+                        <span className="block text-xs text-[var(--muted-foreground)]">{t('sync.viewDetails')}</span>
+                    </Link>
+                    <button className="rounded-md p-1 text-[var(--muted-foreground)]" aria-label={t('common.close')} onClick={() => setDismissedSyncIssue(syncIssue)}>
+                        <X className="size-4" />
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

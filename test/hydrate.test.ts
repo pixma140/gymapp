@@ -93,6 +93,7 @@ describe('account caches and transactional intent', () => {
         await hydrateFromServer(db, snapshot);
         await applyOperation(db, 'profile.update', null, { name: 'Persisted edit' });
         const queued = (await db.outbox.toArray())[0].intent;
+        const previousSuccessfulSync = (await db.syncMetadata.get('state'))!.lastSuccessfulSync;
         db.close();
         await db.open();
         vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) =>
@@ -106,11 +107,13 @@ describe('account caches and transactional intent', () => {
         vi.stubGlobal('fetch', vi.fn((url: unknown, options?: RequestInit) => String(url).endsWith('/snapshot')
             ? Promise.resolve(new Response(JSON.stringify({ ok: true, ...snapshot })))
             : delivery(url, options)));
+        vi.spyOn(Date, 'now').mockReturnValue(previousSuccessfulSync + 1);
         await flushPendingMutations(db);
         await flushPendingMutations(db);
         expect(delivery).toHaveBeenCalledTimes(1);
         expect(await db.outbox.count()).toBe(0);
         expect(await db.users.get(ACCOUNT_A)).toMatchObject({ name: 'Persisted edit', revision: 2 });
+        expect((await db.syncMetadata.get('state'))?.lastSuccessfulSync).toBe(previousSuccessfulSync + 1);
     });
     it('atomically discards pending intent into a validated authoritative snapshot for only one account', async () => {
         const first = fixture();

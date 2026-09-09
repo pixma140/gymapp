@@ -78,8 +78,9 @@ async function replaceAccountData(db: AccountDatabase, snapshot: Snapshot): Prom
     await db.gyms.bulkPut(snapshot.gyms);
     await db.workouts.bulkPut(snapshot.workouts);
     await db.userMeasurements.bulkPut(snapshot.measurements);
+    const refreshedAt = Date.now();
     await db.syncMetadata.put({ key: 'state', ...db.binding, accountGeneration: snapshot.accountGeneration,
-        catalogGeneration: snapshot.catalogGeneration, lastRefreshed: Date.now() });
+        catalogGeneration: snapshot.catalogGeneration, lastRefreshed: refreshedAt, lastSuccessfulSync: refreshedAt });
 }
 
 function assertPendingUnchanged(entries: PendingMutation[], expectedMutationIds: string[]): void {

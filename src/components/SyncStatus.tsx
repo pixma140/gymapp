@@ -14,7 +14,11 @@ export function SyncStatus() {
     const conflict = pending?.some(row => row.state === 'conflict');
     const failed = pending?.some(row => row.state === 'failed');
     const paused = pending?.some(row => row.state === 'paused');
-    return <div className="mb-4 rounded-xl border border-[var(--border)] p-3 text-sm space-y-2" aria-live="polite">
+    return <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 text-sm shadow-sm space-y-3" aria-live="polite">
+        <div>
+            <h2 className="font-semibold text-[var(--foreground)]">{t('sync.title')}</h2>
+            <p className="text-xs text-[var(--muted-foreground)]">{t('sync.description')}</p>
+        </div>
         <div className="flex items-center justify-between gap-3">
             <span>{t('sync.pending')}: {pending?.length ?? 0}</span>
             <button className="rounded-lg border border-[var(--border)] px-3 py-1 disabled:opacity-50" disabled={busy} onClick={async () => {
@@ -26,7 +30,11 @@ export function SyncStatus() {
                 } catch { setBlocked(true); } finally { setBusy(false); }
             }}>{t('sync.refresh')}</button>
         </div>
-        {metadata && <p className="text-xs text-[var(--muted-foreground)]">{t('sync.lastRefreshed')}: {new Date(metadata.lastRefreshed).toLocaleString()}</p>}
+        {metadata && <div className="space-y-1 text-xs text-[var(--muted-foreground)]">
+            <p>{t('sync.lastSuccessful')}: {new Date(metadata.lastSuccessfulSync).toLocaleString()}</p>
+            <p>{t('sync.lastRefreshed')}: {new Date(metadata.lastRefreshed).toLocaleString()}</p>
+        </div>}
+        {!conflict && !failed && !paused && !pending?.length && <p>{t('sync.statusCurrent')}</p>}
         {!conflict && !failed && !paused && Boolean(pending?.length) && <p>{t('sync.statusPending')}</p>}
         {paused && <p role="alert">{t('sync.statusPaused')}</p>}
         {failed && <p role="alert">{t('sync.statusFailed')}</p>}
@@ -52,5 +60,5 @@ export function SyncStatus() {
             </div>
         </div>}
         {blocked && <p role="alert">{t('sync.refreshBlocked')}</p>}
-    </div>;
+    </section>;
 }

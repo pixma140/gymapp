@@ -12,6 +12,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { cn } from '@/lib/utils';
 import { APP_COMMIT, APP_COMMIT_URL, APP_RELEASE_TAG, APP_RELEASE_URL } from '@/lib/constants';
 import { useSession } from '@/context/SessionContext';
+import { SyncStatus } from '@/components/SyncStatus';
 
 export function SettingsPage() {
     const db = useDatabase();
@@ -58,6 +59,8 @@ export function SettingsPage() {
                 <h1 className="text-3xl font-bold tracking-tight text-[var(--foreground)]">{t('settings.title')}</h1>
                 <p className="text-[var(--muted-foreground)] mt-1">{t('settings.subtitle')}</p>
             </header>
+
+            <SyncStatus />
 
             <div className="space-y-4">
                 <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
