@@ -1,5 +1,5 @@
 import { isUuid } from '@shared/commands';
-import type { Snapshot } from '@shared/commands';
+import type { ProfileFields, Snapshot } from '@shared/commands';
 import { actionRequest, isObject, jsonBody, requestJson, type ActionResponse } from '@/lib/api';
 import { isSnapshot } from '@/db/hydrate';
 import { changeSession, notifySession } from './tabs';
@@ -13,9 +13,9 @@ export interface SessionUser {
     isAdmin: boolean;
 }
 export interface Capabilities { manageUsers: boolean; manageOidc: boolean; manageGyms: boolean }
-export type Bootstrap =
+export type Bootstrap = { defaultTimeFormat: ProfileFields['timeFormat'] } & (
     | { status: 'setup' | 'signedOut'; installationId: string }
-    | { status: 'authenticated'; installationId: string; user: SessionUser; capabilities: Capabilities; snapshot: Snapshot };
+    | { status: 'authenticated'; installationId: string; user: SessionUser; capabilities: Capabilities; snapshot: Snapshot });
 
 function isSessionUser(value: unknown): value is SessionUser {
     return isObject(value) && isUuid(value.id)
@@ -25,6 +25,7 @@ function isSessionUser(value: unknown): value is SessionUser {
 }
 export function isBootstrap(value: unknown): value is Bootstrap {
     if (!isObject(value) || !isUuid(value.installationId)) return false;
+    if (typeof value.defaultTimeFormat !== 'string' || !['system', '24h', '12h'].includes(value.defaultTimeFormat)) return false;
     if (value.status === 'setup' || value.status === 'signedOut') return true;
     if (value.status !== 'authenticated' || !isSessionUser(value.user) || !isObject(value.capabilities)
         || !isSnapshot(value.snapshot)) return false;

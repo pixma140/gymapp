@@ -14,9 +14,15 @@ describe('typed API and bootstrap failures', () => {
             age: null, gender: null, reminderFrequency: 'never', language: 'en', timeFormat: 'system', theme: 'dark', mainColor: null };
         const user = { id, username: 'test', name: 'Test', language: 'en', theme: 'dark', isAdmin: false };
         const snapshot = { accountId: id, installationId, accountGeneration: 0, catalogGeneration: 0, profile, gyms: [], workouts: [], workoutExercises: [], customExercises: [], measurements: [] };
-        const response = { status: 'authenticated', installationId, user, snapshot,
+        const response = { status: 'authenticated', installationId, user, snapshot, defaultTimeFormat: 'system',
             capabilities: { manageUsers: false, manageOidc: false, manageGyms: false } };
         expect(isBootstrap(response)).toBe(true);
+        for (const defaultTimeFormat of ['system', '24h', '12h']) {
+            expect(isBootstrap({ ...response, defaultTimeFormat })).toBe(true);
+        }
+        for (const defaultTimeFormat of [undefined, null, 24, 'invalid', ['24h']]) {
+            expect(isBootstrap({ ...response, defaultTimeFormat })).toBe(false);
+        }
         for (const invalid of [1, crypto.randomUUID(), 'invalid']) {
             expect(isBootstrap({ ...response, user: { ...user, id: invalid } })).toBe(false);
             expect(isBootstrap({ ...response, snapshot: { ...snapshot, accountId: invalid, profile: { ...profile, id: invalid } } })).toBe(false);

@@ -11,6 +11,7 @@ const fields: Array<{ key: Exclude<keyof ServerAdminConfig, 'environmentManaged'
     { key: 'dataDir', label: 'admin.config.dataDir', description: 'admin.config.dataDir.desc', variable: 'DATA_DIR' },
     { key: 'nodeEnv', label: 'admin.config.nodeEnv', description: 'admin.config.nodeEnv.desc', variable: 'NODE_ENV' },
     { key: 'viteApiTarget', label: 'admin.config.viteApiTarget', description: 'admin.config.viteApiTarget.desc', variable: 'VITE_API_TARGET' },
+    { key: 'defaultTimeFormat', label: 'settings.timeFormat', description: 'settings.timeFormat.env', variable: 'DEFAULT_TIME_FORMAT' },
 ];
 
 export function ServerSettingsTab() {

@@ -38,7 +38,7 @@ describe('replacement sync contract', () => {
     it('bootstraps an empty installation without fabricating a session', async () => {
         const result = await request('GET', '/api/bootstrap');
         expect(result.status).toBe(200);
-        expect(result.body).toEqual({ ok: true, status: 'setup', installationId });
+        expect(result.body).toEqual({ ok: true, status: 'setup', installationId, defaultTimeFormat: 'system' });
     });
     it('serializes concurrent first-admin setup', async () => {
         const results = await Promise.all(['admin', 'otheradmin'].map(username => request('POST', '/api/setup', {
@@ -52,7 +52,7 @@ describe('replacement sync contract', () => {
         userCookie = user.cookie; userId = user.body.user.id;
     });
     it('bootstraps scoped account data and current capabilities in one response', async () => {
-        expect((await request('GET', '/api/bootstrap')).body).toEqual({ ok: true, status: 'signedOut', installationId });
+        expect((await request('GET', '/api/bootstrap')).body).toEqual({ ok: true, status: 'signedOut', installationId, defaultTimeFormat: 'system' });
         for (const [cookie, id, admin] of [[adminCookie, adminId, true], [userCookie, userId, false]]) {
             const { body } = await request('GET', '/api/bootstrap', { cookie });
             expect(body.status).toBe('authenticated');

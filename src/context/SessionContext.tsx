@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import type { ProfileFields } from '@shared/commands';
 import { AUTHORIZATION_FAILURE, ApiError } from '@/lib/api';
 import { getBootstrap, logoutSession, type Capabilities, type SessionUser } from '@/auth/session';
 import { readSession, subscribeSession, notifySession, sessionEpoch } from '@/auth/tabs';
@@ -14,6 +15,7 @@ interface SessionState {
     database: AccountDatabase | null;
     capabilities: Capabilities | null;
     error: Error | null;
+    defaultTimeFormat: ProfileFields['timeFormat'];
 }
 interface SessionContextValue extends SessionState {
     userId: string | null;
@@ -26,7 +28,7 @@ interface SessionContextValue extends SessionState {
     resolveConflict: (resolution: 'discard' | 'reapply') => Promise<void>;
 }
 const detached = (status: Status, error: Error | null = null): SessionState =>
-    ({ status, user: null, database: null, capabilities: null, error });
+    ({ status, user: null, database: null, capabilities: null, error, defaultTimeFormat: 'system' });
 const SessionContext = createContext<SessionContextValue | undefined>(undefined);
 export function SessionProvider({ children }: { children: React.ReactNode }) {
     const [state, setState] = useState<SessionState>(detached('loading'));
@@ -57,11 +59,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
                 const bootstrap = await getBootstrap();
                 if (version !== generation.current) return;
                 if (bootstrap.status !== 'authenticated') {
-                    setState(detached(bootstrap.status));
+                    setState({ ...detached(bootstrap.status), defaultTimeFormat: bootstrap.defaultTimeFormat });
                     return;
                 }
-                const { user, capabilities, snapshot } = bootstrap;
-                setState({ ...detached('preparing'), user, capabilities });
+                const { user, capabilities, snapshot, defaultTimeFormat } = bootstrap;
+                setState({ ...detached('preparing'), user, capabilities, defaultTimeFormat });
                 database = new AccountDatabase({ accountId: user.id, installationId: bootstrap.installationId });
                 await database.open();
                 const result = await prepareAccountCache(database, snapshot);
@@ -71,7 +73,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
                 readyRole.current = user.isAdmin;
                 epoch.current = preparingEpoch;
                 current.current = database;
-                setState({ status: 'ready', user, capabilities, database, error: null });
+                setState({ status: 'ready', user, capabilities, database, error: null, defaultTimeFormat });
             }, true);
         } catch (error) {
             // The locally opened handle belongs to this bootstrap, never a later account.
@@ -121,7 +123,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
                 readyRole.current = bootstrap.user.isAdmin;
                 epoch.current = preparingEpoch;
                 current.current = database;
-                setState({ status: 'ready', user: bootstrap.user, capabilities: bootstrap.capabilities, database, error: null });
+                setState({ status: 'ready', user: bootstrap.user, capabilities: bootstrap.capabilities, database, error: null, defaultTimeFormat: bootstrap.defaultTimeFormat });
             }, true);
         } catch (error) {
             if (database) (database as AccountDatabase).close();
@@ -152,7 +154,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
                 readyRole.current = bootstrap.user.isAdmin;
                 epoch.current = preparingEpoch;
                 current.current = database;
-                setState({ status: 'ready', user: bootstrap.user, capabilities: bootstrap.capabilities, database, error: null });
+                setState({ status: 'ready', user: bootstrap.user, capabilities: bootstrap.capabilities, database, error: null, defaultTimeFormat: bootstrap.defaultTimeFormat });
             }, true);
         } catch (error) {
             if (database) (database as AccountDatabase).close();

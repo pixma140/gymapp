@@ -29,6 +29,7 @@ test.describe('clock preference', () => {
         await page.getByRole('link', { name: 'Settings', exact: true }).click();
         await expect(page.getByLabel('Language', { exact: true })).toHaveValue('en');
         await expect(page.getByLabel('Time format', { exact: true })).toHaveValue('system');
+        await expect(page.getByText('DEFAULT_TIME_FORMAT=system', { exact: true })).toBeVisible();
         await expectPendingChanges(page, 0);
         await context.setOffline(true);
         await page.getByLabel('Time format', { exact: true }).selectOption('12h');
@@ -59,6 +60,21 @@ test.describe('clock preference', () => {
         await expect(page.locator('header')).toContainText('00:00 – 12:00');
         await page.getByRole('link', { name: 'Analysis', exact: true }).click();
         await expect(page.getByText('00:00', { exact: true })).toBeVisible();
+        // Simulate a restarted server publishing a different runtime default.
+        await page.route('**/api/bootstrap', async route => {
+            const response = await route.fetch();
+            await route.fulfill({ response, json: { ...await response.json(), defaultTimeFormat: '12h' } });
+        });
+        await page.goto(detailsUrl);
+        await expect(page.locator('header')).toContainText('00:00 – 12:00');
+        await page.goto('/settings');
+        await expect(page.getByText('DEFAULT_TIME_FORMAT=12h', { exact: true })).toBeVisible();
+        await expect(page.getByLabel('Time format', { exact: true })).toBeEnabled();
+        await page.getByLabel('Time format', { exact: true }).selectOption('system');
+        await expectPendingChanges(page, 0);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+        await page.goto(detailsUrl);
+        await expect(page.locator('header')).toContainText('12:00 AM – 12:00 PM');
     });
 });
 

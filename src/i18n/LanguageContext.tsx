@@ -21,16 +21,17 @@ type LanguageContextType = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-    const { database: db } = useSession();
+    const { database: db, defaultTimeFormat } = useSession();
     const user = useLiveQuery(() => db?.users.get(db.binding.accountId), [db]);
     const [fallbackLanguage, setFallbackLanguage] = useState<Language>('en');
     const language = user?.language ?? fallbackLanguage;
     const [fallbackTimeFormat, setFallbackTimeFormat] = useState<ProfileFields['timeFormat']>('system');
     const timeFormat = user?.timeFormat ?? fallbackTimeFormat;
-    // Resolve the device clock separately from the language used for labels/dates.
-    const use12Hours = timeFormat === 'system'
+    const resolvedTimeFormat = timeFormat === 'system' ? defaultTimeFormat : timeFormat;
+    // Account override > server default > browser locale, independently of UI language.
+    const use12Hours = resolvedTimeFormat === 'system'
         ? new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hour12
-        : timeFormat === '12h';
+        : resolvedTimeFormat === '12h';
     // Explicit cycles ensure midnight is 00:00 (24h) or 12:00 AM (12h).
     const hourCycle = use12Hours ? 'h12' : 'h23';
     const formatTime = (timestamp: number) => new Date(timestamp).toLocaleTimeString(language, {

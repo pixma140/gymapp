@@ -29,6 +29,7 @@ export interface ServerAdminConfig {
     cookieSecure: boolean;
     publicUrl: string;
     viteApiTarget: string;
+    defaultTimeFormat: 'system' | '24h' | '12h';
     environmentManaged: string[];
 }
 export interface ServerAdminResponse extends ActionResponse { config?: ServerAdminConfig }
@@ -74,6 +75,7 @@ const isServerConfig = (value: unknown): value is ServerAdminResponse => isObjec
     && typeof value.config.nodeEnv === 'string' && typeof value.config.seedDevData === 'boolean'
     && typeof value.config.cookieSecure === 'boolean' && typeof value.config.publicUrl === 'string'
     && typeof value.config.viteApiTarget === 'string' && Array.isArray(value.config.environmentManaged)
+    && typeof value.config.defaultTimeFormat === 'string' && ['system', '24h', '12h'].includes(value.config.defaultTimeFormat)
     && value.config.environmentManaged.every(key => typeof key === 'string');
 const isUsers = (value: unknown): value is AdminUsersResponse => isObject(value) && Array.isArray(value.users)
     && value.users.every(user => isObject(user) && isUuid(user.id) && typeof user.name === 'string'

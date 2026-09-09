@@ -261,7 +261,7 @@ export function createApp({ database, config: serverConfig = readServerConfig(),
                     snapshot: await readSnapshot(tx, user.id)
                 };
             });
-            res.json({ ok: true, ...result });
+            res.json({ ok: true, ...result, defaultTimeFormat: serverConfig.defaultTimeFormat });
         } catch (error) {
             console.error('bootstrap_failed', error);
             res.status(500).json({ ok: false, error: 'bootstrap_failed' });

@@ -148,7 +148,7 @@ databases only; use the explicit alpha reset when recreating development data.
 
 Choose **Settings → Time format** independently of the UI language:
 
-- **Device default** (default): use the browser's locale clock convention.
+- **Default**: use `DEFAULT_TIME_FORMAT` from the server; `system` uses the browser's locale clock convention.
 - **24-hour (14:30)**: always display times from `00:00` to `23:59`.
 - **12-hour (2:30 PM)**: display times with AM/PM.
 
@@ -157,6 +157,18 @@ The preference is saved to your account, works offline, and syncs across devices
 It applies to workout start/end times, workout history, the active-workout banner,
 and sync timestamps. Native date/time editing controls use the browser/OS format;
 timestamps still use your local timezone.
+
+Set the runtime default in `.env` (also loaded by Docker Compose):
+
+```dotenv
+DEFAULT_TIME_FORMAT=24h
+```
+
+Allowed values are `system` (default), `24h`, and `12h`. Restart the API (recreate
+the container for Compose) and reload the page after changing it; no frontend
+rebuild is needed. Accounts using **Default** follow this value, including existing
+accounts. Explicit **24-hour**/**12-hour** selections take precedence. The settings
+page shows the variable name and its current server value in muted text.
 
 Adding the account's `timeFormat` field changes the alpha database schema.
 Existing development installations must be recreated using the explicit reset

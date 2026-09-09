@@ -41,8 +41,11 @@ export function readFixtureCredentials(env) {
 export function readServerConfig(env = {}) {
     const port = Number(text(env, 'PORT', '80'));
     if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('invalid_environment:PORT');
+    const defaultTimeFormat = text(env, 'DEFAULT_TIME_FORMAT', 'system');
+    if (!['system', '24h', '12h'].includes(defaultTimeFormat)) throw new Error('invalid_environment:DEFAULT_TIME_FORMAT');
     const config = {
         port,
+        defaultTimeFormat,
         dataDir: databaseDirectory(env),
         nodeEnv: text(env, 'NODE_ENV', 'development'),
         seedDevData: boolean(env, 'SEED_DEV_DATA'),
@@ -62,6 +65,7 @@ export function readServerConfig(env = {}) {
     for (const [field, key] of Object.entries({
         port: 'PORT', dataDir: 'DATA_DIR', nodeEnv: 'NODE_ENV', seedDevData: 'SEED_DEV_DATA',
         cookieSecure: 'COOKIE_SECURE', publicUrl: 'PUBLIC_URL', viteApiTarget: 'VITE_API_TARGET',
+        defaultTimeFormat: 'DEFAULT_TIME_FORMAT',
     })) {
         if (text(env, key)) config.environmentManaged.push(field);
     }
@@ -69,6 +73,6 @@ export function readServerConfig(env = {}) {
 }
 
 export function publicServerConfig(config) {
-    const { port, dataDir, nodeEnv, seedDevData, cookieSecure, publicUrl, viteApiTarget, environmentManaged } = config;
-    return { port, dataDir, nodeEnv, seedDevData, cookieSecure, publicUrl, viteApiTarget, environmentManaged };
+    const { port, dataDir, nodeEnv, seedDevData, cookieSecure, publicUrl, viteApiTarget, defaultTimeFormat, environmentManaged } = config;
+    return { port, dataDir, nodeEnv, seedDevData, cookieSecure, publicUrl, viteApiTarget, defaultTimeFormat, environmentManaged };
 }

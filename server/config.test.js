@@ -26,8 +26,21 @@ describe('environment configuration', () => {
         expect(() => readFixtureCredentials({ ...env, SEED_USER_USERNAME: env.SEED_ADMIN_USERNAME.toUpperCase() })).toThrow('SEED_USER_USERNAME');
         const config = readServerConfig({ ...env, ADMIN_USERNAME: randomUUID(), OIDC_CLIENT_ID: randomUUID(), OIDC_CLIENT_SECRET: randomUUID(), UNRELATED_SECRET: randomUUID() });
         expect(Object.keys(publicServerConfig(config)).sort()).toEqual([
-            'cookieSecure', 'dataDir', 'environmentManaged', 'nodeEnv', 'port', 'publicUrl', 'seedDevData', 'viteApiTarget',
+            'cookieSecure', 'dataDir', 'defaultTimeFormat', 'environmentManaged', 'nodeEnv', 'port', 'publicUrl', 'seedDevData', 'viteApiTarget',
         ]);
+    });
+
+    it('validates clock defaults and marks explicit environment values', () => {
+        expect(readServerConfig().defaultTimeFormat).toBe('system');
+        expect(readServerConfig({ DEFAULT_TIME_FORMAT: ' ' }).defaultTimeFormat).toBe('system');
+        for (const value of ['system', '24h', '12h']) {
+            const config = readServerConfig({ DEFAULT_TIME_FORMAT: ` ${value} ` });
+            expect(config.defaultTimeFormat).toBe(value);
+            expect(publicServerConfig(config).environmentManaged).toContain('defaultTimeFormat');
+        }
+        for (const value of ['24', '12H', 'invalid']) {
+            expect(() => readServerConfig({ DEFAULT_TIME_FORMAT: value })).toThrow('invalid_environment:DEFAULT_TIME_FORMAT');
+        }
     });
 
     it('scopes configuration to admins, locks env fields, keeps credentials env-only, and uses them for OIDC login', async () => {
@@ -35,7 +48,7 @@ describe('environment configuration', () => {
         const credentials = { admin: { username: randomUUID(), password: randomUUID() }, user: { username: randomUUID(), password: randomUUID() } };
         const clientId = randomUUID();
         const clientSecret = randomUUID();
-        const config = readServerConfig({ PORT: '3000', PUBLIC_URL: 'https://gym.example', OIDC_ENABLED: 'false',
+        const config = readServerConfig({ PORT: '3000', PUBLIC_URL: 'https://gym.example', OIDC_ENABLED: 'false', DEFAULT_TIME_FORMAT: '24h',
             OIDC_ISSUER: 'https://identity.example', OIDC_CLIENT_ID: clientId, OIDC_CLIENT_SECRET: clientSecret });
         let server;
         try {
@@ -59,6 +72,13 @@ describe('environment configuration', () => {
                 const text = await response.text();
                 for (const value of [clientId, clientSecret, credentials.admin.username, credentials.admin.password, credentials.user.username, credentials.user.password]) expect(text).not.toContain(value);
             }
+            const bootstrapBefore = await (await request('/api/bootstrap', cookies.user)).json();
+            expect(bootstrapBefore.defaultTimeFormat).toBe('24h');
+            expect(bootstrapBefore.snapshot.profile.timeFormat).toBe('system');
+            expect(await (await request('/api/bootstrap')).json()).toEqual({
+                ok: true, status: 'signedOut', installationId: bootstrapBefore.installationId, defaultTimeFormat: '24h',
+            });
+            expect((await (await request('/api/admin/config', cookies.admin)).json()).config.defaultTimeFormat).toBe('24h');
             const oidc = (await (await request('/api/admin/oidc', cookies.admin)).json());
             expect(oidc).toMatchObject({ redirectUri: 'https://gym.example/api/auth/oidc/callback', config: {
                 enabled: false, issuer: 'https://identity.example', scopes: 'openid profile email', hasCredentials: true, environmentManaged: ['enabled', 'issuer'],
@@ -75,10 +95,13 @@ describe('environment configuration', () => {
             expect(JSON.parse((await database.getSql("SELECT value FROM app_settings WHERE key = 'oidc.config'")).value)).toEqual({ scopes: 'openid email' });
 
             await new Promise(resolve => server.close(resolve));
-            const enabledConfig = readServerConfig({ OIDC_ENABLED: 'true', OIDC_ISSUER: config.oidc.issuer, OIDC_SCOPES: 'openid profile', OIDC_CLIENT_ID: clientId, OIDC_CLIENT_SECRET: clientSecret });
+            const enabledConfig = readServerConfig({ DEFAULT_TIME_FORMAT: '12h', OIDC_ENABLED: 'true', OIDC_ISSUER: config.oidc.issuer, OIDC_SCOPES: 'openid profile', OIDC_CLIENT_ID: clientId, OIDC_CLIENT_SECRET: clientSecret });
             const restarted = createApp({ database, config: enabledConfig });
             server = await new Promise(resolve => { const listener = restarted.app.listen(0, () => resolve(listener)); });
             const nextBase = `http://127.0.0.1:${server.address().port}`;
+            const bootstrapAfter = await (await fetch(`${nextBase}/api/bootstrap`, { headers: { Cookie: cookies.user } })).json();
+            expect(bootstrapAfter.defaultTimeFormat).toBe('12h');
+            expect(bootstrapAfter.snapshot).toEqual(bootstrapBefore.snapshot);
             expect((await (await fetch(`${nextBase}/api/admin/oidc`, { headers: { Cookie: cookies.admin } })).json()).config.scopes).toBe('openid profile');
             const nativeFetch = globalThis.fetch;
             vi.stubGlobal('fetch', vi.fn((input, options) => String(input).startsWith(config.oidc.issuer)
