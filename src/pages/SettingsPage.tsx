@@ -128,6 +128,7 @@ export function SettingsPage() {
                             <Clock className="size-5 shrink-0 text-[var(--muted-foreground)]" />
                             <div className="text-left">
                                 <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.timeFormat')}</h3>
+                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.timeFormat.desc')}</p>
                             </div>
                         </div>
                         <label htmlFor="settings-time-format" className="sr-only">{t('settings.timeFormat')}</label>
