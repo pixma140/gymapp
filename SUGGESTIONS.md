@@ -1,4 +1,4 @@
-> Implementation checkpoint (2026-09-08): Phase B schemas/fixtures and the necessary command/cache/timed-screen switch are implemented. Exercise catalog and translation recommendations are superseded by exercise removal. Remaining recommendations and verification are tracked in [PLAN.md](PLAN.md); external exercise integration is still a future task.
+> Implementation checkpoint (2026-09-09): Phases A–G are implemented and locally verified. Applicable recommendations are addressed; exercise catalog and translation recommendations are superseded by exercise removal. Hosted GitLab and arm64 verification remain open in [PLAN.md](PLAN.md); external exercise integration is a future task. The assessment, ratings, evidence links, and baseline results below describe the pre-implementation state on 2026-09-08, not the current code.
 
 # Architecture and code-quality suggestions
 

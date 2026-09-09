@@ -1,6 +1,6 @@
 # Implementation plan
 
-Status: Phase G implementation and local verification are complete. All 113 Vitest tests, eight Chromium workflows, lint, production build, and the local Docker image build pass. GitLab now gates tag-only multi-architecture publication on verification and image builds; the hosted pipeline and arm64 build still require a GitLab runner execution. The development database was last explicitly reset and seeded during Phase B on 2026-09-08; no further reset was needed. See `docs/implementation-baseline.md` for checkpoint details.
+Status: Phase G implementation and local verification are complete. All 113 Vitest tests, nine Chromium workflows (including the audit follow-up), lint, production build, and the local Docker image build pass. GitLab now gates tag-only multi-architecture publication on verification and image builds; the hosted pipeline and arm64 build still require a GitLab runner execution. The development database was last explicitly reset and seeded during Phase B on 2026-09-08; no further reset was needed. See `docs/implementation-baseline.md` for checkpoint details.
 
 Sources: [SUGGESTIONS.md](SUGGESTIONS.md), [ARCHITECTURE.md](ARCHITECTURE.md), and the user's appendix. The appendix takes precedence: this is a work-in-progress reset, default test users and shared gyms are required, and the existing exercise implementation must be removed. External exercise integration belongs to a later task.
 
@@ -48,17 +48,19 @@ The old exercise translation/editing recommendation and default exercise seeding
 
 ## 2. Minimal module boundaries
 
-The following paths are proposed implementation targets, not existing files:
+The table records the final implementation boundaries. OIDC orchestration stays
+in `server/app.js` with verification helpers in `server/lib/oidc.js`; shared gym
+operations use the sync service. The originally proposed separate OIDC and gym
+services were not needed to implement their behavior.
 
 | Module | Responsibility |
 | --- | --- |
 | `server/index.js` | Process startup, configuration, database initialization, optional fixture seeding, and listening. |
-| `server/app.js` | `createApp(...)`, dependency wiring, API routers, static assets, error handling. No import-time database creation. |
+| `server/app.js` | `createApp(...)`, dependency wiring, API routers, sessions, OIDC discovery/state/token flow, static assets, error handling. No import-time database creation. |
 | `server/db.js` | SQLite connection, initial schema, explicit transaction/write serialization, close/reset helpers. |
-| `server/services/accounts.js` | Setup, sessions, account creation, role changes, password reset, complete account deletion. |
-| `server/services/oidc.js` | Existing discovery/state/token flow, using existing verification helpers. |
-| `server/services/sync.js` | Validated account-bound commands, deduplication, revision checks, consistent snapshots. |
-| `server/services/gyms.js` | Shared catalog reads and administrator-only changes. |
+| `server/services/accounts.js` | Setup, account creation/OIDC identity resolution, role changes, password reset, complete account deletion. |
+| `server/lib/oidc.js` | OIDC token verification helpers used by the app routes. |
+| `server/services/sync.js` | Validated account-bound commands, deduplication, revision checks, consistent snapshots, shared catalog reads and administrator-only changes. |
 | `shared/` | Narrow runtime validators, command names, payload declarations, and snapshot contract. |
 | `src/context/SessionContext.tsx` | One bootstrap/account/cache lifecycle coordinator and role state. |
 | `src/db/` | Account database factory, write operations, outbox worker, snapshot refresh. |
@@ -224,6 +226,6 @@ Completion means all applicable checkboxes and acceptance cases pass for this re
 ## 6. Audit follow-up — 2026-09-09
 
 - [x] Catch history-deletion failures, show translated feedback, and disable deletion while pending. Browser regression covers canceled confirmation, failed local storage with no lost workout or queued command, and successful retry. All 113 Vitest tests, lint, and the production build pass.
-- [ ] Remove confirmed unused starter files and reconcile current documentation with completed phases and final module placement.
-- [ ] Rebuild the local Docker image after the follow-up changes and record the final local verification results.
-- [ ] Run a hosted GitLab branch pipeline and record its URL, commit, and successful verification plus amd64/arm64 image-build jobs. This requires separate authorization to push or trigger the remote pipeline; tag-only registry publication is not needed to close this check.
+- [x] Remove confirmed unused starter files (`src/App.css`, `src/assets/react.svg`, `public/vite.svg`) and reconcile current documentation with completed phases and final module placement. Historical checkpoint notes are explicitly labeled.
+- [x] Rebuild the local Docker image after the follow-up changes and record the final local verification results in `docs/implementation-baseline.md`: 113 Vitest tests, nine Chromium workflows, lint, production build, and Docker build pass.
+- [ ] Run a hosted GitLab branch pipeline and record its URL, commit, and successful verification plus amd64/arm64 image-build jobs. This requires separate authorization to push or trigger the remote pipeline; tag-only registry publication is not needed to close this check. Only a GitHub origin is configured locally, so the target GitLab project must also be supplied.

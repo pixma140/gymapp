@@ -1,9 +1,10 @@
 # Architecture
 
-Current implementation checkpoint: Phases A–E, including deterministic fixtures,
-account authorization, transactional bootstrap, account-local tab coordination,
-and durable revisioned synchronization. PLAN.md tracks remaining UI and release
-hardening.
+Current implementation checkpoint: Phases A–G are implemented, including
+deterministic fixtures, account authorization, transactional bootstrap,
+account-local tab coordination, durable revisioned synchronization, timed-workout
+UI, and CI publication gates. Local checks pass; hosted GitLab execution and
+arm64 image verification remain open in PLAN.md.
 
 ## Runtime and modules
 
@@ -114,5 +115,11 @@ work remains.
 
 OIDC protocol orchestration remains in app.js; identity creation and password
 reset use the account service. No offline cold start, continuous pull, or
-automatic merging is promised. CI publishing gates and Docker build verification
-remain Phase G work.
+automatic merging is promised. Gym catalog operations share the sync service's
+authorization, revisions, and receipt transaction rather than a separate gym
+service. These are the final module placements from the proposed plan.
+
+CI runs tests, lint, the production build, and Chromium workflows before an
+amd64/arm64 image-build gate. Only release tags can publish. Local Docker build
+verification has passed; hosted GitLab and arm64 execution still need runner
+evidence. Registry publication has not been performed.

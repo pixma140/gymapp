@@ -1,5 +1,9 @@
 # Implementation baseline — 2026-09-08
 
+This is a historical checkpoint log. Each section records the state at that
+checkpoint; its pending-work statements may be superseded by later entries.
+See [PLAN.md](../PLAN.md) for current completion and remaining verification.
+
 Initial working tree was clean. Baseline: 51 tests in six files passed;
 `npm run lint` and `npm run build` passed. HTTP tests require local port binding
 outside this environment's sandbox. Initial Vite output: JS 858.86 kB / gzip
@@ -83,7 +87,7 @@ account-ID non-reuse, generations, identity-bound commands, revision conflicts,
 receipt replays, cache isolation, rollback, dependent edits, and one-time legacy
 cache cleanup. Chromium smoke coverage uses an isolated temporary server/database. Final validation: 58 Vitest tests and two Chromium smoke workflows pass; lint and build pass. Initial JS is approximately 446.6 kB / gzip 137.9 kB (baseline 858.86 / 252.54). Admin and analysis/chart code build as separate chunks.
 
-## Next checkpoint
+## Historical next steps after Phase B — superseded by later checkpoints
 
 Finish remaining Phase C account-service consolidation and role refresh on
 forbidden responses. Then finish Phase D shared API/error handling and exhaustive
@@ -224,3 +228,24 @@ was introduced.
 - Hosted GitLab execution, the arm64 build, and registry publication have not
   been run locally. Publication remains tag-only; nothing was pushed. No
   development database reset or external exercise integration was performed.
+
+
+## Audit follow-up — 2026-09-09
+
+- History deletion now reports local storage failures using the existing
+  translated error, preserves the row on rollback, and disables delete controls
+  while pending. The new browser regression covers cancellation, a real IndexedDB
+  deletion failure, no outgoing command on failure, and successful retry.
+- Removed unreferenced `src/App.css`, `src/assets/react.svg`, and `public/vite.svg`.
+  Architecture and suggestions now reflect A–G completion; old checkpoint notes
+  are labeled historical. PLAN.md records OIDC orchestration in app.js and gym
+  operations in the sync service as the final module placements.
+- Validation: all 113 Vitest tests, nine Chromium workflows, lint, production
+  build, and `docker build --tag gymapp:audit-followup .` pass. Initial JS remains
+  461.83 kB / gzip 141.62 kB locally; admin and analysis remain separate chunks.
+  Docker image: `sha256:aa32cdb0240b39df5219e5512702c697879e55f490710edc1df2757e4d839caa`.
+- Hosted GitLab/arm64 execution remains unverified. The only configured remote
+  is GitHub (`git@github.com:pixma140/gymapp.git`); the GitLab project and separate
+  authorization to push or trigger its branch pipeline are still needed. Record
+  the pipeline URL, tested commit, and successful verification/image-build jobs
+  before closing this item. No push, registry publication, or database reset ran.

@@ -1,5 +1,8 @@
 # Phase B server checkpoint
 
+Historical snapshot from 2026-09-08. Client work described below as forthcoming
+has since landed; see [PLAN.md](../PLAN.md) for current status.
+
 The fresh SQLite schema is now in `server/schema.js`: shared UUID gyms,
 private UUID workouts/measurements, cascading account/session/receipt cleanup,
 non-reused integer account IDs, revisions, and account/catalog generations.
