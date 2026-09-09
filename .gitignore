@@ -32,12 +32,8 @@ dist-ssr
 tbd.md
 .gitconfig
 
-# Local workout-history export and exercise-catalog extraction artifacts.
-# history.csv: source workout export; exercises.txt: extracted unique exercise names.
-# extract_exercises.sh: local helper that generates exercises.txt from history.csv.
-/history.csv
-/exercises.txt
-/extract_exercises.sh
+# exclude all demo files needed for giving AI files
+/demo
 
 # Browser test output
 /playwright-report/
