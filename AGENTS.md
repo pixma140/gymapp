@@ -34,7 +34,7 @@ Keep changes consistent with existing patterns and scripts.
   - `test/serverReset.test.ts`: end-to-end installation reset isolation between the real server sync contract and account-specific IndexedDB caches.
 - `server/app.js` exports `createApp({ database, ...config })` without opening a database or binding a port. Tests explicitly initialize and close handles from `server/db.js`; `server/index.js` owns process startup.
 - `server/seed.test.js`: fixture authentication/restart behavior, fresh-schema invariants, and scoped reset/lease guards.
-- `test/browser/workflows.spec.ts`: Playwright mobile-width account, timed-workout, bootstrap-retry, and two-tab lifecycle tests; `test/browser/server.mjs` owns its temporary database. Run `npm run build`, `npm run test:browser:install` once, then `npm run test:browser`.
+- `test/browser/workflows.spec.ts`: Playwright mobile-width account, timed-workout, history-deletion failure/retry, bootstrap-retry, and two-tab lifecycle tests; `test/browser/server.mjs` owns its temporary database. Run `npm run build`, `npm run test:browser:install` once, then `npm run test:browser`.
 - `server/db.test.js`: database isolation, transaction serialization, rollback isolation, and closed-handle guards.
 
 ## Cursor/Copilot Rules

@@ -220,3 +220,10 @@ The 2026-09-08 repository audit re-ran all Vitest tests, lint, and the productio
 | 12. Tests/CI/docs | Phase G. |
 
 Completion means all applicable checkboxes and acceptance cases pass for this reduced exercise-free app. It does not mean external exercise integration is implemented, migrations for old installations exist, or continuous synchronization is supported.
+
+## 6. Audit follow-up — 2026-09-09
+
+- [x] Catch history-deletion failures, show translated feedback, and disable deletion while pending. Browser regression covers canceled confirmation, failed local storage with no lost workout or queued command, and successful retry. All 113 Vitest tests, lint, and the production build pass.
+- [ ] Remove confirmed unused starter files and reconcile current documentation with completed phases and final module placement.
+- [ ] Rebuild the local Docker image after the follow-up changes and record the final local verification results.
+- [ ] Run a hosted GitLab branch pipeline and record its URL, commit, and successful verification plus amd64/arm64 image-build jobs. This requires separate authorization to push or trigger the remote pipeline; tag-only registry publication is not needed to close this check.

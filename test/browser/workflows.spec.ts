@@ -1,6 +1,53 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs/promises';
 
+test('history deletion preserves the workout on local failure and supports retry', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', error => errors.push(error.message));
+    expect((await page.request.post('/api/auth/register', {
+        data: { username: 'history-delete-retry', password: '123geheim' },
+    })).ok()).toBe(true);
+    await page.goto('/');
+    await page.getByRole('link', { name: /Foundry District/ }).click();
+    await page.getByRole('button', { name: 'Start workout', exact: true }).click();
+    await page.getByRole('button', { name: 'Finish workout', exact: true }).click();
+    await expect(page.getByText('Pending changes: 0', { exact: true })).toBeVisible();
+    await page.getByRole('link', { name: 'Analysis', exact: true }).click();
+    const remove = page.getByRole('button', { name: 'Delete workout', exact: true });
+    const workout = page.getByRole('link', { name: /view/i });
+    await expect(workout).toHaveCount(1);
+    page.once('dialog', dialog => dialog.dismiss());
+    await remove.click();
+    await expect(workout).toHaveCount(1);
+
+    // Fail the actual local storage operation; an HTTP failure would only queue
+    // an offline deletion and would not exercise this UI error path.
+    await page.evaluate(() => {
+        const original = IDBObjectStore.prototype.delete;
+        IDBObjectStore.prototype.delete = function (key) {
+            if (this.name === 'workouts') {
+                IDBObjectStore.prototype.delete = original;
+                throw new DOMException('Injected storage failure', 'UnknownError');
+            }
+            return original.call(this, key);
+        };
+    });
+    page.once('dialog', dialog => dialog.accept());
+    await remove.click();
+    await expect(page.getByRole('alert')).toHaveText('Could not save this change. Please try again.');
+    await expect(workout).toHaveCount(1);
+    await expect(remove).toBeEnabled();
+    await expect(page.getByText('Pending changes: 0', { exact: true })).toBeVisible();
+    expect((await (await page.request.get('/api/sync/snapshot')).json()).workouts).toHaveLength(1);
+
+    page.once('dialog', dialog => dialog.accept());
+    await remove.click();
+    await expect(workout).toHaveCount(0);
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await expect.poll(async () => (await (await page.request.get('/api/sync/snapshot')).json()).workouts).toEqual([]);
+    expect(errors).toEqual([]);
+});
+
 test('fixture users share gyms and retain private timed workouts through logout and reload', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));

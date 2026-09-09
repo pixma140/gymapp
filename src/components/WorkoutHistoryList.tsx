@@ -1,13 +1,16 @@
+import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useDatabase } from '@/context/SessionContext';
-import { applyOperation } from '@/db/operations';
 import { Link } from 'react-router-dom';
 import { Calendar, Clock, ChevronRight, Trash2 } from 'lucide-react';
+import { useDatabase } from '@/context/SessionContext';
+import { applyOperation } from '@/db/operations';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 export function WorkoutHistoryList() {
     const db = useDatabase();
     const { t } = useLanguage();
+    const [deleting, setDeleting] = useState(false);
+    const [failed, setFailed] = useState(false);
     const workouts = useLiveQuery(async () => {
         const allWorkouts = await db.workouts.orderBy('startTime').reverse().toArray();
         // Enrich with gym name
@@ -25,6 +28,7 @@ export function WorkoutHistoryList() {
 
     return (
         <div className="space-y-4">
+            {failed && <p role="alert">{t('sync.operationFailed')}</p>}
             {workouts.length === 0 ? (
                 <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--card)]">
                     <p className="text-[var(--muted-foreground)]">{t('history.empty')}</p>
@@ -50,12 +54,20 @@ export function WorkoutHistoryList() {
                             <button
                                 type="button"
                                 aria-label={t('history.delete')}
+                                disabled={deleting}
                                 onClick={async () => {
-                                    if (window.confirm(t('history.deleteConfirm'))) {
+                                    if (deleting || !window.confirm(t('history.deleteConfirm'))) return;
+                                    setDeleting(true);
+                                    setFailed(false);
+                                    try {
                                         await applyOperation(db, 'workout.delete', workout.id, {});
+                                    } catch {
+                                        setFailed(true);
+                                    } finally {
+                                        setDeleting(false);
                                     }
                                 }}
-                                className="p-2 rounded-full hover:bg-red-500/10 text-[var(--muted-foreground)] hover:text-red-500 transition-colors"
+                                className="p-2 rounded-full hover:bg-red-500/10 text-[var(--muted-foreground)] hover:text-red-500 transition-colors disabled:opacity-50"
                                 title={t('history.delete')}
                             >
                                 <Trash2 className="size-4" />
