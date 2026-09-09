@@ -1,5 +1,35 @@
 # Release notes
 
+## v0.4.0-alpha
+
+**Breaking alpha release:** account and domain identifiers now use canonical
+UUID v7 values, and exercise/set persistence is restored with a new schema.
+Stop the API and recreate the application database with `npm run db:reset:seed`
+(or `npm run db:reset` without fixtures) before starting this version.
+
+### Workout and exercise logging
+
+- Restore catalog-backed exercise selection and set logging, including warmup
+  and working sets, reps, weight, completion state, and workout-history details.
+- Bundle the exercise catalog with muscle/equipment metadata, searchable filters,
+  recently used ordering, and a visual grouped muscle picker.
+- Start new workouts from gym selection, default the first exercise to warmup,
+  and allow completed session start/end times to be corrected.
+- Rank personal gyms by visit history and exercises by per-account usage while
+  keeping catalog behavior isolated between accounts and responsive to deletion.
+
+### Platform and interface
+
+- Replace integer account identifiers and UUID v4 domain identifiers with
+  canonical lowercase UUID v7 values across SQLite, IndexedDB, sync commands,
+  fixtures, and runtime validation.
+- Add independent 12/24-hour clock preferences with a deployment-provided
+  default and align locale-sensitive dates, numbers, and exercise content.
+- Move sync details into Settings, reserve destructive recovery for failures,
+  consolidate gym administration, and remove the duplicate workout resume action.
+- Embed and link release/commit metadata in the Settings footer, including local
+  Docker builds when repository revision information is available.
+
 ## v0.3.0-alpha
 
 **Breaking alpha release:** deployment credentials are environment-only and
