@@ -1,11 +1,49 @@
 # Release notes
 
+## v0.3.0-alpha
+
+**Breaking alpha release:** deployment credentials are environment-only and
+database changes assume a fresh database. There are no migrations, schema-version
+checks, version increments, or compatibility paths during alpha.
+
+### Breaking changes and setup
+
+- Recreate the application database using the explicit reset commands after
+  stopping the API. Initial SQLite definitions replace schema-identifier checks;
+  automatic cleanup of the former browser database is removed.
+- Create a private `.env` from `env.example`. Compose now requires this file;
+  API and reset commands load it, with exported environment variables taking precedence.
+- Fixture mode has no built-in usernames or passwords. Supply
+  `SEED_ADMIN_USERNAME`, `SEED_ADMIN_PASSWORD`, `SEED_USER_USERNAME`, and
+  `SEED_USER_PASSWORD` before enabling `SEED_DEV_DATA` or using `db:reset:seed`.
+  Use `db:reset` for an empty installation with first-administrator setup.
+- Configure `OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET` in the server environment.
+  The admin form and configuration API no longer accept or return credentials.
+  Reconfigure OIDC after recreating the database.
+- Rotate previously published credentials at their provider or affected account;
+  moving configuration into `.env` does not remove values from Git history.
+
+### Improvements
+
+- Add Admin → General with effective non-secret deployment settings and descriptions.
+- Populate OIDC issuer, scopes, and enablement from the environment. These fields
+  are read-only when environment-managed, with matching API enforcement; unset
+  fields remain editable. Show only configured/missing status for OIDC credentials.
+- Exclude private environment files from Git and Docker images, remove published
+  fixture credentials from source/docs, and generate disposable test credentials.
+- Normalize database directories consistently for startup/reset and load Vite's
+  development API proxy target from local environment configuration.
+- Publish releases through the tag-triggered Release workflow after verification
+  and the multi-architecture image build pass.
+
+Verification: 117 unit/integration tests, 10 Chromium workflows, ESLint,
+production build, and Compose configuration validation pass locally.
+
 ## v0.2.0-alpha
 
-Breaking: this release replaces the local and server schemas without a
-migration path. Existing installations must start from a fresh database
-(`npm run db:reset:seed`, or delete the mounted `db` volume); old browser caches
-are discarded automatically once. Exercise logging is temporarily removed.
+Breaking: this release uses fresh local and server databases, following the
+[alpha database policy](README.md#alpha-database-policy-and-reset).
+Exercise logging is temporarily removed.
 
 - Replace the SQLite and Dexie schemas: integer account IDs without reuse, UUID
   domain IDs, foreign-key cascades, record revisions, account/catalog
@@ -58,4 +96,3 @@ are discarded automatically once. Exercise logging is temporarily removed.
 - add possibility to add a new gym in manage gym screen (f50b954)
 - add possibility to change muscle group on exercise edit page (88a6e96)
 - add possibility to change gym location too (830e99f)
-

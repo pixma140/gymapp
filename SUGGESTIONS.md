@@ -100,11 +100,10 @@ Small explicit validators are enough initially; a new validation dependency is n
 
 ### 6. Document and test fresh-database initialization
 
-**Evidence:** the working tree changes Dexie versions 2/3 to version 1 and rewrites SQLite primary keys. Seeding happens on Dexie creation, while hydration clears/replaces the exercise catalog—even when the server catalog is empty.
-
-**Suggested change:** follow the repository's current fresh-install policy: keep edits in initial schemas rather than adding migrations now. Clearly state that these definitions do not upgrade earlier databases. Before supporting existing installations, introduce an explicit upgrade policy and tests.
-
-Choose one owner for the default exercise catalog. A simple option is idempotent server-side seeding when an account is created, followed by snapshot hydration; use stable catalog identifiers to avoid duplication. Test setup, registration, OIDC account creation, logout/login, and a fresh second device. A successful empty snapshot should not accidentally remove the intended default catalog.
+Follow the [alpha database policy](README.md#alpha-database-policy-and-reset):
+edit initial schemas directly and verify freshly created databases. Server-side
+fixtures and account-cache hydration have separate owners. Tests cover fresh
+setup, fixture creation, current-schema restarts, and account-cache isolation.
 
 ## P1 — Simplify ownership of behavior
 

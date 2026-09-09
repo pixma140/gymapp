@@ -6,10 +6,10 @@ has since landed; see [ARCHITECTURE.md](../ARCHITECTURE.md) for current status.
 The fresh SQLite schema is now in `server/schema.js`: shared UUID gyms,
 private UUID workouts/measurements, cascading account/session/receipt cleanup,
 non-reused integer account IDs, revisions, and account/catalog generations.
-Legacy schemas require explicit reset; there is no automatic migration/wipe.
+Schema changes assume fresh databases under the [alpha database policy](../README.md#alpha-database-policy-and-reset).
 
-`SEED_DEV_DATA=true` creates exactly admin/user (password `123geheim`) and the
-two stable shared gyms on a fresh installation. The seed completion marker and
+`SEED_DEV_DATA=true` creates the environment-configured administrator and regular
+account plus two stable shared gyms on a fresh installation. The seed completion marker and
 initialization mode prevent subsequent password/role/name repairs or fixture
 recreation. Non-fixture initialization keeps first-admin setup and registration.
 

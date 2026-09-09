@@ -6,10 +6,14 @@ export const DEVELOPMENT_GYMS = Object.freeze([
 ]);
 
 // Only called by initializeSchema inside the fresh-install transaction.
-export async function seedDevelopmentData(tx) {
-    for (const [username, name, isAdmin] of [['admin', 'Administrator', 1], ['user', 'User', 0]]) {
+export async function seedDevelopmentData(tx, credentials) {
+    if (!credentials?.admin?.username || !credentials.admin.password || !credentials?.user?.username || !credentials.user.password) {
+        throw new Error('fixture_credentials_required');
+    }
+    for (const [role, name, isAdmin] of [['admin', 'Administrator', 1], ['user', 'User', 0]]) {
+        const { username, password } = credentials[role];
         await tx.runSql(`INSERT INTO users (username, passwordHash, name, isAdmin, language, theme, reminderFrequency, createdAt)
-            VALUES (?, ?, ?, ?, 'en', 'dark', 'never', ?)`, [username, hashPassword('123geheim'), name, isAdmin, Date.now()]);
+            VALUES (?, ?, ?, ?, 'en', 'dark', 'never', ?)`, [username, hashPassword(password), name, isAdmin, Date.now()]);
     }
     for (const gym of DEVELOPMENT_GYMS) {
         await tx.runSql('INSERT INTO gyms (id, name, location) VALUES (?, ?, ?)', [gym.id, gym.name, gym.location]);

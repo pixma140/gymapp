@@ -17,7 +17,7 @@ outside this environment's sandbox. Initial Vite output: JS 858.86 kB / gzip
 - Cache destruction/replacement: SetupPage, RequireAuth, SettingsPage,
   db/hydrate.ts. Providers/guards query the first global local user.
 - Gym writes: AddGymForm and ManageGymsPage. GymList derives history display
-  from workouts, while legacy schema still stores counters.
+  from workouts.
 - Workout and set writes: useWorkoutSession; deletions in WorkoutDetailsPage
   and WorkoutHistoryList. WorkoutPage and EditWorkoutPage use this hook.
 - Exercise writes/seeds: AddExerciseForm, ManageExercisesPage, db/db.ts.
@@ -54,9 +54,9 @@ use of their scoped handle after completion.
 
 First-administrator creation now checks and inserts within one serialized
 transaction. Role changes and administrator deletion recheck current authority,
-self guards, and last-admin constraints inside the same transaction. Legacy
+self guards, and last-admin constraints inside the same transaction. Account
 private rows and sessions are deleted atomically; profile sync cannot delete
-accounts. The legacy table dispatcher rejects inherited property names.
+accounts. Command dispatch rejects inherited property names.
 HTTP regression coverage includes concurrent setup, both roles attempting
 sync deletion, orphan cleanup, and rollback on a deliberately failed deletion.
 
@@ -76,17 +76,17 @@ checks the cooperating-process lease and removes only configured database/WAL/
 SHM files; fixture mode is explicit. The real `./db/gymapp.db` was checked for
 open handles, reset, and seeded on 2026-09-08. No source export was deleted.
 
-The schema switch required replacing the legacy HTTP mutation/snapshot contract
-and updating its client consumers together. Account caches now use installation
-and account identity, domain IDs are UUIDs, and local operations enqueue durable
+The command/snapshot contract and its client consumers were implemented together.
+Account caches use installation and account identity, domain IDs are UUIDs,
+and local operations enqueue durable
 intent transactionally. Exercise components/stores/seeds were removed; timed
 screens use explicit start/resume/finish/cancel. Shared gym editing is protected
 and uses archive operations. Theme/language read the ready account handle.
 
 Additional tests cover fixture authentication, restart/reset, foreign keys,
 account-ID non-reuse, generations, identity-bound commands, revision conflicts,
-receipt replays, cache isolation, rollback, dependent edits, and one-time legacy
-cache cleanup. Chromium smoke coverage uses an isolated temporary server/database. Final validation: 58 Vitest tests and two Chromium smoke workflows pass; lint and build pass. Initial JS is approximately 446.6 kB / gzip 137.9 kB (baseline 858.86 / 252.54). Admin and analysis/chart code build as separate chunks.
+receipt replays, cache isolation, rollback, and dependent edits.
+Chromium smoke coverage uses an isolated temporary server/database. Final validation: 58 Vitest tests and two Chromium smoke workflows pass; lint and build pass. Initial JS is approximately 446.6 kB / gzip 137.9 kB (baseline 858.86 / 252.54). Admin and analysis/chart code build as separate chunks.
 
 ## Historical next steps after Phase B — superseded by later checkpoints
 
@@ -189,7 +189,7 @@ suite passed (80 tests including the in-progress client regressions).
   admin and analysis remain separate chunks.
 - Phase E remains open for backoff/Retry-After, immutable-envelope refinements,
   freezing local writes during snapshot replacement, and reviewed conflict
-  reapplication. No application database reset or schema migration was needed.
+  reapplication.
 
 ## Phase G regression checkpoint — 2026-09-09
 

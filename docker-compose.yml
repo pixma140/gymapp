@@ -9,17 +9,13 @@ services:
     build: .
     container_name: gymapp
     image: gymapp:latest
+    env_file:
+      - .env
     environment:
-      - NODE_ENV=production
-      # Development fixtures only; disable for a non-fixture installation.
-      - SEED_DEV_DATA=true
-      # Promote this username to admin on startup (first OIDC/admin setup).
-      # - ADMIN_USERNAME=myadmin
-      # Public base URL used to build the OIDC redirect URI.
-      # Only needed if the auto-detected host header is wrong (e.g. behind some proxies).
-      # - PUBLIC_URL=https://gym.example.com
-      # Set to "true" when served over HTTPS so the session cookie is marked Secure.
-      # - COOKIE_SECURE=true
+      NODE_ENV: production
+      PORT: 80
+      DATA_DIR: /app/data
+      # OIDC_*, COOKIE_SECURE, PUBLIC_URL and fixture credentials come from .env.
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.gymapp.entrypoints=web"
@@ -29,7 +25,7 @@ services:
 #    ports:
 #      - "8080:80"
     volumes:
-      - ./db:/app/data
+      - ${DATA_DIR:-./db}:/app/data
     <<: *def
 
 networks:

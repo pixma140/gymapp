@@ -1,8 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+export function databaseDirectory(env = process.env) {
+    return env.DATA_DIR?.trim() || '/app/data';
+}
+
 export function databasePath(env = process.env) {
-    return path.resolve(env.DATA_DIR ?? '/app/data', 'gymapp.db');
+    return path.resolve(databaseDirectory(env), 'gymapp.db');
 }
 
 // All application processes (server/reset) hold this lease while using the file.

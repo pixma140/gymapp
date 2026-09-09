@@ -6,6 +6,7 @@ import { verifyPassword, parseCookies, base64UrlEncode } from './lib/crypto.js';
 import { verifyIdToken } from './lib/oidc.js';
 import { createAccountService } from './services/accounts.js';
 import { createSyncService, readSnapshot } from './services/sync.js';
+import { publicServerConfig, readServerConfig } from './config.js';
 
 function hasExactKeys(value, required, optional = []) {
     if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -13,16 +14,16 @@ function hasExactKeys(value, required, optional = []) {
     return required.every(key => Object.hasOwn(value, key)) && Object.keys(value).every(key => allowed.has(key));
 }
 
-export function createApp({ database, cookieSecure = false, adminUsername = '', publicUrl = '', distDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist') }) {
+export function createApp({ database, config: serverConfig = readServerConfig(), distDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist') }) {
     const { runSql, getSql, allSql } = database;
     const accounts = createAccountService(database);
     const sync = createSyncService(database);
     const SESSION_COOKIE = 'gymapp_session';
     const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
-    const COOKIE_SECURE = cookieSecure;
+    const COOKIE_SECURE = serverConfig.cookieSecure;
     const OIDC_STATE_TTL_MS = 1000 * 60 * 10;
-    const ADMIN_USERNAME = adminUsername.trim();
-    const PUBLIC_URL = publicUrl.trim();
+    const ADMIN_USERNAME = serverConfig.adminUsername;
+    const PUBLIC_URL = serverConfig.publicUrl;
     const DIST_DIR = distDir;
 
     function setSessionCookie(res, sessionId) {
@@ -85,27 +86,28 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
     const DEFAULT_OIDC_CONFIG = {
         enabled: false,
         issuer: '',
-        clientId: '',
-        clientSecret: '',
         scopes: 'openid profile email'
     };
 
     async function getOidcConfig() {
         const raw = await getSetting(OIDC_SETTING_KEY);
-        if (!raw) {
-            return { ...DEFAULT_OIDC_CONFIG };
-        }
-
-        try {
-            return { ...DEFAULT_OIDC_CONFIG, ...JSON.parse(raw) };
-        } catch {
-            return { ...DEFAULT_OIDC_CONFIG };
-        }
+        const stored = raw ? JSON.parse(raw) : {};
+        return { ...DEFAULT_OIDC_CONFIG, ...stored, ...serverConfig.oidc };
     }
 
     async function saveOidcConfig(config) {
-        await setSetting(OIDC_SETTING_KEY, JSON.stringify(config));
+        const editable = Object.fromEntries(['enabled', 'issuer', 'scopes']
+            .filter(key => !Object.hasOwn(serverConfig.oidc, key)).map(key => [key, config[key]]));
+        await setSetting(OIDC_SETTING_KEY, JSON.stringify(editable));
         discoveryCache.clear();
+    }
+
+    function publicOidcConfig(config) {
+        return {
+            enabled: config.enabled, issuer: config.issuer, scopes: config.scopes,
+            hasCredentials: Boolean(config.clientId && config.clientSecret),
+            environmentManaged: ['enabled', 'issuer', 'scopes'].filter(key => Object.hasOwn(serverConfig.oidc, key)),
+        };
     }
 
     const discoveryCache = new Map();
@@ -426,11 +428,16 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
     app.get('/api/auth/oidc/status', async (_req, res) => {
         try {
             const config = await getOidcConfig();
-            const enabled = Boolean(config.enabled && config.issuer && config.clientId);
+            const enabled = Boolean(config.enabled && config.issuer && config.clientId && config.clientSecret);
             res.json({ ok: true, enabled });
         } catch {
             res.json({ ok: true, enabled: false });
         }
+    });
+
+    app.get('/api/admin/config', async (req, res) => {
+        if (!await requireAdmin(req, res)) return;
+        res.json({ ok: true, config: publicServerConfig(serverConfig) });
     });
 
     app.get('/api/admin/oidc', async (req, res) => {
@@ -443,13 +450,7 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
             const config = await getOidcConfig();
             res.json({
                 ok: true,
-                config: {
-                    enabled: Boolean(config.enabled),
-                    issuer: config.issuer,
-                    clientId: config.clientId,
-                    scopes: config.scopes,
-                    hasClientSecret: Boolean(config.clientSecret)
-                },
+                config: publicOidcConfig(config),
                 redirectUri: getRedirectUri(req)
             });
         } catch (error) {
@@ -467,26 +468,33 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
         try {
             const current = await getOidcConfig();
             const body = req.body;
-            if (!hasExactKeys(body, ['enabled', 'issuer', 'clientId', 'scopes'], ['clientSecret'])
+            if (!hasExactKeys(body, ['enabled', 'issuer', 'scopes'])
                 || typeof body.enabled !== 'boolean' || typeof body.issuer !== 'string'
-                || typeof body.clientId !== 'string' || typeof body.scopes !== 'string'
-                || (Object.hasOwn(body, 'clientSecret') && typeof body.clientSecret !== 'string')) {
+                || typeof body.scopes !== 'string') {
                 res.status(400).json({ ok: false, error: 'invalid_payload' });
                 return;
             }
 
             const issuer = body.issuer.trim().replace(/\/$/, '');
-            const clientId = body.clientId.trim();
             const scopes = body.scopes.trim() || DEFAULT_OIDC_CONFIG.scopes;
             const enabled = body.enabled;
 
-            // Only overwrite the secret when a new non-empty value is supplied.
-            const clientSecret = typeof body.clientSecret === 'string' && body.clientSecret.length > 0
-                ? body.clientSecret
-                : current.clientSecret;
+            const nextConfig = { ...current, enabled, issuer, scopes };
+            for (const key of ['enabled', 'issuer', 'scopes']) {
+                if (Object.hasOwn(serverConfig.oidc, key) && nextConfig[key] !== current[key]) {
+                    res.status(400).json({ ok: false, error: 'environment_managed' });
+                    return;
+                }
+            }
+            if (issuer) {
+                try { readServerConfig({ OIDC_ISSUER: issuer }); } catch {
+                    res.status(400).json({ ok: false, error: 'invalid_payload' });
+                    return;
+                }
+            }
 
             if (enabled) {
-                if (!issuer || !clientId || !clientSecret) {
+                if (!issuer || !current.clientId || !current.clientSecret) {
                     res.status(400).json({ ok: false, error: 'missing_required_fields' });
                     return;
                 }
@@ -499,18 +507,11 @@ export function createApp({ database, cookieSecure = false, adminUsername = '', 
                 }
             }
 
-            const nextConfig = { enabled, issuer, clientId, clientSecret, scopes };
             await saveOidcConfig(nextConfig);
 
             res.json({
                 ok: true,
-                config: {
-                    enabled: nextConfig.enabled,
-                    issuer: nextConfig.issuer,
-                    clientId: nextConfig.clientId,
-                    scopes: nextConfig.scopes,
-                    hasClientSecret: Boolean(nextConfig.clientSecret)
-                },
+                config: publicOidcConfig(nextConfig),
                 redirectUri: getRedirectUri(req)
             });
         } catch (error) {

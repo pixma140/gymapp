@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { AUTHORIZATION_FAILURE, ApiError } from '@/lib/api';
 import { getBootstrap, logoutSession, type Capabilities, type SessionUser } from '@/auth/session';
 import { readSession, subscribeSession, notifySession, sessionEpoch } from '@/auth/tabs';
-import { AccountDatabase, clearLegacyCacheOnce } from '@/db/db';
+import { AccountDatabase } from '@/db/db';
 import { discardPendingChanges, prepareAccountCache, resolvePendingConflict } from '@/db/hydrate';
 import { flushPendingMutations } from '@/db/sqliteSync';
 
@@ -62,8 +62,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
                 }
                 const { user, capabilities, snapshot } = bootstrap;
                 setState({ ...detached('preparing'), user, capabilities });
-                await clearLegacyCacheOnce();
-                if (version !== generation.current) return;
                 database = new AccountDatabase({ accountId: user.id, installationId: bootstrap.installationId });
                 await database.open();
                 const result = await prepareAccountCache(database, snapshot);

@@ -40,13 +40,13 @@ describe('replacement sync contract', () => {
     });
     it('serializes concurrent first-admin setup', async () => {
         const results = await Promise.all(['admin', 'otheradmin'].map(username => request('POST', '/api/setup', {
-            body: { username, password: 'adminpassword', name: 'Admin' },
+            body: { username, password: randomUUID(), name: 'Admin' },
         })));
         expect(results.map(result => result.status).sort()).toEqual([200, 409]);
         expect(await database.getSql('SELECT COUNT(*) AS count FROM users')).toEqual({ count: 1 });
         const result = results.find(result => result.status === 200);
         adminCookie = result.cookie; adminId = result.body.user.id;
-        const user = await request('POST', '/api/auth/register', { body: { username: 'regular', password: 'userpassword' } });
+        const user = await request('POST', '/api/auth/register', { body: { username: 'regular', password: randomUUID() } });
         userCookie = user.cookie; userId = user.body.user.id;
     });
     it('bootstraps scoped account data and current capabilities in one response', async () => {
@@ -63,7 +63,7 @@ describe('replacement sync contract', () => {
         }
         expect((await request('GET', '/api/bootstrap', { cookie: 'gymapp_session=expired' })).body.status).toBe('signedOut');
     });
-    it('authenticates before dispatch and rejects legacy/inherited commands', async () => {
+    it('authenticates before dispatch and rejects malformed or unknown commands', async () => {
         expect((await request('POST', '/api/sync', { body: {} })).status).toBe(401);
         for (const body of [{ table: 'users', operation: 'delete', id: userId }, { operation: { toString: 'invalid' } }, { operation: 'constructor' }, { operation: '__proto__' }, { operation: 'exercise.create' }]) {
             expect((await send(body)).status).toBe(400);

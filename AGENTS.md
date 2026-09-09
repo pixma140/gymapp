@@ -12,7 +12,7 @@ Keep changes consistent with existing patterns and scripts.
 
 ## Commands (npm)
 - Install: `npm install`
-- Dev frontend: `npm run dev`; API with fixture defaults: `npm run dev:server`.
+- Dev frontend: `npm run dev`; API: `npm run dev:server` (loads local `.env`; see `env.example`).
 - Explicit app database reset: stop the API, then `npm run db:reset:seed` (or `db:reset` without fixtures).
 - Build: `npm run build` (runs `tsc -b` then `vite build`)
 - Lint: `npm run lint` (eslint)
@@ -33,7 +33,8 @@ Keep changes consistent with existing patterns and scripts.
   - `test/*.test.ts`: client-side logic (account-cache isolation, hydration, transactional outbox, and dependent acknowledgements via `fake-indexeddb`).
   - `test/serverReset.test.ts`: end-to-end installation reset isolation between the real server sync contract and account-specific IndexedDB caches.
 - `server/app.js` exports `createApp({ database, ...config })` without opening a database or binding a port. Tests explicitly initialize and close handles from `server/db.js`; `server/index.js` owns process startup.
-- `server/seed.test.js`: fixture authentication/restart behavior, fresh-schema invariants, and scoped reset/lease guards.
+  - `server/seed.test.js`: fixture authentication/restart behavior, fresh-schema invariants, and scoped reset/lease guards.
+  - `server/config.test.js`: environment validation, admin configuration authorization, env-only credentials, OIDC precedence and login wiring.
 - `test/browser/workflows.spec.ts`: Playwright mobile-width account, timed-workout, history-deletion failure/retry, bootstrap-retry, and two-tab lifecycle tests; `test/browser/server.mjs` owns its temporary database. Run `npm run build`, `npm run test:browser:install` once, then `npm run test:browser`.
 - `server/db.test.js`: database isolation, transaction serialization, rollback isolation, and closed-handle guards.
 
@@ -110,12 +111,19 @@ Keep changes consistent with existing patterns and scripts.
 
 ## Database Schema Notes
 - Entities: account profile, shared Gym, private timed Workout and UserMeasurement, mutation outbox, and sync metadata. Domain IDs are UUID strings; account IDs remain integers.
-- Account caches use one initial Dexie `version(1)` in `src/db/db.ts`. Initial SQLite DDL lives in `server/schema.js`; old databases require explicit reset.
-- Update schema carefully; Dexie migrations must be explicit.
-- Unless explicitly stated otherwise, make all database changes as if there is
-  no application already running in production. Do not use `ALTER TABLE` or add
-  a new Dexie version; instead add new fields directly to the `CREATE TABLE`
-  statements or to the initial Dexie `version(1)` schema.
+- Until the project leaves alpha, all schema changes are intentionally breaking
+  and assume a freshly created database. Edit the initial SQLite `CREATE TABLE`
+  statements in `server/schema.js` and the single Dexie `version(1)` schema in
+  `src/db/db.ts` directly.
+- Do not add migrations, `ALTER TABLE`, Dexie version increments or upgrade hooks,
+  schema-version tracking/checks, or compatibility/cleanup code for previous schemas.
+- Recreate development databases when the schema changes. Ordinary restarts still
+  preserve data for the current schema.
+
+## Deployment Configuration
+- `env.example` documents supported variables; local `.env` files are ignored by Git and Docker.
+- Deployment usernames, fixture passwords, and OIDC client credentials come only from the server environment. Tests generate disposable credentials.
+- Configuration APIs use explicit non-secret allowlists. Environment-managed fields are read-only in the admin UI and enforced by the API; unset OIDC fields remain editable.
 
 ## Adding Features
 - Match current UI patterns (card layout, bold headers, muted text).

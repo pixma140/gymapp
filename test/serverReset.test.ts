@@ -12,6 +12,11 @@ import { applyOperation } from '@/db/operations';
 import { flushPendingMutations } from '@/db/sqliteSync';
 import type { Snapshot } from '@shared/commands';
 
+const fixtureCredentials = {
+    admin: { username: crypto.randomUUID(), password: crypto.randomUUID() },
+    user: { username: crypto.randomUUID(), password: crypto.randomUUID() },
+};
+
 interface RunningServer {
     baseUrl: string;
     close: () => Promise<void>;
@@ -38,7 +43,7 @@ async function startServer(filename: string): Promise<RunningServer> {
 async function login(baseUrl: string): Promise<string> {
     const response = await fetch(`${baseUrl}/api/auth/login`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'user', password: '123geheim' }),
+        body: JSON.stringify(fixtureCredentials.user),
     });
     expect(response.status).toBe(200);
     const cookie = response.headers.get('set-cookie')?.split(';')[0];
@@ -63,7 +68,7 @@ describe('server reset replay isolation', () => {
         const filename = path.join(dir, 'gymapp.db');
         let running: RunningServer | null = null;
         try {
-            const installationX = await resetDatabase(filename, { seedDevData: true });
+            const installationX = await resetDatabase(filename, { seedDevData: true, fixtureCredentials });
             running = await startServer(filename);
             const cookieX = await login(running.baseUrl);
             const bootstrapX = await bootstrap(running.baseUrl, cookieX);
@@ -75,7 +80,7 @@ describe('server reset replay isolation', () => {
 
             await running.close();
             running = null;
-            const installationY = await resetDatabase(filename, { seedDevData: true });
+            const installationY = await resetDatabase(filename, { seedDevData: true, fixtureCredentials });
             expect(installationY).not.toBe(installationX);
             running = await startServer(filename);
             const cookieY = await login(running.baseUrl);

@@ -50,16 +50,3 @@ export class AccountDatabase extends Dexie {
         });
     }
 }
-
-export async function clearLegacyCacheOnce(): Promise<void> {
-    const control = new Dexie('GymAppCacheControl');
-    control.version(1).stores({ flags: 'key' });
-    try {
-        if (!await control.table('flags').get('legacy-reset-v1')) {
-            await Dexie.delete('GymAppDB');
-            await control.table('flags').put({ key: 'legacy-reset-v1', completedAt: Date.now() });
-        }
-    } finally {
-        control.close();
-    }
-}

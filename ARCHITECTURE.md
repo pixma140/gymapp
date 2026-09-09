@@ -19,13 +19,14 @@ built frontend and APIs; Vite proxies API requests during development.
 | `server/app.js` | App factory, auth/admin/OIDC routes, sync wiring, static serving |
 | `server/db.js` | SQLite handle and serialized statements/transactions |
 | `server/schema.js` | Fresh initial DDL, installation identity, revision/generation triggers |
-| `server/seed.js` | Deterministic fixture accounts and shared gym UUIDs |
+| `server/config.js` | Validated environment configuration and explicit non-secret API projection |
+| `server/seed.js` | Environment-supplied fixture accounts and stable shared gym UUIDs |
 | `server/reset.js`, `databaseFiles.js` | Scoped reset and cooperating-process database lease |
 | `server/services/accounts.js` | Account creation/OIDC identity resolution, role/deletion guards, atomic password reset |
 | `server/services/sync.js` | Validated commands, revisions, receipts, consistent snapshots |
 | `shared/commands.js`, `.d.ts` | Runtime command validation and protocol types |
 | `src/context/SessionContext.tsx` | Bootstrap, ready-account handle, worker scheduling, logout/discard/conflict resolution |
-| `src/db/db.ts` | Account/installation database factory and one-time legacy-cache cleanup |
+| `src/db/db.ts` | Account/installation database factory and initial cache schema |
 | `src/db/operations.ts` | Atomic local state plus outgoing command |
 | `src/db/sqliteSync.ts` | Ordered Web-Lock sender, generation preflight, retry timing, and receipt/dependency reconciliation |
 | `src/db/hydrate.ts` | Validated atomic snapshots, pending-work preservation, and explicit conflict resolution |
@@ -53,10 +54,11 @@ as mutations. Calls inside a transaction must use and await its scoped SQL
 methods; calling the public queued methods from inside would deadlock.
 
 Fresh-schema initialization and seeding are transactional. `installation`
-records the schema identifier, UUID, and initial fixture/empty mode. A seed
+records the UUID, catalog generation, and initial fixture/empty mode. A seed
 completion marker is stored in `app_settings`. Ordinary startup cannot inject
 fixtures into an initialized non-fixture database or recreate deleted fixtures.
-The old initial schema requires explicit reset; there are no ALTER migrations.
+During alpha, schema changes assume fresh databases and edit the initial
+definitions directly; see the [alpha database policy](README.md#alpha-database-policy-and-reset).
 
 IndexedDB names are `GymApp:<installation UUID>:<account ID>`. Initial version 1
 stores contain profile (`users`), shared catalog cache (`gyms`), private workouts,
@@ -120,17 +122,18 @@ row as a regression, not a preference.
 
 | Scenario | Required result |
 | --- | --- |
-| Fresh reset with fixtures | Exactly `admin` and `user` authenticate with `123geheim`; roles are correct; exactly the two named gyms exist once. |
+| Fresh reset with fixtures | Environment-supplied fixture accounts authenticate; administrator/regular roles are correct; exactly the two named gyms exist once. |
 | Restart after fixture edits | No duplicate gyms, password resets, role repairs, or recreated deleted accounts. |
 | Fixture mode disabled | Empty installation offers setup; concurrent first-admin setup is safe. |
 | Admin versus user | Admin sees Users/OIDC/Gyms; user does not. Direct user calls to each admin endpoint fail without mutation. |
+| Deployment configuration | Admin sees allowlisted non-secret settings; environment-set OIDC fields are read-only; credentials stay environment-only. |
 | Shared catalog | Both accounts receive the same gym IDs/names. Admin rename appears for user after refresh. User cannot create/edit/archive gyms. |
 | Private activity | A workout/measurement by one user is absent from the other's views, snapshot, and writes; gym visits are per user. |
 | Account deletion | All private rows/sessions/receipts are removed atomically; shared gyms survive; self/last-admin alternate paths are blocked. |
 | Offline edit and reload | Local state and queued command survive; eventual delivery occurs once. |
 | Transaction failure | Neither a partial local operation nor an outgoing command survives rollback. |
 | Switch/logout/session expiry | Previous account's queue is retained and paused; no cross-account delivery, including a second tab changing cookies. |
-| Server reset with an old browser | Installation mismatch prevents replay into reset accounts; legacy cache handling is explicit. |
+| Server reset with a cached browser session | Installation mismatch prevents replay into reset accounts. |
 | Two devices, same account | New record IDs are distinct; competing active sessions or stale edits return conflicts; reviewed reapplication works. |
 | Refresh with pending/failed work | No silent data replacement; failure and resolution are visible. |
 | Exercise removal | No exercise/equipment/set stores, routes, controls, seeds, or provider network calls remain. Source export is not imported. |
@@ -146,8 +149,7 @@ authorization, revisions, and receipt transaction rather than a separate gym
 service. These are the final module placements.
 
 External exercise integration is a separate future task: there is no provider
-credential, request, adapter, or placeholder table in the codebase. Old
-installations have no migration path; a fresh database is required.
+credential, request, adapter, or placeholder table in the codebase.
 
 GitHub Actions runs only on release tags and manual dispatch: tests, lint, the
 production build, and the Chromium workflows gate the amd64/arm64 image build

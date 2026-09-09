@@ -1,11 +1,39 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs/promises';
 
+const fixtureCredentials = {
+    admin: { username: process.env.TEST_SEED_ADMIN_USERNAME!, password: process.env.TEST_SEED_ADMIN_PASSWORD! },
+    user: { username: process.env.TEST_SEED_USER_USERNAME!, password: process.env.TEST_SEED_USER_PASSWORD! },
+};
+const testPassword = crypto.randomUUID();
+
+test('admin sees environment-managed settings without deployment credentials', async ({ page }) => {
+    expect((await page.request.post('/api/auth/login', { data: fixtureCredentials.admin })).ok()).toBe(true);
+    await page.goto('/admin');
+    await page.getByRole('button', { name: 'General', exact: true }).click();
+    await expect(page.getByLabel('Server port')).toHaveValue('4173');
+    await expect(page.getByLabel('Server port')).toHaveAttribute('readonly', '');
+    await expect(page.getByLabel('Development fixtures')).toHaveValue('Enabled');
+    await page.getByRole('button', { name: 'OIDC', exact: true }).click();
+    await expect(page.getByLabel('Issuer URL')).toHaveValue('https://identity.example');
+    await expect(page.getByLabel('Issuer URL')).toBeDisabled();
+    await expect(page.getByRole('checkbox')).toBeDisabled();
+    await expect(page.getByText('OIDC credentials are configured.', { exact: true })).toBeVisible();
+    await expect(page.locator('input[type=password]')).toHaveCount(0);
+    await expect(page.getByLabel('Scopes')).toBeEnabled();
+    await page.getByLabel('Scopes').fill('openid email');
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(page.getByText('Settings saved.', { exact: true })).toBeVisible();
+    await page.reload();
+    await page.getByRole('button', { name: 'OIDC', exact: true }).click();
+    await expect(page.getByLabel('Scopes')).toHaveValue('openid email');
+});
+
 test('history deletion preserves the workout on local failure and supports retry', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
     expect((await page.request.post('/api/auth/register', {
-        data: { username: 'history-delete-retry', password: '123geheim' },
+        data: { username: 'history-delete-retry', password: testPassword },
     })).ok()).toBe(true);
     await page.goto('/');
     await page.getByRole('link', { name: /Foundry District/ }).click();
@@ -51,10 +79,11 @@ test('history deletion preserves the workout on local failure and supports retry
 test('fixture users share gyms and retain private timed workouts through logout and reload', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
-    const login = async (username: string) => {
+    const login = async (role: keyof typeof fixtureCredentials) => {
+        const { username, password } = fixtureCredentials[role];
         await page.goto('/auth');
         await page.locator('input[autocomplete=username]').fill(username);
-        await page.locator('input[autocomplete=current-password]').fill('123geheim');
+        await page.locator('input[autocomplete=current-password]').fill(password);
         await page.getByRole('button', { name: 'Log in', exact: true }).click();
         await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     };
@@ -126,8 +155,8 @@ test('fixture users share gyms and retain private timed workouts through logout 
 
 test('offline timed intent, cancellation, profile measurements, and catalog edits use the new stores', async ({ page, context }) => {
     await page.goto('/auth');
-    await page.locator('input[autocomplete=username]').fill('admin');
-    await page.locator('input[autocomplete=current-password]').fill('123geheim');
+    await page.locator('input[autocomplete=username]').fill(fixtureCredentials.admin.username);
+    await page.locator('input[autocomplete=current-password]').fill(fixtureCredentials.admin.password);
     await page.getByRole('button', { name: 'Log in', exact: true }).click();
     await page.getByRole('link', { name: /Moonshot Barbell Club/ }).click();
     await context.setOffline(true);
@@ -178,15 +207,15 @@ test('offline timed intent, cancellation, profile measurements, and catalog edit
 test('authorization failure refreshes a demoted administrator role', async ({ page, playwright }) => {
     const admin = await playwright.request.newContext({ baseURL: 'http://127.0.0.1:4173' });
     try {
-        expect((await admin.post('/api/auth/login', { data: { username: 'admin', password: '123geheim' } })).ok()).toBe(true);
+        expect((await admin.post('/api/auth/login', { data: fixtureCredentials.admin })).ok()).toBe(true);
         const created = await admin.post('/api/admin/users', {
-            data: { username: 'role-refresh', password: 'testpassword', name: 'Role Refresh', isAdmin: true },
+            data: { username: 'role-refresh', password: testPassword, name: 'Role Refresh', isAdmin: true },
         });
         const { id } = await created.json();
         expect(created.ok()).toBe(true);
         await page.goto('/auth');
         await page.locator('input[autocomplete=username]').fill('role-refresh');
-        await page.locator('input[autocomplete=current-password]').fill('testpassword');
+        await page.locator('input[autocomplete=current-password]').fill(testPassword);
         await page.getByRole('button', { name: 'Log in', exact: true }).click();
         await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
         expect((await admin.patch(`/api/admin/users/${id}`, { data: { isAdmin: false } })).ok()).toBe(true);
@@ -203,7 +232,7 @@ test('authorization failure refreshes a demoted administrator role', async ({ pa
 
 test('failed bootstrap preserves pending intent and retries without onboarding', async ({ page, context }) => {
     expect((await page.request.post('/api/auth/register', {
-        data: { username: 'browser-retry', password: '123geheim' },
+        data: { username: 'browser-retry', password: testPassword },
     })).ok()).toBe(true);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
@@ -228,7 +257,7 @@ test('failed bootstrap preserves pending intent and retries without onboarding',
 test('discard is confirmed, failure-atomic, exportable, and scoped to the current account', async ({ page, context }) => {
     const register = async (username: string) => {
         expect((await page.request.post('/api/auth/register', {
-            data: { username, password: '123geheim' },
+            data: { username, password: testPassword },
         })).ok()).toBe(true);
         await page.goto('/');
         await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
@@ -279,7 +308,7 @@ test('discard is confirmed, failure-atomic, exportable, and scoped to the curren
     await expect(page.getByRole('button', { name: /Discard pending changes/ })).toBeDisabled();
     await page.getByRole('button', { name: /Log out|Logout/i }).click();
     expect((await page.request.post('/api/auth/login', {
-        data: { username: 'discard-account-a', password: '123geheim' },
+        data: { username: 'discard-account-a', password: testPassword },
     })).ok()).toBe(true);
     await page.goto('/');
     await expect(page.getByRole('link', { name: 'Resume workout', exact: true })).toBeVisible();
@@ -293,7 +322,7 @@ test('discard is confirmed, failure-atomic, exportable, and scoped to the curren
 
 test('superseded bootstrap completion cannot publish stale session state', async ({ page }) => {
     expect((await page.request.post('/api/auth/register', {
-        data: { username: 'superseded-bootstrap', password: '123geheim' },
+        data: { username: 'superseded-bootstrap', password: testPassword },
     })).ok()).toBe(true);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
@@ -328,7 +357,7 @@ test('superseded bootstrap completion cannot publish stale session state', async
 
 test('an external cookie switch pauses stale intent and rebinds the visible tab', async ({ page }) => {
     expect((await page.request.post('/api/auth/register', {
-        data: { username: 'external-cookie-a', password: '123geheim' },
+        data: { username: 'external-cookie-a', password: testPassword },
     })).ok()).toBe(true);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
@@ -345,7 +374,7 @@ test('an external cookie switch pauses stale intent and rebinds the visible tab'
     await page.getByRole('button', { name: 'Start workout', exact: true }).click();
     await expect.poll(() => sending).toBe(true);
     expect((await page.request.post('/api/auth/login', {
-        data: { username: 'admin', password: '123geheim' },
+        data: fixtureCredentials.admin,
     })).ok()).toBe(true);
     release();
     expect((await mismatch).status()).toBe(409);
@@ -356,7 +385,7 @@ test('an external cookie switch pauses stale intent and rebinds the visible tab'
 
     await page.route('**/api/sync', route => route.abort());
     expect((await page.request.post('/api/auth/login', {
-        data: { username: 'external-cookie-a', password: '123geheim' },
+        data: { username: 'external-cookie-a', password: testPassword },
     })).ok()).toBe(true);
     await page.evaluate(() => {
         Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
@@ -372,7 +401,7 @@ test('an external cookie switch pauses stale intent and rebinds the visible tab'
 
 test('two tabs serialize senders and propagate logout and account switches', async ({ page, context }) => {
     expect((await page.request.post('/api/auth/register', {
-        data: { username: 'browser-tabs', password: '123geheim' },
+        data: { username: 'browser-tabs', password: testPassword },
     })).ok()).toBe(true);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
@@ -404,8 +433,8 @@ test('two tabs serialize senders and propagate logout and account switches', asy
     await expect.poll(() => logoutRequests).toBe(1);
     await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
     await context.unroute('**/api/sync');
-    await second.locator('input[autocomplete=username]').fill('admin');
-    await second.locator('input[autocomplete=current-password]').fill('123geheim');
+    await second.locator('input[autocomplete=username]').fill(fixtureCredentials.admin.username);
+    await second.locator('input[autocomplete=current-password]').fill(fixtureCredentials.admin.password);
     await second.getByRole('button', { name: 'Log in', exact: true }).click();
     await expect(second.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
@@ -414,7 +443,7 @@ test('two tabs serialize senders and propagate logout and account switches', asy
     await second.getByRole('link', { name: 'Settings', exact: true }).click();
     await second.getByRole('button', { name: /Log out|Logout/i }).click();
     await second.locator('input[autocomplete=username]').fill('browser-tabs');
-    await second.locator('input[autocomplete=current-password]').fill('123geheim');
+    await second.locator('input[autocomplete=current-password]').fill(testPassword);
     await second.getByRole('button', { name: 'Log in', exact: true }).click();
     await expect(second.getByText('Pending changes: 0', { exact: true })).toBeVisible();
     await expect(second.getByRole('link', { name: 'Resume workout', exact: true })).toBeVisible();

@@ -1,4 +1,10 @@
 import { defineConfig } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
+
+// Shared only by this test run and its child server/worker processes.
+for (const key of ['SEED_ADMIN_USERNAME', 'SEED_ADMIN_PASSWORD', 'SEED_USER_USERNAME', 'SEED_USER_PASSWORD']) {
+    process.env[`TEST_${key}`] ||= randomUUID();
+}
 export default defineConfig({
     testDir: './test/browser',
     fullyParallel: false,

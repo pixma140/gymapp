@@ -19,7 +19,7 @@
     "type": "git",
     "url": "https://github.com/pixma140/gymapp.git"
   },
-  "version": "0.2.0-alpha",
+  "version": "0.3.0-alpha",
   "private": true,
   "type": "module",
   "scripts": {
@@ -29,9 +29,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "dev:server": "SEED_DEV_DATA=${SEED_DEV_DATA:-true} PORT=${PORT:-3000} DATA_DIR=${DATA_DIR:-./db} node server/index.js",
-    "db:reset": "DATA_DIR=${DATA_DIR:-./db} node server/reset.js",
-    "db:reset:seed": "DATA_DIR=${DATA_DIR:-./db} node server/reset.js --seed",
+    "dev:server": "node server/index.js",
+    "db:reset": "node server/reset.js",
+    "db:reset:seed": "node server/reset.js --seed",
     "test:browser": "playwright test",
     "test:browser:install": "playwright install chromium"
   },

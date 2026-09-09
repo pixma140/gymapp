@@ -1,38 +1,43 @@
 import { describe, it, expect } from 'vitest';
+import { randomUUID } from 'node:crypto';
 import { hashPassword, verifyPassword, parseCookies, base64UrlEncode } from './crypto.js';
 
 describe('password hashing', () => {
     it('produces a salt:hash pair and verifies the correct password', () => {
-        const stored = hashPassword('correct horse battery staple');
+        const password = randomUUID();
+        const stored = hashPassword(password);
         expect(stored).toMatch(/^[0-9a-f]{32}:[0-9a-f]{128}$/);
-        expect(verifyPassword('correct horse battery staple', stored)).toBe(true);
+        expect(verifyPassword(password, stored)).toBe(true);
     });
 
     it('uses a unique salt so equal passwords hash differently', () => {
-        const a = hashPassword('samePassword123');
-        const b = hashPassword('samePassword123');
+        const password = randomUUID();
+        const a = hashPassword(password);
+        const b = hashPassword(password);
         expect(a).not.toBe(b);
-        expect(verifyPassword('samePassword123', a)).toBe(true);
-        expect(verifyPassword('samePassword123', b)).toBe(true);
+        expect(verifyPassword(password, a)).toBe(true);
+        expect(verifyPassword(password, b)).toBe(true);
     });
 
     it('rejects an incorrect password', () => {
-        const stored = hashPassword('rightPassword');
-        expect(verifyPassword('wrongPassword', stored)).toBe(false);
+        const stored = hashPassword(randomUUID());
+        expect(verifyPassword(randomUUID(), stored)).toBe(false);
     });
 
     it('rejects a tampered hash without throwing', () => {
-        const stored = hashPassword('password');
+        const password = randomUUID();
+        const stored = hashPassword(password);
         const [salt] = stored.split(':');
         const tampered = `${salt}:${'0'.repeat(128)}`;
-        expect(verifyPassword('password', tampered)).toBe(false);
+        expect(verifyPassword(password, tampered)).toBe(false);
     });
 
     it('returns false for malformed or missing hashes', () => {
-        expect(verifyPassword('password', '')).toBe(false);
-        expect(verifyPassword('password', null)).toBe(false);
-        expect(verifyPassword('password', 'no-colon')).toBe(false);
-        expect(verifyPassword('password', 'salt:')).toBe(false);
+        const password = randomUUID();
+        expect(verifyPassword(password, '')).toBe(false);
+        expect(verifyPassword(password, null)).toBe(false);
+        expect(verifyPassword(password, 'no-colon')).toBe(false);
+        expect(verifyPassword(password, 'salt:')).toBe(false);
     });
 });
 

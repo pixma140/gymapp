@@ -1,7 +1,6 @@
 import 'fake-indexeddb/auto';
-import Dexie from 'dexie';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AccountDatabase, clearLegacyCacheOnce } from '@/db/db';
+import { AccountDatabase } from '@/db/db';
 import { discardPendingChanges, hydrateFromServer, prepareAccountCache, resolvePendingConflict } from '@/db/hydrate';
 import { applyOperation, updateProfileWithMeasurement } from '@/db/operations';
 import { flushPendingMutations } from '@/db/sqliteSync';
@@ -167,21 +166,6 @@ describe('account caches and transactional intent', () => {
         const reapplied = await db.outbox.orderBy('sequence').toArray();
         expect(reapplied.map(entry => entry.intent.operation)).toEqual(['profile.update', 'measurement.create']);
         expect(reapplied[1].dependency).toBe(reapplied[0].sequence);
-    });
-    it('clears only the known legacy cache once, preserving unrelated browser storage', async () => {
-        await Dexie.delete('GymAppCacheControl');
-        const legacy = new Dexie('GymAppDB'); legacy.version(1).stores({ old: 'id' });
-        const unrelated = new Dexie('OtherApp'); unrelated.version(1).stores({ data: 'id' });
-        try {
-            await legacy.table('old').put({ id: 1 }); legacy.close();
-            await unrelated.table('data').put({ id: 1 });
-            await clearLegacyCacheOnce();
-            expect(await Dexie.exists('GymAppDB')).toBe(false);
-            expect(await unrelated.table('data').count()).toBe(1);
-            await legacy.open(); await legacy.table('old').put({ id: 2 }); legacy.close();
-            await clearLegacyCacheOnce();
-            expect(await Dexie.exists('GymAppDB')).toBe(true);
-        } finally { await legacy.delete(); await unrelated.delete(); await Dexie.delete('GymAppCacheControl'); }
     });
     it('retains an ambiguous command unchanged and propagates acknowledgement revisions to dependent edits', async () => {
         const { db, snapshot } = fixture();

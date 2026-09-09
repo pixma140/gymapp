@@ -3,9 +3,10 @@ import { Tabs } from '@/components/Tabs';
 import { OidcSettingsTab } from '@/components/admin/OidcSettingsTab';
 import { ManageGymsPage } from '@/pages/ManageGymsPage';
 import { UsersTab } from '@/components/admin/UsersTab';
+import { ServerSettingsTab } from '@/components/admin/ServerSettingsTab';
 import { useLanguage } from '@/i18n/LanguageContext';
 
-type AdminTab = 'oidc' | 'users' | 'gyms';
+type AdminTab = 'oidc' | 'users' | 'gyms' | 'general';
 
 export function AdminPage() {
     const { t } = useLanguage();
@@ -14,7 +15,8 @@ export function AdminPage() {
     const tabs = [
         { id: 'gyms', label: t('manageGyms.title') },
         { id: 'users', label: t('admin.tab.users') },
-        { id: 'oidc', label: t('admin.tab.oidc') }
+        { id: 'oidc', label: t('admin.tab.oidc') },
+        { id: 'general', label: t('admin.tab.general') }
     ];
 
     return (
@@ -27,6 +29,7 @@ export function AdminPage() {
             <Tabs tabs={tabs} activeTab={activeTab} onChange={(id) => setActiveTab(id as AdminTab)} />
 
             {activeTab === 'oidc' && <OidcSettingsTab />}
+            {activeTab === 'general' && <ServerSettingsTab />}
 
             {activeTab === 'users' && <UsersTab />}
 

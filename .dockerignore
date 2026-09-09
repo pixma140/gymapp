@@ -8,3 +8,5 @@ extract_exercises.sh
 playwright-report
 test-results
 *.log
+.env
+.env.*

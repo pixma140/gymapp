@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 import { createApp } from './app.js';
 import { openDatabase } from './db.js';
@@ -10,6 +11,7 @@ import { createAccountService } from './services/accounts.js';
 const DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'gymapp-test-'));
 const database = openDatabase(path.join(DATA_DIR, 'gymapp.db'));
 const { app } = createApp({ database });
+const passwords = { admin: randomUUID(), bob: randomUUID(), carol: randomUUID(), reset: randomUUID(), other: randomUUID() };
 
 let server;
 let baseUrl;
@@ -64,9 +66,9 @@ describe('admin user management', () => {
 
     it('rejects malformed setup without creating an administrator', async () => {
         for (const body of [
-            { username: ['admin'], password: 'adminpassword', name: 'Admin' },
-            { username: 'admin', password: 'adminpassword', name: 'Admin', language: 'fr' },
-            { username: 'admin', password: 'adminpassword', name: 'Admin', isAdmin: true },
+            { username: ['admin'], password: passwords.admin, name: 'Admin' },
+            { username: 'admin', password: passwords.admin, name: 'Admin', language: 'fr' },
+            { username: 'admin', password: passwords.admin, name: 'Admin', isAdmin: true },
         ]) {
             const result = await request('POST', '/api/setup', { body });
             expect(result.status).toBe(400);
@@ -77,7 +79,7 @@ describe('admin user management', () => {
 
     it('bootstraps the first admin via setup', async () => {
         const res = await request('POST', '/api/setup', {
-            body: { username: 'admin', password: 'adminpassword', name: 'Admin' },
+            body: { username: 'admin', password: passwords.admin, name: 'Admin' },
         });
         expect(res.status).toBe(200);
         expect(res.body.user.isAdmin).toBe(true);
@@ -87,7 +89,7 @@ describe('admin user management', () => {
 
     it('registers a second (non-admin) user', async () => {
         const res = await request('POST', '/api/auth/register', {
-            body: { username: 'bob', password: 'bobpassword' },
+            body: { username: 'bob', password: passwords.bob },
         });
         expect(res.status).toBe(200);
         bobCookie = res.cookie;
@@ -168,10 +170,10 @@ describe('admin user management', () => {
         expect(await database.getSql('SELECT isAdmin FROM users WHERE id = ?', [bobId])).toEqual({ isAdmin: 0 });
 
         const password = await request('POST', `/api/admin/users/${bobId}/password`, {
-            cookie: adminCookie, body: { password: ['longpassword'] },
+            cookie: adminCookie, body: { password: [passwords.other] },
         });
         expect(password.status).toBe(400);
-        expect((await request('POST', '/api/auth/login', { body: { username: 'bob', password: 'bobpassword' } })).status).toBe(200);
+        expect((await request('POST', '/api/auth/login', { body: { username: 'bob', password: passwords.bob } })).status).toBe(200);
     });
 
     it('prevents an admin from demoting themselves', async () => {
@@ -186,7 +188,7 @@ describe('admin user management', () => {
     it('creates a new user via the admin endpoint', async () => {
         const res = await request('POST', '/api/admin/users', {
             cookie: adminCookie,
-            body: { username: 'carol', password: 'carolpassword', name: 'Carol', email: 'carol@example.com', isAdmin: false },
+            body: { username: 'carol', password: passwords.carol, name: 'Carol', email: 'carol@example.com', isAdmin: false },
         });
         expect(res.status).toBe(200);
         expect(typeof res.body.id).toBe('number');
@@ -203,8 +205,8 @@ describe('admin user management', () => {
 
     it('rejects coerced administrator creation and leaves no account behind', async () => {
         for (const body of [
-            { username: 'coerced-admin', password: 'longpassword', name: 'Coerced', isAdmin: 'false' },
-            { username: 'extra-admin', password: 'longpassword', name: 'Extra', isAdmin: true, unexpected: true },
+            { username: 'coerced-admin', password: passwords.other, name: 'Coerced', isAdmin: 'false' },
+            { username: 'extra-admin', password: passwords.other, name: 'Extra', isAdmin: true, unexpected: true },
         ]) {
             const result = await request('POST', '/api/admin/users', { cookie: adminCookie, body });
             expect(result.status).toBe(400);
@@ -216,7 +218,7 @@ describe('admin user management', () => {
 
     it('lets an admin-created user log in with their credentials', async () => {
         const res = await request('POST', '/api/auth/login', {
-            body: { username: 'carol', password: 'carolpassword' },
+            body: { username: 'carol', password: passwords.carol },
         });
         expect(res.status).toBe(200);
         expect(res.body.user.username).toBe('carol');
@@ -225,7 +227,7 @@ describe('admin user management', () => {
     it('rejects creating a user with a duplicate username', async () => {
         const res = await request('POST', '/api/admin/users', {
             cookie: adminCookie,
-            body: { username: 'carol', password: 'anotherpassword', name: 'Carol 2', isAdmin: false },
+            body: { username: 'carol', password: passwords.other, name: 'Carol 2', isAdmin: false },
         });
         expect(res.status).toBe(409);
         expect(res.body.error).toBe('username_taken');
@@ -243,7 +245,7 @@ describe('admin user management', () => {
     it('forbids a non-admin from creating users', async () => {
         const res = await request('POST', '/api/admin/users', {
             cookie: bobCookie,
-            body: { username: 'mallory', password: 'mallorypassword', name: 'Mallory', isAdmin: true },
+            body: { username: 'mallory', password: passwords.other, name: 'Mallory', isAdmin: true },
         });
         expect(res.status).toBe(403);
     });
@@ -253,7 +255,7 @@ describe('admin user management', () => {
         // and the old password must stop working.
         const res = await request('POST', `/api/admin/users/${bobId}/password`, {
             cookie: adminCookie,
-            body: { password: 'bobnewpassword' },
+            body: { password: passwords.reset },
         });
         expect(res.status).toBe(200);
 
@@ -263,13 +265,13 @@ describe('admin user management', () => {
 
         // Old password is rejected.
         const oldLogin = await request('POST', '/api/auth/login', {
-            body: { username: 'bob', password: 'bobpassword' },
+            body: { username: 'bob', password: passwords.bob },
         });
         expect(oldLogin.status).toBe(401);
 
         // New password works.
         const newLogin = await request('POST', '/api/auth/login', {
-            body: { username: 'bob', password: 'bobnewpassword' },
+            body: { username: 'bob', password: passwords.reset },
         });
         expect(newLogin.status).toBe(200);
         bobCookie = newLogin.cookie;
@@ -280,7 +282,7 @@ describe('admin user management', () => {
         await database.runSql("CREATE TRIGGER reject_session_delete BEFORE DELETE ON sessions BEGIN SELECT RAISE(ABORT, 'test session failure'); END");
         try {
             const result = await request('POST', `/api/admin/users/${bobId}/password`, {
-                cookie: adminCookie, body: { password: 'rollbackpassword' },
+                cookie: adminCookie, body: { password: passwords.other },
             });
             expect(result.status).toBe(500);
             expect(await database.getSql('SELECT passwordHash FROM users WHERE id = ?', [bobId])).toEqual(before);
@@ -298,10 +300,11 @@ describe('admin user management', () => {
         expect(me.body.user.isAdmin).toBe(false);
         for (const [method, route, body] of [
             ['GET', '/api/admin/users'],
-            ['POST', '/api/admin/users', { username: 'denied', password: 'longpassword', name: 'Denied' }],
+            ['GET', '/api/admin/config'],
+            ['POST', '/api/admin/users', { username: 'denied', password: passwords.other, name: 'Denied' }],
             ['PATCH', `/api/admin/users/${adminId}`, { isAdmin: false }],
             ['DELETE', `/api/admin/users/${adminId}`],
-            ['POST', `/api/admin/users/${adminId}/password`, { password: 'longpassword' }],
+            ['POST', `/api/admin/users/${adminId}/password`, { password: passwords.other }],
             ['GET', '/api/admin/oidc'],
             ['PUT', '/api/admin/oidc', { enabled: false }],
         ]) {
@@ -311,13 +314,13 @@ describe('admin user management', () => {
 
     it('rejects registration privilege fields and serializes valid competing registrations', async () => {
         const privileged = await request('POST', '/api/auth/register', {
-            body: { username: 'privileged', password: 'longpassword', isAdmin: true },
+            body: { username: 'privileged', password: passwords.other, isAdmin: true },
         });
         expect(privileged.status).toBe(400);
         expect(await database.getSql("SELECT COUNT(*) AS count FROM users WHERE username = 'privileged'"))
             .toEqual({ count: 0 });
         const results = await Promise.all(['Concurrent', 'concurrent'].map(username =>
-            request('POST', '/api/auth/register', { body: { username, password: 'longpassword' } })));
+            request('POST', '/api/auth/register', { body: { username, password: passwords.other } })));
         expect(results.map(result => result.status).sort()).toEqual([200, 409]);
         const created = results.find(result => result.status === 200);
         expect(created.body.user.isAdmin).toBe(false);
@@ -325,14 +328,14 @@ describe('admin user management', () => {
 
     it('rejects malformed login and OIDC settings without changing security state', async () => {
         const login = await request('POST', '/api/auth/login', {
-            body: { username: ['admin'], password: 'adminpassword' },
+            body: { username: ['admin'], password: passwords.admin },
         });
         expect(login.status).toBe(400);
         expect(login.cookie).toBeUndefined();
 
         const oidc = await request('PUT', '/api/admin/oidc', {
             cookie: adminCookie,
-            body: { enabled: 'false', issuer: 'https://issuer.example', clientId: 'client', clientSecret: 'secret', scopes: 'openid' },
+            body: { enabled: 'false', issuer: 'https://issuer.example', scopes: 'openid' },
         });
         expect(oidc.status).toBe(400);
         expect(oidc.body.error).toBe('invalid_payload');
@@ -352,7 +355,7 @@ describe('admin user management', () => {
     it('returns 404 when resetting a password for an unknown user', async () => {
         const res = await request('POST', '/api/admin/users/999999/password', {
             cookie: adminCookie,
-            body: { password: 'whateverpassword' },
+            body: { password: passwords.other },
         });
         expect(res.status).toBe(404);
     });
@@ -376,7 +379,7 @@ describe('admin user management', () => {
         expect(await database.getSql('SELECT isAdmin, passwordHash FROM users WHERE id = ?', [first.id]))
             .toEqual({ isAdmin: 0, passwordHash: null });
         const reset = await request('POST', `/api/admin/users/${first.id}/password`, {
-            cookie: adminCookie, body: { password: 'longpassword' },
+            cookie: adminCookie, body: { password: passwords.other },
         });
         expect(reset.status).toBe(400);
         expect(reset.body.error).toBe('no_password_auth');
@@ -386,8 +389,8 @@ describe('admin user management', () => {
     it('rechecks a demoted actor inside account service transactions', async () => {
         const accounts = createAccountService(database);
         const forbidden = { status: 403, error: 'forbidden' };
-        expect(await accounts.create({ username: 'service-denied', password: 'longpassword' }, bobId)).toEqual(forbidden);
-        expect(await accounts.resetPassword(bobId, adminId, 'longpassword')).toEqual(forbidden);
+        expect(await accounts.create({ username: 'service-denied', password: passwords.other }, bobId)).toEqual(forbidden);
+        expect(await accounts.resetPassword(bobId, adminId, passwords.other)).toEqual(forbidden);
         expect(await accounts.changeRole(bobId, bobId, true)).toEqual(forbidden);
         expect(await accounts.delete(bobId, adminId)).toEqual(forbidden);
     });

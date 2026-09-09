@@ -13,20 +13,25 @@ remain available. External exercise integration is a future task.
 
 ```bash
 npm install
+# Copy env.example to .env and set your local configuration and credentials.
 npm run dev:server
 # In a second terminal:
-VITE_API_TARGET=http://localhost:3000 npm run dev
+npm run dev
 ```
 
-The API development command defaults to `PORT=3000`, `DATA_DIR=./db`, and
-`SEED_DEV_DATA=true`. Vite's proxy otherwise defaults to `http://localhost:80`.
+The API and reset commands load `.env` using Node's built-in environment loader.
+Exported variables take precedence. `env.example` uses `PORT=3000`,
+`DATA_DIR=./db`, and `VITE_API_TARGET=http://localhost:3000` for local development.
+Keep `.env` private; it is excluded from Git and Docker build contexts.
+Leave `NODE_ENV` out of the shared `.env`; Compose sets it for the server and
+Vite selects the correct mode for development or production builds.
 
-Development fixtures are initialized **once** on a fresh installation:
-
-| Username | Password | Role |
-| --- | --- | --- |
-| `admin` | `123geheim` | Administrator |
-| `user` | `123geheim` | Regular user |
+Development fixtures are initialized **once** on a fresh installation when
+`SEED_DEV_DATA=true`. Set `SEED_ADMIN_USERNAME`, `SEED_ADMIN_PASSWORD`,
+`SEED_USER_USERNAME`, and `SEED_USER_PASSWORD` first. Usernames must be distinct
+and at least three characters; passwords must be at least eight characters.
+There are no built-in credentials. The accounts have administrator and regular
+user roles respectively. Tests generate disposable credentials for each run.
 
 Both accounts see the same UUIDs for **Iron Odyssey** (Foundry District) and
 **Moonshot Barbell Club** (Riverside Hangar). Only administrators can create,
@@ -38,10 +43,15 @@ Restarting fixture mode preserves changed passwords, roles, gym names, and
 intentionally deleted accounts. `ADMIN_USERNAME` never repairs fixture roles.
 Enabling fixtures on an installation initialized without fixtures is refused.
 
-## Explicit reset
+## Alpha database policy and reset
 
-The schema is for a fresh WIP installation. Legacy databases are rejected with
-`database_reset_required`; there is no automatic migration or startup wipe.
+Until the project leaves alpha, schema changes are intentionally breaking and
+assume a fresh database. Update the initial SQLite DDL and single Dexie
+`version(1)` definition directly. There are no migrations, schema-version checks,
+version increments, or compatibility/cleanup paths for previous schemas.
+Recreate development databases after schema changes; ordinary restarts preserve
+data for the current schema.
+
 Stop the API first (Ctrl-C, or `docker compose stop gymapp`), then run:
 
 ```bash
@@ -55,12 +65,12 @@ It creates a new installation UUID, so old account queues cannot target reset
 accounts. A server/reset lock prevents concurrent use by application processes.
 After a crash, a stale `gymapp.db.lock` may remain: verify all processes and
 containers using that directory are stopped before removing that lock file.
-Do not reset a database used by an older server that predates the lock.
 
-The browser clears the known legacy `GymAppDB` cache once when preparing its
-first account cache. It records completion in `GymAppCacheControl`; unrelated
-IndexedDB databases, local storage, and source exports are untouched. Modern
-account caches survive ordinary startup/logout. Settings offers an explicitly
+For client-only schema changes, delete the app's account IndexedDB databases
+through browser developer tools before reloading, or reset the server to create
+a new installation identity and fresh account caches.
+
+Account caches survive ordinary startup/logout. Settings offers an explicitly
 confirmed discard of pending local changes followed by a server reload; export
 first if you need to retain pending intent.
 
@@ -71,18 +81,19 @@ SEED_DEV_DATA=false PORT=3000 DATA_DIR=./db node server/index.js
 ```
 
 An empty non-fixture installation offers first-administrator setup. Regular
-registration creates non-admin accounts; OIDC remains optional and is configured
-in the admin area. Concurrent setup requests cannot create multiple first admins.
+registration creates non-admin accounts. Concurrent setup requests cannot create
+multiple first admins.
 
 ```bash
 docker build -t gymapp .
-docker run -p 8080:80 -v "$(pwd)/db:/app/data" gymapp
+docker run --env-file .env -e PORT=80 -e DATA_DIR=/app/data -e NODE_ENV=production -p 8080:80 -v "$(pwd)/db:/app/data" gymapp
 ```
 
-The current Compose file is a **development** configuration with fixtures
-explicitly enabled and a Traefik network. Disable its `SEED_DEV_DATA` flag for a
-non-fixture installation. Docker excludes local databases, `history.csv`, and
-exercise-extraction artifacts from its build context.
+Compose reads `.env`, including OIDC settings and credentials, and uses a Traefik
+network. Container `PORT`, `DATA_DIR`, and `NODE_ENV` are explicitly overridden to
+match its runtime. The host database mount follows `DATA_DIR` from `.env`.
+Disable `SEED_DEV_DATA` for a non-fixture installation. Docker excludes local
+environment files, databases, `history.csv`, and exercise-extraction artifacts.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
@@ -90,8 +101,34 @@ exercise-extraction artifacts from its build context.
 | `DATA_DIR` | `/app/data` | Directory containing `gymapp.db` |
 | `SEED_DEV_DATA` | `false` | One-time development fixtures on a fresh installation |
 | `COOKIE_SECURE` | `false` | Secure session cookie when served over HTTPS |
-| `ADMIN_USERNAME` | unset | Legacy non-fixture bootstrap promotion only |
+| `ADMIN_USERNAME` | unset | Non-fixture startup admin promotion; environment-only |
 | `PUBLIC_URL` | detected | Base URL for OIDC callback construction |
+| `NODE_ENV` | `development` | Runtime mode; Compose uses `production` |
+| `VITE_API_TARGET` | `http://localhost:80` in Vite | Local development API proxy target |
+| `SEED_ADMIN_USERNAME`, `SEED_ADMIN_PASSWORD` | unset | Fixture administrator credentials; environment-only |
+| `SEED_USER_USERNAME`, `SEED_USER_PASSWORD` | unset | Fixture regular-user credentials; environment-only |
+| `OIDC_ENABLED` | unset | Optional `true`/`false` override for SSO enablement |
+| `OIDC_ISSUER` | unset | Optional issuer URL override |
+| `OIDC_SCOPES` | `openid profile email` | Optional scope override |
+| `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` | unset | Provider credentials; environment-only |
+
+Admin → General displays effective non-secret server settings with their source
+and purpose. Change deployment settings in the environment and restart to apply.
+Admin → OIDC displays environment-provided issuer, scopes, and enablement as
+read-only fields. Unset OIDC fields remain editable and are saved in SQLite.
+The API enforces environment precedence. OIDC client credentials are neither
+returned by configuration APIs nor saved through the admin form; only their
+configured/missing status is shown. Ordinary user creation and password resets
+remain available in Admin → Users.
+
+Set OIDC credentials in `.env` or Compose's environment, restart, and use the
+displayed callback URL when configuring your provider. Enable OIDC in the
+environment or admin form after supplying the issuer and credentials.
+
+For credentials previously published in Git, rotate them at the provider or
+reset the affected account password. Moving values into `.env` does not remove
+them from Git history. Changing fixture environment credentials affects fresh
+databases only; use the explicit alpha reset when recreating development data.
 
 ## Sync behavior and current limits
 

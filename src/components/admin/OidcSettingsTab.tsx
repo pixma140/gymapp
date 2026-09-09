@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Copy, Check } from 'lucide-react';
-import { getOidcAdminConfig, saveOidcAdminConfig } from '@/auth/admin';
+import { getOidcAdminConfig, saveOidcAdminConfig, type OidcAdminConfig } from '@/auth/admin';
 import { useLanguage } from '@/i18n/LanguageContext';
 import type { TranslationKey } from '@/i18n/translations';
 
@@ -9,10 +9,9 @@ export function OidcSettingsTab() {
 
     const [enabled, setEnabled] = useState(false);
     const [issuer, setIssuer] = useState('');
-    const [clientId, setClientId] = useState('');
-    const [clientSecret, setClientSecret] = useState('');
     const [scopes, setScopes] = useState('openid profile email');
-    const [hasClientSecret, setHasClientSecret] = useState(false);
+    const [hasCredentials, setHasCredentials] = useState(false);
+    const [environmentManaged, setEnvironmentManaged] = useState<OidcAdminConfig['environmentManaged']>([]);
     const [redirectUri, setRedirectUri] = useState('');
 
     const [isLoading, setIsLoading] = useState(true);
@@ -32,13 +31,17 @@ export function OidcSettingsTab() {
             if (result.ok && result.config) {
                 setEnabled(result.config.enabled);
                 setIssuer(result.config.issuer);
-                setClientId(result.config.clientId);
                 setScopes(result.config.scopes || 'openid profile email');
-                setHasClientSecret(result.config.hasClientSecret);
+                setHasCredentials(result.config.hasCredentials);
+                setEnvironmentManaged(result.config.environmentManaged);
                 setRedirectUri(result.redirectUri ?? '');
+            } else {
+                setErrorKey('admin.config.error');
             }
 
             setIsLoading(false);
+        }).catch(() => {
+            if (mounted) { setErrorKey('admin.config.error'); setIsLoading(false); }
         });
 
         return () => {
@@ -49,6 +52,7 @@ export function OidcSettingsTab() {
     const errorKeyForCode = (code?: string): TranslationKey => {
         if (code === 'missing_required_fields') return 'admin.oidc.error.required';
         if (code === 'discovery_failed') return 'admin.oidc.error.discovery';
+        if (code === 'environment_managed') return 'admin.config.managed';
         return 'admin.oidc.error.generic';
     };
 
@@ -62,8 +66,6 @@ export function OidcSettingsTab() {
             const result = await saveOidcAdminConfig({
                 enabled,
                 issuer: issuer.trim(),
-                clientId: clientId.trim(),
-                clientSecret: clientSecret.length > 0 ? clientSecret : undefined,
                 scopes: scopes.trim()
             });
 
@@ -74,11 +76,10 @@ export function OidcSettingsTab() {
 
             setEnabled(result.config.enabled);
             setIssuer(result.config.issuer);
-            setClientId(result.config.clientId);
             setScopes(result.config.scopes || 'openid profile email');
-            setHasClientSecret(result.config.hasClientSecret);
+            setHasCredentials(result.config.hasCredentials);
+            setEnvironmentManaged(result.config.environmentManaged);
             setRedirectUri(result.redirectUri ?? redirectUri);
-            setClientSecret('');
             setSavedMessage(true);
         } catch {
             setErrorKey('admin.oidc.error.generic');
@@ -102,7 +103,7 @@ export function OidcSettingsTab() {
     }
 
     const labelClass = 'block text-xs font-bold text-[var(--muted-foreground)] uppercase tracking-wider mb-2';
-    const inputClass = 'w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors';
+    const inputClass = 'w-full bg-[var(--input)] border border-[var(--border)] rounded-xl p-3 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors disabled:opacity-60';
 
     return (
         <form onSubmit={handleSave} className="space-y-5">
@@ -116,10 +117,12 @@ export function OidcSettingsTab() {
                     <span>
                         <span className="block text-sm font-medium text-[var(--foreground)]">{t('admin.oidc.enabled')}</span>
                         <span className="block text-xs text-[var(--muted-foreground)]">{t('admin.oidc.enabled.desc')}</span>
+                        {environmentManaged.includes('enabled') && <span className="block text-xs text-[var(--muted-foreground)]">{t('admin.config.managed')}</span>}
                     </span>
                     <input
                         type="checkbox"
                         checked={enabled}
+                        disabled={environmentManaged.includes('enabled')}
                         onChange={(event) => setEnabled(event.target.checked)}
                         className="size-5 accent-[var(--primary)]"
                     />
@@ -127,51 +130,36 @@ export function OidcSettingsTab() {
             </div>
 
             <div>
-                <label className={labelClass}>{t('admin.oidc.issuer')}</label>
+                <label htmlFor="oidc-issuer" className={labelClass}>{t('admin.oidc.issuer')}</label>
                 <input
+                    id="oidc-issuer"
                     type="url"
                     value={issuer}
+                    disabled={environmentManaged.includes('issuer')}
                     onChange={(event) => setIssuer(event.target.value)}
                     placeholder={t('admin.oidc.issuer.placeholder')}
                     className={inputClass}
                 />
+                {environmentManaged.includes('issuer') && <p className="text-xs text-[var(--muted-foreground)] mt-1">{t('admin.config.managed')}</p>}
+            </div>
+
+            <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4">
+                <p className="text-sm text-[var(--foreground)]">{t(hasCredentials ? 'admin.oidc.credentials.set' : 'admin.oidc.credentials.missing')}</p>
+                <p className="text-xs text-[var(--muted-foreground)] mt-1">{t('admin.oidc.credentials.desc')}</p>
             </div>
 
             <div>
-                <label className={labelClass}>{t('admin.oidc.clientId')}</label>
+                <label htmlFor="oidc-scopes" className={labelClass}>{t('admin.oidc.scopes')}</label>
                 <input
-                    type="text"
-                    value={clientId}
-                    onChange={(event) => setClientId(event.target.value)}
-                    className={inputClass}
-                    autoComplete="off"
-                />
-            </div>
-
-            <div>
-                <label className={labelClass}>{t('admin.oidc.clientSecret')}</label>
-                <input
-                    type="password"
-                    value={clientSecret}
-                    onChange={(event) => setClientSecret(event.target.value)}
-                    className={inputClass}
-                    autoComplete="new-password"
-                    placeholder={hasClientSecret ? '••••••••' : ''}
-                />
-                {hasClientSecret && (
-                    <p className="text-xs text-[var(--muted-foreground)] mt-1">{t('admin.oidc.clientSecret.set')}</p>
-                )}
-            </div>
-
-            <div>
-                <label className={labelClass}>{t('admin.oidc.scopes')}</label>
-                <input
+                    id="oidc-scopes"
                     type="text"
                     value={scopes}
+                    disabled={environmentManaged.includes('scopes')}
                     onChange={(event) => setScopes(event.target.value)}
                     className={inputClass}
                     autoComplete="off"
                 />
+                {environmentManaged.includes('scopes') && <p className="text-xs text-[var(--muted-foreground)] mt-1">{t('admin.config.managed')}</p>}
             </div>
 
             {redirectUri && (
@@ -199,7 +187,7 @@ export function OidcSettingsTab() {
 
             <button
                 type="submit"
-                disabled={isSaving}
+                disabled={isSaving || environmentManaged.length === 3}
                 className="w-full bg-[var(--primary)] disabled:opacity-50 text-white py-3 rounded-xl font-semibold"
             >
                 {isSaving ? t('admin.oidc.saving') : t('admin.oidc.save')}

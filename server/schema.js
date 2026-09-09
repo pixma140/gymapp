@@ -4,19 +4,11 @@ import { seedDevelopmentData } from './seed.js';
 const uuidCheck = column => `length(${column}) = 36 AND substr(${column}, 9, 1) = '-' AND substr(${column}, 14, 1) = '-' AND substr(${column}, 19, 1) = '-' AND substr(${column}, 24, 1) = '-' AND length(replace(${column}, '-', '')) = 32 AND replace(${column}, '-', '') NOT GLOB '*[^0-9a-f]*'`;
 const profileColumns = 'name, email, weight, height, bodyFat, age, gender, reminderFrequency, language, theme, mainColor';
 
-// Fresh-install DDL only. An existing legacy installation requires an explicit reset.
-export async function initializeSchema(tx, { seedDevData = false } = {}) {
-    const existing = await tx.getSql("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'users'");
-    if (existing) {
-        const metadata = await tx.getSql("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'installation'");
-        if (!metadata) throw new Error('database_reset_required');
-        const installation = await tx.getSql('SELECT schemaId FROM installation WHERE singleton = 1');
-        if (installation?.schemaId !== 'account-uuid-v1') throw new Error('database_reset_required');
-    }
+// Alpha schema changes belong directly in this fresh-database DDL.
+export async function initializeSchema(tx, { seedDevData = false, fixtureCredentials } = {}) {
     await tx.runSql(`CREATE TABLE IF NOT EXISTS installation (
         singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
         id TEXT NOT NULL UNIQUE CHECK (${uuidCheck('id')}),
-        schemaId TEXT NOT NULL,
         catalogGeneration INTEGER NOT NULL DEFAULT 0 CHECK (catalogGeneration >= 0),
         initializationMode TEXT NOT NULL CHECK (initializationMode IN ('empty', 'fixtures'))
     )`);
@@ -92,9 +84,9 @@ export async function initializeSchema(tx, { seedDevData = false } = {}) {
     }
     const installation = await tx.getSql('SELECT * FROM installation WHERE singleton = 1');
     if (!installation) {
-        await tx.runSql('INSERT INTO installation (singleton, id, schemaId, initializationMode) VALUES (1, ?, ?, ?)',
-            [randomUUID(), 'account-uuid-v1', seedDevData ? 'fixtures' : 'empty']);
-        if (seedDevData) await seedDevelopmentData(tx);
+        await tx.runSql('INSERT INTO installation (singleton, id, initializationMode) VALUES (1, ?, ?)',
+            [randomUUID(), seedDevData ? 'fixtures' : 'empty']);
+        if (seedDevData) await seedDevelopmentData(tx, fixtureCredentials);
     } else if (seedDevData && installation.initializationMode !== 'fixtures') {
         throw new Error('fixtures_require_explicit_reset');
     }
