@@ -2,7 +2,7 @@ import { v7 as uuidv7 } from 'uuid';
 import { seedDevelopmentData } from './seed.js';
 
 const uuidCheck = column => `length(${column}) = 36 AND substr(${column}, 9, 1) = '-' AND substr(${column}, 14, 1) = '-' AND substr(${column}, 15, 1) = '7' AND substr(${column}, 19, 1) = '-' AND substr(${column}, 20, 1) IN ('8', '9', 'a', 'b') AND substr(${column}, 24, 1) = '-' AND length(replace(${column}, '-', '')) = 32 AND replace(${column}, '-', '') NOT GLOB '*[^0-9a-f]*'`;
-const profileColumns = 'name, email, weight, height, bodyFat, age, gender, reminderFrequency, language, theme, mainColor';
+const profileColumns = 'name, email, weight, height, bodyFat, age, gender, reminderFrequency, language, timeFormat, theme, mainColor';
 
 // Alpha schema changes belong directly in this fresh-database DDL.
 export async function initializeSchema(tx, { seedDevData = false, fixtureCredentials } = {}) {
@@ -21,6 +21,7 @@ export async function initializeSchema(tx, { seedDevData = false, fixtureCredent
         age INTEGER CHECK (age > 0 AND age = CAST(age AS INTEGER)), gender TEXT CHECK (gender IN ('male', 'female', 'other')),
         reminderFrequency TEXT NOT NULL DEFAULT 'never' CHECK (reminderFrequency IN ('daily', 'weekly', 'monthly', 'never')),
         language TEXT NOT NULL DEFAULT 'en' CHECK (language IN ('en', 'de')),
+        timeFormat TEXT NOT NULL DEFAULT 'system' CHECK (timeFormat IN ('system', '24h', '12h')),
         theme TEXT NOT NULL DEFAULT 'dark' CHECK (theme IN ('light', 'dark', 'oled', 'system')),
         mainColor TEXT, createdAt INTEGER, lastLoginAt INTEGER,
         revision INTEGER NOT NULL DEFAULT 1 CHECK (revision > 0),

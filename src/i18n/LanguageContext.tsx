@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useSession } from '@/context/SessionContext';
 import { applyOperation } from '@/db/operations';
+import type { ProfileFields } from '@shared/commands';
 import { translations } from './translations';
 import type { Language } from './translations';
 import type { TranslationKey } from './translations';
@@ -10,6 +11,10 @@ import type { TranslationKey } from './translations';
 type LanguageContextType = {
     language: Language;
     setLanguage: (lang: Language) => Promise<void>;
+    timeFormat: ProfileFields['timeFormat'];
+    setTimeFormat: (format: ProfileFields['timeFormat']) => Promise<void>;
+    formatTime: (timestamp: number) => string;
+    formatDateTime: (timestamp: number) => string;
     t: (key: TranslationKey) => string;
 };
 
@@ -20,6 +25,20 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const user = useLiveQuery(() => db?.users.get(db.binding.accountId), [db]);
     const [fallbackLanguage, setFallbackLanguage] = useState<Language>('en');
     const language = user?.language ?? fallbackLanguage;
+    const [fallbackTimeFormat, setFallbackTimeFormat] = useState<ProfileFields['timeFormat']>('system');
+    const timeFormat = user?.timeFormat ?? fallbackTimeFormat;
+    // Resolve the device clock separately from the language used for labels/dates.
+    const use12Hours = timeFormat === 'system'
+        ? new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hour12
+        : timeFormat === '12h';
+    // Explicit cycles ensure midnight is 00:00 (24h) or 12:00 AM (12h).
+    const hourCycle = use12Hours ? 'h12' : 'h23';
+    const formatTime = (timestamp: number) => new Date(timestamp).toLocaleTimeString(language, {
+        hour: '2-digit', minute: '2-digit', hourCycle,
+    });
+    const formatDateTime = (timestamp: number) => new Date(timestamp).toLocaleString(language, {
+        dateStyle: 'medium', timeStyle: 'short', hourCycle,
+    });
 
     useEffect(() => {
         document.documentElement.lang = language;
@@ -37,8 +56,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         return translations[language][key] || key;
     };
 
+    const setTimeFormat = async (format: ProfileFields['timeFormat']) => {
+        if (user && db) {
+            await applyOperation(db, 'profile.update', null, { timeFormat: format });
+        } else {
+            setFallbackTimeFormat(format);
+        }
+    };
+
     return (
-        <LanguageContext.Provider value={{ language, setLanguage, t }}>
+        <LanguageContext.Provider value={{ language, setLanguage, timeFormat, setTimeFormat, formatTime, formatDateTime, t }}>
             {children}
         </LanguageContext.Provider>
     );

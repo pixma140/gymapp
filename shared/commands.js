@@ -1,4 +1,4 @@
-export const PROFILE_COLUMNS = ['name', 'email', 'weight', 'height', 'bodyFat', 'age', 'gender', 'reminderFrequency', 'language', 'theme', 'mainColor'];
+export const PROFILE_COLUMNS = ['name', 'email', 'weight', 'height', 'bodyFat', 'age', 'gender', 'reminderFrequency', 'language', 'timeFormat', 'theme', 'mainColor'];
 export const COMMAND_FIELDS = Object.freeze({
     'profile.update': PROFILE_COLUMNS,
     'measurement.create': ['weight', 'bodyFat', 'timestamp'],
@@ -52,6 +52,7 @@ export function validateCommand(command) {
         if (key === 'gender' && value !== null && !['male', 'female', 'other'].includes(value)) return 'invalid_payload';
         if (key === 'reminderFrequency' && !['daily', 'weekly', 'monthly', 'never'].includes(value)) return 'invalid_payload';
         if (key === 'language' && !['en', 'de'].includes(value)) return 'invalid_payload';
+        if (key === 'timeFormat' && !['system', '24h', '12h'].includes(value)) return 'invalid_payload';
         if (key === 'theme' && !['light', 'dark', 'oled', 'system'].includes(value)) return 'invalid_payload';
         if (key === 'gymId' && !isUuid(value)) return 'invalid_payload';
         if (key === 'workoutId' && !isUuid(value)) return 'invalid_payload';

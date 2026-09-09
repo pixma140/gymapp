@@ -144,6 +144,24 @@ reset the affected account password. Moving values into `.env` does not remove
 them from Git history. Changing fixture environment credentials affects fresh
 databases only; use the explicit alpha reset when recreating development data.
 
+## Language and time format
+
+Choose **Settings → Time format** independently of the UI language:
+
+- **Device default** (default): use the browser's locale clock convention.
+- **24-hour (14:30)**: always display times from `00:00` to `23:59`.
+- **12-hour (2:30 PM)**: display times with AM/PM.
+
+For English labels with German-style times, select **English** and **24-hour**.
+The preference is saved to your account, works offline, and syncs across devices.
+It applies to workout start/end times, workout history, the active-workout banner,
+and sync timestamps. Native date/time editing controls use the browser/OS format;
+timestamps still use your local timezone.
+
+Adding the account's `timeFormat` field changes the alpha database schema.
+Existing development installations must be recreated using the explicit reset
+procedure above before running this version.
+
 ## Sync behavior and current limits
 
 Account, domain, mutation, and installation IDs are RFC 9562 UUID v7 strings generated

@@ -15,7 +15,7 @@ function fixture(accountId = ACCOUNT_A, installationId = uuidv7()): { db: Accoun
     const db = new AccountDatabase({ accountId, installationId }); opened.push(db);
     return { db, snapshot: { accountId, installationId, accountGeneration: 0, catalogGeneration: 1,
         profile: { id: accountId, revision: 1, name: 'Test', email: null, weight: null, height: null, bodyFat: null, age: null, gender: null,
-            reminderFrequency: 'never', language: 'en', theme: 'dark', mainColor: null },
+            reminderFrequency: 'never', language: 'en', timeFormat: 'system', theme: 'dark', mainColor: null },
         gyms: [{ id: uuidv7(), revision: 1, name: 'Shared', location: 'City', archived: false }], workouts: [], workoutExercises: [], customExercises: [], measurements: [] } };
 }
 afterEach(async () => {
@@ -24,6 +24,17 @@ afterEach(async () => {
 });
 
 describe('account caches and transactional intent', () => {
+    it('persists the clock preference offline independently of language and account', async () => {
+        const { db, snapshot } = fixture();
+        const other = fixture(ACCOUNT_B, snapshot.installationId);
+        await hydrateFromServer(db, snapshot);
+        await hydrateFromServer(other.db, other.snapshot);
+        await applyOperation(db, 'profile.update', null, { timeFormat: '24h' });
+        db.close(); await db.open();
+        expect(await db.users.get(ACCOUNT_A)).toMatchObject({ language: 'en', timeFormat: '24h' });
+        expect(await other.db.users.get(ACCOUNT_B)).toMatchObject({ timeFormat: 'system' });
+        expect((await db.outbox.toArray())[0].intent).toMatchObject({ operation: 'profile.update', payload: { timeFormat: '24h' } });
+    });
     it('updates workout times atomically and validates active and completed sessions', async () => {
         const { db, snapshot } = fixture();
         await hydrateFromServer(db, snapshot);

@@ -8,6 +8,60 @@ const fixtureCredentials = {
 };
 const testPassword = crypto.randomUUID();
 
+test.describe('clock preference', () => {
+    test.use({ locale: 'de-DE', timezoneId: 'Europe/Berlin' });
+
+    test('uses the device clock with English labels and persists explicit 12/24-hour overrides', async ({ page, context }) => {
+        expect((await page.request.post('/api/auth/register', {
+            data: { username: `clock-${uuidv7()}`, password: testPassword },
+        })).ok()).toBe(true);
+        await page.goto('/');
+        await page.getByRole('link', { name: /Foundry District/ }).click();
+        await page.getByRole('button', { name: 'Finish workout', exact: true }).click();
+        await page.getByRole('link', { name: 'Analysis', exact: true }).click();
+        await page.getByRole('link', { name: 'View details' }).click();
+        await page.getByRole('link', { name: 'Edit', exact: true }).click();
+        await page.getByLabel('Start date and time', { exact: true }).fill('2026-09-08T00:00');
+        await page.getByLabel('End date and time', { exact: true }).fill('2026-09-08T12:00');
+        await page.getByRole('button', { name: 'Save', exact: true }).click();
+        await expect(page.locator('header')).toContainText('00:00 – 12:00');
+        const detailsUrl = page.url();
+        await page.getByRole('link', { name: 'Settings', exact: true }).click();
+        await expect(page.getByLabel('Language', { exact: true })).toHaveValue('en');
+        await expect(page.getByLabel('Time format', { exact: true })).toHaveValue('system');
+        await expectPendingChanges(page, 0);
+        await context.setOffline(true);
+        await page.getByLabel('Time format', { exact: true }).selectOption('12h');
+        await expect(page.getByLabel('Time format', { exact: true })).toHaveValue('12h');
+        await page.getByRole('link', { name: 'Analysis', exact: true }).click();
+        await expect(page.getByText('12:00 AM', { exact: true })).toBeVisible();
+        await page.getByRole('link', { name: 'View details' }).click();
+        await expect(page.locator('header')).toContainText('12:00 AM – 12:00 PM');
+        await context.setOffline(false);
+        await expectPendingChanges(page, 0);
+        await page.reload();
+        await expect(page.locator('header')).toContainText('12:00 AM – 12:00 PM');
+        await page.getByRole('link', { name: 'Settings', exact: true }).click();
+        await page.getByLabel('Language', { exact: true }).selectOption('de');
+        await expect(page.getByLabel('Zeitformat', { exact: true })).toHaveValue('12h');
+        await expectPendingChanges(page, 0);
+        await page.goto(detailsUrl);
+        await expect(page.locator('header')).toContainText('12:00 AM – 12:00 PM');
+        await page.goto('/settings');
+        await page.getByLabel('Zeitformat', { exact: true }).selectOption('24h');
+        await page.getByLabel('Sprache', { exact: true }).selectOption('en');
+        await expectPendingChanges(page, 0);
+        await page.reload();
+        await expect(page.getByLabel('Time format', { exact: true })).toHaveValue('24h');
+        const snapshot = await (await page.request.get('/api/sync/snapshot')).json();
+        expect(snapshot.profile).toMatchObject({ timeFormat: '24h', language: 'en' });
+        await page.goto(detailsUrl);
+        await expect(page.locator('header')).toContainText('00:00 – 12:00');
+        await page.getByRole('link', { name: 'Analysis', exact: true }).click();
+        await expect(page.getByText('00:00', { exact: true })).toBeVisible();
+    });
+});
+
 test('demo workout flow logs sets, creates exercises, and edits completed history', async ({ page, context }, testInfo) => {
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));

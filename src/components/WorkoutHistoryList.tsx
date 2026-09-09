@@ -10,7 +10,7 @@ import { formatDuration } from '@/lib/workoutDisplay';
 
 export function WorkoutHistoryList() {
     const db = useDatabase();
-    const { language, t } = useLanguage();
+    const { language, formatTime, t } = useLanguage();
     const [deleting, setDeleting] = useState(false);
     const [failed, setFailed] = useState(false);
     const workouts = useLiveQuery(async () => {
@@ -55,7 +55,7 @@ export function WorkoutHistoryList() {
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <Clock className="size-3" />
-                                    {new Date(workout.startTime).toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' })}
+                                    {formatTime(workout.startTime)}
                                 </div>
                             </div>
                         </div>

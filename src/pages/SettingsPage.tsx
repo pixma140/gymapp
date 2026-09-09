@@ -1,4 +1,4 @@
-import { Database, Moon, Earth, Bell, Palette, Github, LogOut, Shield } from 'lucide-react';
+import { Database, Moon, Earth, Bell, Palette, Github, LogOut, Shield, Clock } from 'lucide-react';
 import { useDatabase } from '@/context/SessionContext';
 import { applyOperation } from '@/db/operations';
 import type { Theme } from '@/context/ThemeContext';
@@ -17,7 +17,7 @@ export function SettingsPage() {
     const db = useDatabase();
     const user = useLiveQuery(() => db.users.orderBy('id').first());
     const navigate = useNavigate();
-    const { t, language, setLanguage } = useLanguage();
+    const { t, language, setLanguage, timeFormat, setTimeFormat } = useLanguage();
     const { theme, setTheme, mainColor, setColor } = useTheme();
     const { isAdmin, logout } = useSession();
 
@@ -120,6 +120,27 @@ export function SettingsPage() {
                         >
                             <option value="en">{t('language.english')}</option>
                             <option value="de">{t('language.german')}</option>
+                        </select>
+                    </div>
+
+                    <div className="w-full flex items-center justify-between p-4 border-b border-[var(--border)] border-dashed">
+                        <div className="flex items-center gap-3">
+                            <Clock className="size-5 shrink-0 text-[var(--muted-foreground)]" />
+                            <div className="text-left">
+                                <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.timeFormat')}</h3>
+                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.timeFormat.desc')}</p>
+                            </div>
+                        </div>
+                        <label htmlFor="settings-time-format" className="sr-only">{t('settings.timeFormat')}</label>
+                        <select
+                            id="settings-time-format"
+                            value={timeFormat}
+                            onChange={(e) => setTimeFormat(e.target.value as User['timeFormat'])}
+                            className="bg-[var(--input)] border border-[var(--border)] rounded-lg text-xs p-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
+                        >
+                            <option value="system">{t('settings.timeFormat.system')}</option>
+                            <option value="24h">{t('settings.timeFormat.24h')}</option>
+                            <option value="12h">{t('settings.timeFormat.12h')}</option>
                         </select>
                     </div>
 

@@ -208,7 +208,7 @@ describe('replacement sync contract', () => {
     });
     it('rejects invalid values and privilege changes without advancing generations', async () => {
         const before = (await snapshot(userCookie)).body.accountGeneration;
-        for (const payload of [{ weight: -1 }, { bodyFat: 101 }, { language: 'xx' }, { theme: 'unknown' }, { name: '' }, { isAdmin: true }, { passwordHash: 'hacked' }]) {
+        for (const payload of [{ weight: -1 }, { bodyFat: 101 }, { language: 'xx' }, { timeFormat: '25h' }, { timeFormat: null }, { timeFormat: 24 }, { theme: 'unknown' }, { name: '' }, { isAdmin: true }, { passwordHash: 'hacked' }]) {
             expect((await send(command('profile.update', payload, { expectedRevision: 2 }))).status).toBe(400);
         }
         expect((await snapshot(userCookie)).body.accountGeneration).toBe(before);
@@ -233,5 +233,19 @@ describe('replacement sync contract', () => {
         expect((await send({ ...edit, mutationId: uuidv7() })).body.error).toBe('revision_conflict');
         expect((await send(command('workout.update', { startTime: 2500 }, { targetId: start.targetId, expectedRevision: 4 }))).body.error).toBe('invalid_workout_times');
         expect((await snapshot(userCookie)).body.workouts).toContainEqual(expect.objectContaining({ id: start.targetId, startTime: 800, endTime: 2000 }));
+    });
+    it('syncs each clock preference independently of language and isolates accounts', async () => {
+        const adminBefore = (await snapshot(adminCookie)).body;
+        expect((await snapshot(userCookie)).body.profile.timeFormat).toBe('system');
+        for (const timeFormat of ['24h', '12h', 'system']) {
+            const before = (await snapshot(userCookie)).body;
+            const update = command('profile.update', { timeFormat }, { expectedRevision: before.profile.revision });
+            expect((await send(update)).status).toBe(200);
+            const after = (await snapshot(userCookie)).body;
+            expect(after.profile).toEqual({ ...before.profile, timeFormat, revision: before.profile.revision + 1 });
+            expect(after.accountGeneration).toBe(before.accountGeneration + 1);
+            expect((await request('GET', '/api/bootstrap', { cookie: userCookie })).body.snapshot.profile.timeFormat).toBe(timeFormat);
+        }
+        expect((await snapshot(adminCookie)).body).toEqual(adminBefore);
     });
 });

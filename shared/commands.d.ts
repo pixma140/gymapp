@@ -16,6 +16,7 @@ export interface ProfileFields {
     gender: string | null;
     reminderFrequency: 'daily' | 'weekly' | 'monthly' | 'never';
     language: 'en' | 'de';
+    timeFormat: 'system' | '24h' | '12h';
     theme: 'light' | 'dark' | 'oled' | 'system';
     mainColor: string | null;
 }
