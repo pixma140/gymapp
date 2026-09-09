@@ -5,7 +5,7 @@ import { isSnapshot } from '@/db/hydrate';
 import { changeSession, notifySession } from './tabs';
 
 export interface SessionUser {
-    id: number;
+    id: string;
     username: string | null;
     name: string;
     language: 'en' | 'de';
@@ -18,7 +18,7 @@ export type Bootstrap =
     | { status: 'authenticated'; installationId: string; user: SessionUser; capabilities: Capabilities; snapshot: Snapshot };
 
 function isSessionUser(value: unknown): value is SessionUser {
-    return isObject(value) && Number.isSafeInteger(value.id) && Number(value.id) > 0
+    return isObject(value) && isUuid(value.id)
         && (value.username === null || typeof value.username === 'string') && typeof value.name === 'string'
         && ['en', 'de'].includes(String(value.language)) && ['light', 'dark', 'oled', 'system'].includes(String(value.theme))
         && typeof value.isAdmin === 'boolean';

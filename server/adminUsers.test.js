@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { v7 as uuidv7 } from 'uuid';
+import { isUuid } from '../shared/commands.js';
 
 import { createApp } from './app.js';
 import { openDatabase } from './db.js';
@@ -85,6 +87,7 @@ describe('admin user management', () => {
         expect(res.body.user.isAdmin).toBe(true);
         adminCookie = res.cookie;
         adminId = res.body.user.id;
+        expect(isUuid(adminId)).toBe(true);
     });
 
     it('registers a second (non-admin) user', async () => {
@@ -95,6 +98,7 @@ describe('admin user management', () => {
         bobCookie = res.cookie;
         bobId = res.body.user.id;
         expect(bobId).not.toBe(adminId);
+        expect(isUuid(bobId)).toBe(true);
     });
 
     it('rejects listing users when unauthenticated', async () => {
@@ -191,7 +195,7 @@ describe('admin user management', () => {
             body: { username: 'carol', password: passwords.carol, name: 'Carol', email: 'carol@example.com', isAdmin: false },
         });
         expect(res.status).toBe(200);
-        expect(typeof res.body.id).toBe('number');
+        expect(isUuid(res.body.id)).toBe(true);
 
         const list = await request('GET', '/api/admin/users', { cookie: adminCookie });
         const carol = list.body.users.find((u) => u.username === 'carol');
@@ -353,11 +357,24 @@ describe('admin user management', () => {
     });
 
     it('returns 404 when resetting a password for an unknown user', async () => {
-        const res = await request('POST', '/api/admin/users/999999/password', {
+        const res = await request('POST', `/api/admin/users/${uuidv7()}/password`, {
             cookie: adminCookie,
             body: { password: passwords.other },
         });
         expect(res.status).toBe(404);
+    });
+    it('rejects numeric, v4, and malformed account IDs on every admin mutation route', async () => {
+        for (const id of ['1', randomUUID(), 'invalid']) {
+            for (const [method, route, body] of [
+                ['POST', `/api/admin/users/${id}/password`, { password: passwords.other }],
+                ['PATCH', `/api/admin/users/${id}`, { isAdmin: true }],
+                ['DELETE', `/api/admin/users/${id}`],
+            ]) {
+                const result = await request(method, route, { cookie: adminCookie, body });
+                expect(result.status).toBe(400);
+                expect(result.body.error).toBe('invalid_user');
+            }
+        }
     });
 
     it('forbids a non-admin from deleting a user', async () => {
@@ -376,6 +393,7 @@ describe('admin user management', () => {
         const profile = { issuer: 'https://issuer.example', subject: 'same-subject', name: 'OIDC User', email: null };
         const [first, second] = await Promise.all([accounts.resolveOidc(profile), accounts.resolveOidc(profile)]);
         expect(first.id).toBe(second.id);
+        expect(isUuid(first.id)).toBe(true);
         expect(await database.getSql('SELECT isAdmin, passwordHash FROM users WHERE id = ?', [first.id]))
             .toEqual({ isAdmin: 0, passwordHash: null });
         const reset = await request('POST', `/api/admin/users/${first.id}/password`, {
@@ -396,12 +414,12 @@ describe('admin user management', () => {
     });
 
     it('rolls back account cleanup if any private-data deletion fails', async () => {
-        await database.runSql("INSERT INTO userMeasurements (userId, id, weight, timestamp) VALUES (?, '00000000-0000-4000-8000-000000000099', 80, 1)", [bobId]);
+        await database.runSql("INSERT INTO userMeasurements (userId, id, weight, timestamp) VALUES (?, '00000000-0000-7000-8000-000000000099', 80, 1)", [bobId]);
         await database.runSql("CREATE TRIGGER reject_user_delete BEFORE DELETE ON users BEGIN SELECT RAISE(ABORT, 'test cleanup failure'); END");
         try {
             const result = await request('DELETE', `/api/admin/users/${bobId}`, { cookie: adminCookie });
             expect(result.status).toBe(500);
-            expect(await database.getSql("SELECT weight FROM userMeasurements WHERE userId = ? AND id = '00000000-0000-4000-8000-000000000099'", [bobId])).toEqual({ weight: 80 });
+            expect(await database.getSql("SELECT weight FROM userMeasurements WHERE userId = ? AND id = '00000000-0000-7000-8000-000000000099'", [bobId])).toEqual({ weight: 80 });
             expect((await request('GET', '/api/auth/me', { cookie: bobCookie })).status).toBe(200);
         } finally {
             await database.runSql('DROP TRIGGER reject_user_delete');
@@ -409,10 +427,10 @@ describe('admin user management', () => {
     });
 
     it('deletes a user, private data, and sessions without touching another account', async () => {
-        await database.runSql("INSERT INTO userMeasurements (userId, id, weight, timestamp) VALUES (?, '00000000-0000-4000-8000-000000000001', 80, 1), (?, '00000000-0000-4000-8000-000000000002', 90, 1)", [bobId, adminId]);
-        await database.runSql("INSERT INTO gyms (id, name) VALUES ('00000000-0000-4000-8000-000000000003', 'Shared')");
-        await database.runSql("INSERT INTO workouts (userId, id, gymId, startTime) VALUES (?, '00000000-0000-4000-8000-000000000004', '00000000-0000-4000-8000-000000000003', 1)", [bobId]);
-        await database.runSql("INSERT INTO mutation_receipts (userId, mutationId, command, result, createdAt) VALUES (?, '00000000-0000-4000-8000-000000000005', '{}', '{}', 1)", [bobId]);
+        await database.runSql("INSERT INTO userMeasurements (userId, id, weight, timestamp) VALUES (?, '00000000-0000-7000-8000-000000000001', 80, 1), (?, '00000000-0000-7000-8000-000000000002', 90, 1)", [bobId, adminId]);
+        await database.runSql("INSERT INTO gyms (id, name) VALUES ('00000000-0000-7000-8000-000000000003', 'Shared')");
+        await database.runSql("INSERT INTO workouts (userId, id, gymId, startTime) VALUES (?, '00000000-0000-7000-8000-000000000004', '00000000-0000-7000-8000-000000000003', 1)", [bobId]);
+        await database.runSql("INSERT INTO mutation_receipts (userId, mutationId, command, result, createdAt) VALUES (?, '00000000-0000-7000-8000-000000000005', '{}', '{}', 1)", [bobId]);
         const res = await request('DELETE', `/api/admin/users/${bobId}`, { cookie: adminCookie });
         expect(res.status).toBe(200);
 

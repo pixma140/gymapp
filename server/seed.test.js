@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { v7 as uuidv7 } from 'uuid';
 import { openDatabase } from './db.js';
 import { createApp } from './app.js';
 import { resetDatabase } from './reset.js';
@@ -10,6 +11,8 @@ import { acquireDatabaseLease, databasePath } from './databaseFiles.js';
 import { DEVELOPMENT_GYMS } from './seed.js';
 import { hashPassword, verifyPassword } from './lib/crypto.js';
 import { readServerConfig } from './config.js';
+import { isUuid } from '../shared/commands.js';
+import { createAccountService } from './services/accounts.js';
 
 const fixtureCredentials = {
     admin: { username: randomUUID(), password: randomUUID() },
@@ -18,6 +21,36 @@ const fixtureCredentials = {
 const fixtureOptions = { seedDevData: true, fixtureCredentials };
 
 describe('fresh schema and development fixtures', () => {
+    it('creates v7 installation and fixture IDs and enforces v7 in every UUID primary key', async () => {
+        const db = openDatabase(':memory:');
+        const start = Date.now();
+        try {
+            await db.initDatabase(fixtureOptions);
+            const installation = await db.getSql('SELECT id FROM installation');
+            const users = await db.allSql('SELECT id FROM users');
+            for (const user of users) expect(isUuid(user.id)).toBe(true);
+            const userId = users[1].id;
+            expect(isUuid(installation.id)).toBe(true);
+            const timestamp = Number.parseInt(installation.id.slice(0, 13).replace('-', ''), 16);
+            expect(timestamp).toBeGreaterThanOrEqual(start);
+            expect(timestamp).toBeLessThanOrEqual(Date.now());
+            for (const gym of DEVELOPMENT_GYMS) expect(isUuid(gym.id)).toBe(true);
+            const invalidIds = [randomUUID(), '00000000-0000-7000-c000-000000000001',
+                '00000000-0000-7000-8000-00000000000G', '00000000000070008000000000000001'];
+            await expect(db.runSql("INSERT INTO users (id, name) VALUES (1, 'Numeric')")).rejects.toThrow('CHECK constraint failed');
+            for (const id of invalidIds) {
+                for (const [sql, params] of [
+                    ['UPDATE installation SET id = ?', [id]],
+                    ["INSERT INTO users (id, name) VALUES (?, 'Invalid')", [id]],
+                    ["INSERT INTO gyms (id, name) VALUES (?, 'Invalid')", [id]],
+                    ['INSERT INTO workouts (id, userId, gymId, startTime) VALUES (?, ?, ?, 1)', [id, userId, DEVELOPMENT_GYMS[0].id]],
+                    ['INSERT INTO userMeasurements (id, userId, timestamp) VALUES (?, ?, 1)', [id, userId]],
+                    ["INSERT INTO mutation_receipts (mutationId, userId, command, result, createdAt) VALUES (?, ?, '{}', '{}', 1)", [id, userId]],
+                ]) await expect(db.runSql(sql, params)).rejects.toThrow('CHECK constraint failed');
+            }
+            expect(await db.getSql('SELECT id FROM installation')).toEqual(installation);
+        } finally { await db.close(); }
+    });
     it('rolls back fresh initialization without fixture credentials', async () => {
         const db = openDatabase(':memory:');
         try {
@@ -91,18 +124,20 @@ describe('fresh schema and development fixtures', () => {
         try {
             await db.initDatabase(fixtureOptions);
             expect(await db.getSql('PRAGMA foreign_keys')).toEqual({ foreign_keys: 1 });
-            const workoutId = randomUUID();
-            await db.runSql('INSERT INTO workouts (id, userId, gymId, startTime) VALUES (?, 2, ?, 1)', [workoutId, DEVELOPMENT_GYMS[0].id]);
+            const { id: userId } = await db.getSql('SELECT id FROM users WHERE username = ?', [fixtureCredentials.user.username]);
+            const workoutId = uuidv7();
+            await db.runSql('INSERT INTO workouts (id, userId, gymId, startTime) VALUES (?, ?, ?, 1)', [workoutId, userId, DEVELOPMENT_GYMS[0].id]);
             await expect(db.runSql('DELETE FROM gyms WHERE id = ?', [DEVELOPMENT_GYMS[0].id])).rejects.toThrow();
-            await expect(db.runSql('INSERT INTO workouts (id, userId, gymId, startTime) VALUES (?, 2, ?, 2)', [randomUUID(), DEVELOPMENT_GYMS[0].id])).rejects.toThrow();
+            await expect(db.runSql('INSERT INTO workouts (id, userId, gymId, startTime) VALUES (?, ?, ?, 2)', [uuidv7(), userId, DEVELOPMENT_GYMS[0].id])).rejects.toThrow();
             await db.runSql('UPDATE workouts SET endTime = 2 WHERE id = ?', [workoutId]);
             expect(await db.getSql('SELECT revision FROM workouts WHERE id = ?', [workoutId])).toEqual({ revision: 2 });
-            expect(await db.getSql('SELECT dataGeneration FROM users WHERE id = 2')).toEqual({ dataGeneration: 2 });
-            await db.runSql('DELETE FROM users WHERE id = 2');
+            expect(await db.getSql('SELECT dataGeneration FROM users WHERE id = ?', [userId])).toEqual({ dataGeneration: 2 });
+            await db.runSql('DELETE FROM users WHERE id = ?', [userId]);
             expect(await db.allSql('SELECT * FROM workouts')).toEqual([]);
-            const next = await db.runSql("INSERT INTO users (name) VALUES ('Next')");
-            expect(next.lastID).toBeGreaterThan(2);
-            await expect(db.runSql('INSERT INTO sessions (id, userId, expiresAt) VALUES (?, 999, 10)', ['invalid'])).rejects.toThrow();
+            const next = await createAccountService(db).create({ ...fixtureCredentials.user, name: 'Next' });
+            expect(isUuid(next.id)).toBe(true);
+            expect(next.id).not.toBe(userId);
+            await expect(db.runSql('INSERT INTO sessions (id, userId, expiresAt) VALUES (?, ?, 10)', [randomUUID(), userId])).rejects.toThrow('FOREIGN KEY constraint failed');
         } finally { await db.close(); }
     });
     it('resets only configured database files, reseeds explicitly, and refuses a running-server lease', async () => {

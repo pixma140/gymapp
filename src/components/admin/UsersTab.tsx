@@ -21,7 +21,7 @@ export function UsersTab() {
 
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [pendingId, setPendingId] = useState<number | null>(null);
+    const [pendingId, setPendingId] = useState<string | null>(null);
     const [errorKey, setErrorKey] = useState<TranslationKey | null>(null);
     const [successKey, setSuccessKey] = useState<TranslationKey | null>(null);
 
@@ -38,7 +38,7 @@ export function UsersTab() {
     const [isCreating, setIsCreating] = useState(false);
 
     // Inline password-reset state.
-    const [resetId, setResetId] = useState<number | null>(null);
+    const [resetId, setResetId] = useState<string | null>(null);
     const [resetPassword, setResetPassword] = useState('');
 
     const loadUsers = async () => {

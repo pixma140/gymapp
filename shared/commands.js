@@ -11,7 +11,7 @@ export const COMMAND_FIELDS = Object.freeze({
     'gym.update': ['name', 'location'],
     'gym.archive': ['archived'],
 });
-export const isUuid = value => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value);
+export const isUuid = value => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value);
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const timestamp = value => Number.isSafeInteger(value) && value >= 0;
 
@@ -19,7 +19,7 @@ export function validateCommand(command) {
     if (!object(command) || typeof command.operation !== 'string' || !Object.hasOwn(COMMAND_FIELDS, command.operation)) return 'unsupported_operation';
     const keys = ['mutationId', 'accountId', 'installationId', 'operation', 'targetId', 'expectedRevision', 'payload'];
     if (Object.keys(command).length !== keys.length || keys.some(key => !Object.hasOwn(command, key))) return 'invalid_command';
-    if (!isUuid(command.mutationId) || !isUuid(command.installationId) || !Number.isSafeInteger(command.accountId) || command.accountId <= 0) return 'invalid_binding';
+    if (!isUuid(command.mutationId) || !isUuid(command.installationId) || !isUuid(command.accountId)) return 'invalid_binding';
     if (command.operation === 'profile.update' ? command.targetId !== null : !isUuid(command.targetId)) return 'invalid_target';
     const create = ['measurement.create', 'workout.start', 'gym.create'].includes(command.operation);
     if (create ? command.expectedRevision !== null : !Number.isSafeInteger(command.expectedRevision) || command.expectedRevision < 1) return 'invalid_revision';

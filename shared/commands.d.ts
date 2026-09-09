@@ -1,8 +1,9 @@
 /** Replacement protocol. Wired into HTTP/client operations in phases B–E. */
+/** Canonical lowercase RFC 9562 UUID v7, checked at runtime by isUuid. */
 export type UUID = string;
 export type Revision = number;
 export interface AccountBinding {
-    accountId: number;
+    accountId: UUID;
     installationId: UUID;
 }
 export interface ProfileFields {
@@ -19,7 +20,7 @@ export interface ProfileFields {
     mainColor: string | null;
 }
 export interface Profile extends ProfileFields {
-    id: number;
+    id: UUID;
     revision: Revision;
 }
 export interface MeasurementFields {

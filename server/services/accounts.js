@@ -1,13 +1,15 @@
+import { v7 as uuidv7 } from 'uuid';
 import { hashPassword } from '../lib/crypto.js';
 
 export function createAccountService(database) {
     const insertPasswordAccount = async (tx, profile, isAdmin = false) => {
-        const result = await tx.runSql(
-            'INSERT INTO users (username, passwordHash, name, email, isAdmin, language, theme, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [profile.username, hashPassword(profile.password), profile.name ?? profile.username, profile.email ?? null,
+        const id = uuidv7();
+        await tx.runSql(
+            'INSERT INTO users (id, username, passwordHash, name, email, isAdmin, language, theme, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [id, profile.username, hashPassword(profile.password), profile.name ?? profile.username, profile.email ?? null,
                 isAdmin ? 1 : 0, profile.language ?? 'en', 'dark', Date.now()]
         );
-        return { id: result.lastID };
+        return { id };
     };
     return {
         setup: profile => database.transaction(async tx => {
@@ -30,11 +32,12 @@ export function createAccountService(database) {
         resolveOidc: profile => database.transaction(async tx => {
             const existing = await tx.getSql('SELECT id FROM users WHERE oidcIssuer = ? AND oidcSubject = ?', [profile.issuer, profile.subject]);
             if (existing) return existing;
-            const result = await tx.runSql(
-                'INSERT INTO users (name, email, oidcIssuer, oidcSubject, language, theme, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [profile.name, profile.email, profile.issuer, profile.subject, 'en', 'dark', Date.now()]
+            const id = uuidv7();
+            await tx.runSql(
+                'INSERT INTO users (id, name, email, oidcIssuer, oidcSubject, language, theme, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                [id, profile.name, profile.email, profile.issuer, profile.subject, 'en', 'dark', Date.now()]
             );
-            return { id: result.lastID };
+            return { id };
         }),
         resetPassword: (actorId, targetId, password) => database.transaction(async tx => {
             const guard = await requireAdmin(tx, actorId);

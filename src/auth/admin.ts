@@ -1,3 +1,4 @@
+import { isUuid } from '@shared/commands';
 import { actionRequest, isObject, jsonBody, type ActionResponse } from '@/lib/api';
 export interface OidcAdminConfig {
     enabled: boolean;
@@ -33,7 +34,7 @@ export interface ServerAdminConfig {
 export interface ServerAdminResponse extends ActionResponse { config?: ServerAdminConfig }
 
 export interface AdminUser {
-    id: number;
+    id: string;
     username: string | null;
     name: string;
     email: string | null;
@@ -75,7 +76,7 @@ const isServerConfig = (value: unknown): value is ServerAdminResponse => isObjec
     && typeof value.config.viteApiTarget === 'string' && Array.isArray(value.config.environmentManaged)
     && value.config.environmentManaged.every(key => typeof key === 'string');
 const isUsers = (value: unknown): value is AdminUsersResponse => isObject(value) && Array.isArray(value.users)
-    && value.users.every(user => isObject(user) && Number.isSafeInteger(user.id) && typeof user.name === 'string'
+    && value.users.every(user => isObject(user) && isUuid(user.id) && typeof user.name === 'string'
         && (user.username === null || typeof user.username === 'string') && typeof user.isAdmin === 'boolean'
         && typeof user.isSelf === 'boolean' && ['password', 'oidc'].includes(String(user.authType)));
 
@@ -84,11 +85,11 @@ export const getServerAdminConfig = (): Promise<ServerAdminResponse> => actionRe
 export const getAdminUsers = (): Promise<AdminUsersResponse> => actionRequest('/api/admin/users', isUsers);
 export const createAdminUser = (input: CreateUserInput): Promise<AdminActionResponse> =>
     actionRequest('/api/admin/users', isAction, jsonBody(input));
-export const resetUserPassword = (userId: number, password: string): Promise<AdminActionResponse> =>
+export const resetUserPassword = (userId: string, password: string): Promise<AdminActionResponse> =>
     actionRequest(`/api/admin/users/${userId}/password`, isAction, jsonBody({ password }));
-export const setUserAdmin = (userId: number, isAdmin: boolean): Promise<AdminActionResponse> =>
+export const setUserAdmin = (userId: string, isAdmin: boolean): Promise<AdminActionResponse> =>
     actionRequest(`/api/admin/users/${userId}`, isAction, jsonBody({ isAdmin }, 'PATCH'));
-export const deleteAdminUser = (userId: number): Promise<AdminActionResponse> =>
+export const deleteAdminUser = (userId: string): Promise<AdminActionResponse> =>
     actionRequest(`/api/admin/users/${userId}`, isAction, { method: 'DELETE' });
 export const saveOidcAdminConfig = (input: OidcConfigInput): Promise<OidcAdminResponse> =>
     actionRequest('/api/admin/oidc', isOidc, jsonBody(input, 'PUT'));

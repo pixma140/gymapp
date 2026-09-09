@@ -7,6 +7,7 @@ import { verifyIdToken } from './lib/oidc.js';
 import { createAccountService } from './services/accounts.js';
 import { createSyncService, readSnapshot } from './services/sync.js';
 import { publicServerConfig, readServerConfig } from './config.js';
+import { isUuid } from '../shared/commands.js';
 
 function hasExactKeys(value, required, optional = []) {
     if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -591,8 +592,8 @@ export function createApp({ database, config: serverConfig = readServerConfig(),
             return;
         }
 
-        const userId = Number(req.params.id);
-        if (!Number.isInteger(userId) || userId <= 0) {
+        const userId = req.params.id;
+        if (!isUuid(userId)) {
             res.status(400).json({ ok: false, error: 'invalid_user' });
             return;
         }
@@ -623,8 +624,8 @@ export function createApp({ database, config: serverConfig = readServerConfig(),
             return;
         }
 
-        const userId = Number(req.params.id);
-        if (!Number.isInteger(userId) || userId <= 0) {
+        const userId = req.params.id;
+        if (!isUuid(userId)) {
             res.status(400).json({ ok: false, error: 'invalid_user' });
             return;
         }
@@ -655,8 +656,8 @@ export function createApp({ database, config: serverConfig = readServerConfig(),
             return;
         }
 
-        const userId = Number(req.params.id);
-        if (!Number.isInteger(userId) || userId <= 0) {
+        const userId = req.params.id;
+        if (!isUuid(userId)) {
             res.status(400).json({ ok: false, error: 'invalid_user' });
             return;
         }

@@ -40,8 +40,14 @@ lazy-loaded; body charts reside in the analysis chunk.
 
 ## Persistence
 
-SQLite enables foreign keys. `users.id` uses AUTOINCREMENT to prevent reuse.
-Shared `gyms`, private `workouts`, and `userMeasurements` use UUID primary keys.
+SQLite enables foreign keys. `users.id` is a server-generated UUID v7 primary key;
+all account foreign keys are text. Recreating an account generates a new identity.
+Shared `gyms`, private `workouts`, and `userMeasurements` use UUID v7 primary keys.
+The `uuid` package generates RFC 9562 v7 identifiers on both client and server,
+including account, installation, and mutation IDs. Shared validators and initial SQLite
+constraints enforce the version, variant, and canonical lowercase format.
+Timestamp-prefixed IDs improve index locality; explicit timestamps and outbox
+sequences still determine domain and delivery order across device clocks.
 Account deletion cascades sessions, workouts, measurements, and mutation
 receipts; it does not delete shared gyms. Referenced gyms cannot be deleted.
 Archiving prevents new workouts but allows already-started sessions to finish.
@@ -62,8 +68,8 @@ definitions directly; see the [alpha database policy](README.md#alpha-database-p
 
 IndexedDB names are `GymApp:<installation UUID>:<account ID>`. Initial version 1
 stores contain profile (`users`), shared catalog cache (`gyms`), private workouts,
-measurements, ordered outbox, and sync metadata. IDs are UUIDs except the account
-profile and auto-increment outbox sequence. The outbox persists immutable intent,
+measurements, ordered outbox, and sync metadata. Entity IDs are UUID v7 strings;
+the outbox sequence is auto-incrementing. The outbox persists immutable intent,
 an immutable prepared envelope once its server revision is known, dependency,
 attempt count, state, error, and next retry time. Each prepared envelope carries
 the account/installation binding checked by the server.

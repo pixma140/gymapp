@@ -1,11 +1,12 @@
+import { v7 as uuidv7 } from 'uuid';
 import type { Command, CommandPayloads, Operation, ProfileFields } from '@shared/commands';
 import { validateCommand } from '@shared/commands';
 import type { AccountDatabase, MutationIntent } from './db';
 
 export async function applyOperation<K extends Operation>(db: AccountDatabase, operation: K, targetId: string | null, payload: CommandPayloads[K]): Promise<string | null> {
     const domain = operation.split('.')[0];
-    const id = domain === 'profile' ? null : targetId ?? crypto.randomUUID();
-    const intent = Object.freeze({ mutationId: crypto.randomUUID(), operation, targetId: id, payload: Object.freeze({ ...payload }) }) as MutationIntent;
+    const id = domain === 'profile' ? null : targetId ?? uuidv7();
+    const intent = Object.freeze({ mutationId: uuidv7(), operation, targetId: id, payload: Object.freeze({ ...payload }) }) as MutationIntent;
     return applyIntent(db, intent);
 }
 
@@ -62,5 +63,5 @@ export async function applyIntent(db: AccountDatabase, intent: MutationIntent): 
         await db.outbox.add({ intent, command, dependency: previous?.sequence ?? referencedGym?.sequence,
             revisionDependency: Boolean(previous), attempts: 0, state: 'pending' });
     });
-    return typeof id === 'string' ? id : null;
+    return targetId;
 }

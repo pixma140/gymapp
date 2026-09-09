@@ -1,3 +1,4 @@
+import { v7 as uuidv7 } from 'uuid';
 import { isUuid, PROFILE_COLUMNS, validateCommand } from '@shared/commands';
 import { ApiError, isObject } from '@/lib/api';
 import type { Snapshot } from '@shared/commands';
@@ -7,12 +8,12 @@ import { applyIntent } from './operations';
 const revision = (value: unknown) => Number.isSafeInteger(value) && Number(value) >= 1;
 const generation = (value: unknown) => Number.isSafeInteger(value) && Number(value) >= 0;
 const validPayload = (operation: string, payload: unknown) => validateCommand({
-    mutationId: '00000000-0000-4000-8000-000000000001', installationId: '00000000-0000-4000-8000-000000000001',
-    accountId: 1, operation, targetId: operation === 'profile.update' ? null : '00000000-0000-4000-8000-000000000001',
+    mutationId: '00000000-0000-7000-8000-000000000001', installationId: '00000000-0000-7000-8000-000000000001',
+    accountId: '00000000-0000-7000-8000-000000000001', operation, targetId: operation === 'profile.update' ? null : '00000000-0000-7000-8000-000000000001',
     expectedRevision: operation === 'profile.update' ? 1 : null, payload,
 }) === null;
 export function isSnapshot(value: unknown): value is Snapshot {
-    if (!isObject(value) || !isUuid(value.installationId) || !Number.isSafeInteger(value.accountId) || Number(value.accountId) <= 0
+    if (!isObject(value) || !isUuid(value.installationId) || !isUuid(value.accountId)
         || !generation(value.accountGeneration) || !generation(value.catalogGeneration)
         || !isObject(value.profile) || value.profile.id !== value.accountId || !revision(value.profile.revision)
         || !Array.isArray(value.gyms) || !Array.isArray(value.workouts) || !Array.isArray(value.measurements)) return false;
@@ -116,7 +117,7 @@ export async function resolvePendingConflict(db: AccountDatabase, snapshot: Snap
         await replaceAccountData(db, snapshot);
         const reappliedSequences = new Map<number, number>();
         for (const entry of reviewed) {
-            const intent = Object.freeze({ ...entry.intent, mutationId: crypto.randomUUID(),
+            const intent = Object.freeze({ ...entry.intent, mutationId: uuidv7(),
                 payload: Object.freeze({ ...entry.intent.payload }) }) as MutationIntent;
             await applyIntent(db, intent);
             const reapplied = await db.outbox.filter(candidate => candidate.intent.mutationId === intent.mutationId).first();

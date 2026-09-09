@@ -132,11 +132,21 @@ databases only; use the explicit alpha reset when recreating development data.
 
 ## Sync behavior and current limits
 
-Domain IDs are UUIDs; account IDs are non-reused server integers. Each
+Account, domain, mutation, and installation IDs are RFC 9562 UUID v7 strings generated
+with the `uuid` package on the client and server. They use lowercase canonical
+`xxxxxxxx-xxxx-7xxx-[89ab]xxx-xxxxxxxxxxxx` formatting with a leading Unix
+millisecond timestamp. API/cache validation and initial SQLite constraints
+require v7. Setup, registration, admin-created accounts, OIDC accounts, and fixtures
+all receive server-generated v7 account IDs. Each
 account/installation pair has a separate IndexedDB database. Explicit commands
 carry both identities, a mutation UUID, and expected revision. The server
 validates and commits a mutation plus its receipt in one transaction; retries
 return the saved result instead of applying the mutation twice.
+
+UUID ordering improves index locality but does not replace explicit workout
+timestamps or the outbox sequence; device clocks can differ. UUIDs are identifiers,
+not authentication secrets. This alpha change requires fresh server/browser
+databases under the reset policy above; schema definitions stay at their initial version.
 
 The client retains failed or ambiguous work. A browser Web Lock permits one
 sender per account across tabs; browsers without Web Locks retain their queue.

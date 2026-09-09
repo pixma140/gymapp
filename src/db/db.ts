@@ -41,7 +41,7 @@ export class AccountDatabase extends Dexie {
     syncMetadata!: EntityTable<SyncMetadata, 'key'>;
 
     constructor(binding: AccountBinding) {
-        if (!isUuid(binding.installationId) || !Number.isSafeInteger(binding.accountId) || binding.accountId <= 0) throw new Error('invalid_account_binding');
+        if (!isUuid(binding.installationId) || !isUuid(binding.accountId)) throw new Error('invalid_account_binding');
         super(`GymApp:${binding.installationId}:${binding.accountId}`);
         this.binding = Object.freeze({ ...binding });
         this.version(1).stores({

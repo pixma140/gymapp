@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs/promises';
+import { v7 as uuidv7, version as uuidVersion } from 'uuid';
 
 const fixtureCredentials = {
     admin: { username: process.env.TEST_SEED_ADMIN_USERNAME!, password: process.env.TEST_SEED_ADMIN_PASSWORD! },
@@ -187,6 +188,11 @@ test('offline timed intent, cancellation, profile measurements, and catalog edit
     const data = await (await page.request.get('/api/sync/snapshot')).json();
     expect(data.profile.weight).toBe(80);
     expect(data.measurements).toHaveLength(1);
+    expect(uuidVersion(data.installationId)).toBe(7);
+    expect(uuidVersion(data.accountId)).toBe(7);
+    expect(data.profile.id).toBe(data.accountId);
+    expect(uuidVersion(data.measurements[0].id)).toBe(7);
+    for (const gym of data.gyms) expect(uuidVersion(gym.id)).toBe(7);
     expect(data.workouts).toEqual([]);
     await page.getByRole('link', { name: 'Analysis', exact: true }).click();
     await page.getByRole('button', { name: 'Body Analysis', exact: true }).click();
@@ -333,7 +339,7 @@ test('superseded bootstrap completion cannot publish stale session state', async
         calls++;
         if (calls === 1) {
             await gate;
-            await route.fulfill({ json: { ok: true, status: 'signedOut', installationId: crypto.randomUUID() } });
+            await route.fulfill({ json: { ok: true, status: 'signedOut', installationId: uuidv7() } });
             return;
         }
         await route.continue();

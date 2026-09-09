@@ -1,11 +1,28 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, isObject, requestJson } from '@/lib/api';
 import { changeSession, sessionEpoch } from '@/auth/tabs';
-import { getBootstrap, logoutSession } from '@/auth/session';
+import { getBootstrap, isBootstrap, logoutSession } from '@/auth/session';
+import { v7 as uuidv7 } from 'uuid';
 
 afterEach(() => vi.unstubAllGlobals());
 const valid = (value: unknown): value is { ok: true } => isObject(value) && value.ok === true;
 describe('typed API and bootstrap failures', () => {
+    it('validates UUID v7 accounts in authenticated bootstrap responses', () => {
+        const id = uuidv7();
+        const installationId = uuidv7();
+        const profile = { id, revision: 1, name: 'Test', email: null, weight: null, height: null, bodyFat: null,
+            age: null, gender: null, reminderFrequency: 'never', language: 'en', theme: 'dark', mainColor: null };
+        const user = { id, username: 'test', name: 'Test', language: 'en', theme: 'dark', isAdmin: false };
+        const snapshot = { accountId: id, installationId, accountGeneration: 0, catalogGeneration: 0, profile, gyms: [], workouts: [], measurements: [] };
+        const response = { status: 'authenticated', installationId, user, snapshot,
+            capabilities: { manageUsers: false, manageOidc: false, manageGyms: false } };
+        expect(isBootstrap(response)).toBe(true);
+        for (const invalid of [1, crypto.randomUUID(), 'invalid']) {
+            expect(isBootstrap({ ...response, user: { ...user, id: invalid } })).toBe(false);
+            expect(isBootstrap({ ...response, snapshot: { ...snapshot, accountId: invalid, profile: { ...profile, id: invalid } } })).toBe(false);
+        }
+        expect(isBootstrap({ ...response, user: { ...user, id: uuidv7() } })).toBe(false);
+    });
     it.each([
         [401, 'unauthenticated'], [403, 'forbidden'], [400, 'validation'], [409, 'conflict'],
         [429, 'rateLimited'], [500, 'server'], [404, 'http'],

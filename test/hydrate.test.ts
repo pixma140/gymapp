@@ -1,18 +1,22 @@
 import 'fake-indexeddb/auto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { v7 as uuidv7 } from 'uuid';
 import { AccountDatabase } from '@/db/db';
 import { discardPendingChanges, hydrateFromServer, prepareAccountCache, resolvePendingConflict } from '@/db/hydrate';
 import { applyOperation, updateProfileWithMeasurement } from '@/db/operations';
 import { flushPendingMutations } from '@/db/sqliteSync';
 import type { Snapshot } from '@shared/commands';
+import { isUuid } from '@shared/commands';
 
 const opened: AccountDatabase[] = [];
-function fixture(accountId = 1, installationId = crypto.randomUUID()): { db: AccountDatabase; snapshot: Snapshot } {
+const ACCOUNT_A = uuidv7();
+const ACCOUNT_B = uuidv7();
+function fixture(accountId = ACCOUNT_A, installationId = uuidv7()): { db: AccountDatabase; snapshot: Snapshot } {
     const db = new AccountDatabase({ accountId, installationId }); opened.push(db);
     return { db, snapshot: { accountId, installationId, accountGeneration: 0, catalogGeneration: 1,
         profile: { id: accountId, revision: 1, name: 'Test', email: null, weight: null, height: null, bodyFat: null, age: null, gender: null,
             reminderFrequency: 'never', language: 'en', theme: 'dark', mainColor: null },
-        gyms: [{ id: crypto.randomUUID(), revision: 1, name: 'Shared', location: 'City', archived: false }], workouts: [], measurements: [] } };
+        gyms: [{ id: uuidv7(), revision: 1, name: 'Shared', location: 'City', archived: false }], workouts: [], measurements: [] } };
 }
 afterEach(async () => {
     vi.unstubAllGlobals();
@@ -20,10 +24,51 @@ afterEach(async () => {
 });
 
 describe('account caches and transactional intent', () => {
+    it('creates time-ordered UUID v7 domain and mutation IDs and renews them on reapplication', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        const start = Date.now();
+        const ids: string[] = [];
+        for (let index = 0; index < 32; index++) {
+            const id = await applyOperation(db, 'measurement.create', null, { weight: 80, bodyFat: null, timestamp: index });
+            ids.push(id!);
+        }
+        const pending = await db.outbox.orderBy('sequence').toArray();
+        const generated = pending.flatMap(entry => [entry.intent.targetId!, entry.intent.mutationId]);
+        const end = Date.now();
+        expect(new Set(generated).size).toBe(64);
+        expect(generated).toEqual([...generated].sort());
+        for (const id of generated) {
+            expect(isUuid(id)).toBe(true);
+            const timestamp = Number.parseInt(id.slice(0, 13).replace('-', ''), 16);
+            expect(timestamp).toBeGreaterThanOrEqual(start);
+            expect(timestamp).toBeLessThanOrEqual(end);
+        }
+        expect((await db.userMeasurements.toArray()).map(row => row.id)).toEqual(ids);
+        await db.outbox.update(pending[0].sequence, { state: 'conflict' });
+        await resolvePendingConflict(db, snapshot, pending.map(entry => entry.intent.mutationId), 'reapply');
+        const reapplied = await db.outbox.orderBy('sequence').toArray();
+        expect(reapplied.map(entry => entry.intent.targetId)).toEqual(ids);
+        for (const entry of reapplied) {
+            expect(isUuid(entry.intent.mutationId)).toBe(true);
+            expect(generated).not.toContain(entry.intent.mutationId);
+        }
+    });
+    it('rejects non-v7 account bindings and snapshot record IDs', async () => {
+        const { db, snapshot } = fixture();
+        const invalidIds = [crypto.randomUUID(), '00000000-0000-7000-c000-000000000001',
+            '00000000-0000-7000-8000-00000000000G', '00000000000070008000000000000001'];
+        for (const id of invalidIds) {
+            expect(() => new AccountDatabase({ accountId: ACCOUNT_A, installationId: id })).toThrow('invalid_account_binding');
+            expect(() => new AccountDatabase({ accountId: id, installationId: snapshot.installationId })).toThrow('invalid_account_binding');
+            await expect(hydrateFromServer(db, { ...snapshot, gyms: [{ ...snapshot.gyms[0], id }] })).rejects.toThrow('invalid_snapshot');
+        }
+        expect(await db.gyms.count()).toBe(0);
+    });
     it('uses UUID-keyed, exercise-free stores isolated by account and installation', async () => {
         const first = fixture();
-        const second = fixture(2, first.snapshot.installationId);
-        const reset = fixture(1);
+        const second = fixture(ACCOUNT_B, first.snapshot.installationId);
+        const reset = fixture(ACCOUNT_A);
         await hydrateFromServer(first.db, first.snapshot);
         expect(await second.db.users.count()).toBe(0);
         expect(await reset.db.gyms.count()).toBe(0);
@@ -38,10 +83,10 @@ describe('account caches and transactional intent', () => {
         await hydrateFromServer(db, snapshot);
         await applyOperation(db, 'profile.update', null, { name: 'Offline edit' });
         db.close(); await db.open();
-        expect((await db.users.get(1))?.name).toBe('Offline edit');
+        expect((await db.users.get(ACCOUNT_A))?.name).toBe('Offline edit');
         expect(await db.outbox.count()).toBe(1);
         await expect(hydrateFromServer(db, snapshot)).rejects.toThrow('pending_work');
-        expect((await db.users.get(1))?.name).toBe('Offline edit');
+        expect((await db.users.get(ACCOUNT_A))?.name).toBe('Offline edit');
     });
     it('delivers persisted offline intent once after reopening the account cache', async () => {
         const { db, snapshot } = fixture();
@@ -65,26 +110,26 @@ describe('account caches and transactional intent', () => {
         await flushPendingMutations(db);
         expect(delivery).toHaveBeenCalledTimes(1);
         expect(await db.outbox.count()).toBe(0);
-        expect(await db.users.get(1)).toMatchObject({ name: 'Persisted edit', revision: 2 });
+        expect(await db.users.get(ACCOUNT_A)).toMatchObject({ name: 'Persisted edit', revision: 2 });
     });
     it('atomically discards pending intent into a validated authoritative snapshot for only one account', async () => {
         const first = fixture();
-        const second = fixture(2, first.snapshot.installationId);
+        const second = fixture(ACCOUNT_B, first.snapshot.installationId);
         await hydrateFromServer(first.db, first.snapshot);
         await hydrateFromServer(second.db, second.snapshot);
         await applyOperation(first.db, 'profile.update', null, { name: 'Discard me' });
         await applyOperation(second.db, 'profile.update', null, { name: 'Keep me' });
         const authoritative = { ...first.snapshot, accountGeneration: 3,
             profile: { ...first.snapshot.profile, revision: 2, name: 'Server name' }, workouts: [{
-                id: crypto.randomUUID(), revision: 1, gymId: first.snapshot.gyms[0].id, startTime: 10, endTime: 20,
+                id: uuidv7(), revision: 1, gymId: first.snapshot.gyms[0].id, startTime: 10, endTime: 20,
             }] };
         const expected = (await first.db.outbox.toArray()).map(entry => entry.intent.mutationId);
         await discardPendingChanges(first.db, authoritative, expected);
         expect(await first.db.outbox.count()).toBe(0);
-        expect((await first.db.users.get(1))?.name).toBe('Server name');
+        expect((await first.db.users.get(ACCOUNT_A))?.name).toBe('Server name');
         expect(await first.db.workouts.toArray()).toEqual(authoritative.workouts);
         expect(await first.db.syncMetadata.get('state')).toMatchObject({ accountGeneration: 3, catalogGeneration: 1 });
-        expect((await second.db.users.get(2))?.name).toBe('Keep me');
+        expect((await second.db.users.get(ACCOUNT_B))?.name).toBe('Keep me');
         expect(await second.db.outbox.count()).toBe(1);
     });
     it('leaves optimistic rows and commands untouched when discard validation or replacement fails', async () => {
@@ -95,12 +140,12 @@ describe('account caches and transactional intent', () => {
         const expected = before.map(entry => entry.intent.mutationId);
         await expect(discardPendingChanges(db, { ...snapshot, gyms: [{ ...snapshot.gyms[0], archived: 'false' }] } as unknown as Snapshot, expected))
             .rejects.toThrow('invalid_snapshot');
-        await expect(discardPendingChanges(db, { ...snapshot, accountId: 2, profile: { ...snapshot.profile, id: 2 } }, expected))
+        await expect(discardPendingChanges(db, { ...snapshot, accountId: ACCOUNT_B, profile: { ...snapshot.profile, id: ACCOUNT_B } }, expected))
             .rejects.toThrow('account_binding_mismatch');
         const put = vi.spyOn(db.users, 'put').mockRejectedValueOnce(new Error('replacement_failed'));
         await expect(discardPendingChanges(db, snapshot, expected)).rejects.toThrow('replacement_failed');
         put.mockRestore();
-        expect((await db.users.get(1))?.name).toBe('Keep local');
+        expect((await db.users.get(ACCOUNT_A))?.name).toBe('Keep local');
         expect(await db.outbox.toArray()).toEqual(before);
     });
     it('aborts discard if another tab adds pending intent after confirmation', async () => {
@@ -110,8 +155,8 @@ describe('account caches and transactional intent', () => {
         const expected = (await db.outbox.toArray()).map(entry => entry.intent.mutationId);
         await applyOperation(db, 'profile.update', null, { weight: 80 });
         await expect(discardPendingChanges(db, snapshot, expected)).rejects.toThrow('pending_work_changed');
-        expect((await db.users.get(1))?.name).toBe('Originally confirmed');
-        expect((await db.users.get(1))?.weight).toBe(80);
+        expect((await db.users.get(ACCOUNT_A))?.name).toBe('Originally confirmed');
+        expect((await db.users.get(ACCOUNT_A))?.weight).toBe(80);
         expect(await db.outbox.count()).toBe(2);
     });
     it('rolls back both local state and outgoing intent on transaction failure', async () => {
@@ -121,14 +166,14 @@ describe('account caches and transactional intent', () => {
             await applyOperation(db, 'profile.update', null, { name: 'Must roll back' });
             throw new Error('abort');
         })).rejects.toThrow('abort');
-        expect((await db.users.get(1))?.name).toBe('Test');
+        expect((await db.users.get(ACCOUNT_A))?.name).toBe('Test');
         expect(await db.outbox.count()).toBe(0);
     });
     it('records profile measurements and both intents in one transaction', async () => {
         const { db, snapshot } = fixture();
         await hydrateFromServer(db, snapshot);
         await updateProfileWithMeasurement(db, { name: 'Measured', weight: 80, bodyFat: 20 }, 10);
-        expect(await db.users.get(1)).toMatchObject({ name: 'Measured', weight: 80, bodyFat: 20 });
+        expect(await db.users.get(ACCOUNT_A)).toMatchObject({ name: 'Measured', weight: 80, bodyFat: 20 });
         expect(await db.userMeasurements.toArray()).toEqual([
             expect.objectContaining({ weight: 80, bodyFat: 20, timestamp: 10, revision: 0 }),
         ]);
@@ -141,7 +186,7 @@ describe('account caches and transactional intent', () => {
         await hydrateFromServer(db, snapshot);
         await expect(updateProfileWithMeasurement(db, { name: 'Must roll back', weight: 80 }, Number.NaN))
             .rejects.toThrow('invalid_payload');
-        expect(await db.users.get(1)).toEqual(snapshot.profile);
+        expect(await db.users.get(ACCOUNT_A)).toEqual(snapshot.profile);
         expect(await db.userMeasurements.count()).toBe(0);
         expect(await db.outbox.count()).toBe(0);
     });
@@ -152,7 +197,7 @@ describe('account caches and transactional intent', () => {
         const pending = await db.outbox.orderBy('sequence').toArray();
         await db.outbox.update(pending[0].sequence, { state: 'conflict', error: 'revision_conflict' });
         await resolvePendingConflict(db, snapshot, pending.map(entry => entry.intent.mutationId), 'discard');
-        expect(await db.users.get(1)).toEqual(snapshot.profile);
+        expect(await db.users.get(ACCOUNT_A)).toEqual(snapshot.profile);
         expect(await db.userMeasurements.count()).toBe(0);
         expect(await db.outbox.count()).toBe(0);
     });
@@ -251,7 +296,7 @@ describe('account caches and transactional intent', () => {
         await flushPendingMutations(db);
         expect(fetch).toHaveBeenCalledTimes(1);
         expect((await db.outbox.toArray())[0]).toMatchObject({ state: 'conflict', attempts: 0, error: 'generation_conflict' });
-        expect((await db.users.get(1))?.name).toBe('Stale local edit');
+        expect((await db.users.get(ACCOUNT_A))?.name).toBe('Stale local edit');
     });
     it('marks the affected domain intent when a mixed queue has one stale generation', async () => {
         const { db, snapshot } = fixture();
@@ -284,7 +329,7 @@ describe('account caches and transactional intent', () => {
         expect(remaining).toHaveLength(1);
         expect(remaining[0].intent.operation).toBe('gym.update');
         expect(await db.userMeasurements.get(measurementId!)).toBeUndefined();
-        expect((await db.users.get(1))?.name).toBe('Remote profile');
+        expect((await db.users.get(ACCOUNT_A))?.name).toBe('Remote profile');
         expect((await db.gyms.get(snapshot.gyms[0].id))?.name).toBe('Catalog edit');
     });
     it('does not advance the unrelated generation after an acknowledgement', async () => {
@@ -326,13 +371,13 @@ describe('account caches and transactional intent', () => {
         const after = await db.outbox.orderBy('sequence').toArray();
         if (resolution === 'discard') {
             expect(after).toHaveLength(0);
-            expect(await db.users.get(1)).toMatchObject({ name: 'Server', weight: null, revision: 3 });
+            expect(await db.users.get(ACCOUNT_A)).toMatchObject({ name: 'Server', weight: null, revision: 3 });
         } else {
             expect(after).toHaveLength(2);
             expect(after.map(entry => entry.intent.mutationId)).not.toEqual(before.map(entry => entry.intent.mutationId));
             expect(after[0].command).toMatchObject({ expectedRevision: 3, payload: { name: 'Reviewed' } });
             expect(after[1]).toMatchObject({ dependency: after[0].sequence, command: null });
-            expect(await db.users.get(1)).toMatchObject({ name: 'Reviewed', weight: 80, revision: 3 });
+            expect(await db.users.get(ACCOUNT_A)).toMatchObject({ name: 'Reviewed', weight: 80, revision: 3 });
         }
     });
     it('discards a workout that depends on a rejected offline gym create', async () => {
@@ -355,10 +400,10 @@ describe('account caches and transactional intent', () => {
         await applyOperation(db, 'profile.update', null, { name: 'Keep local intent' });
         const malformed = { ...snapshot, gyms: [{ ...snapshot.gyms[0], archived: 'false' }] };
         expect((await prepareAccountCache(db, malformed as unknown as Snapshot)).status).toBe('error');
-        expect((await db.users.get(1))?.name).toBe('Keep local intent');
+        expect((await db.users.get(ACCOUNT_A))?.name).toBe('Keep local intent');
         expect(await db.outbox.count()).toBe(1);
         expect((await prepareAccountCache(db, snapshot)).status).toBe('success');
-        expect((await db.users.get(1))?.name).toBe('Keep local intent');
+        expect((await db.users.get(ACCOUNT_A))?.name).toBe('Keep local intent');
     });
     it('does not send when a lifecycle change happens while waiting for a lock', async () => {
         const { db, snapshot } = fixture();
@@ -377,7 +422,7 @@ describe('account caches and transactional intent', () => {
     });
     it('applies a confirmed acknowledgement to the detached account cache', async () => {
         const { db, snapshot } = fixture();
-        const next = fixture(2, snapshot.installationId);
+        const next = fixture(ACCOUNT_B, snapshot.installationId);
         await hydrateFromServer(db, snapshot);
         await hydrateFromServer(next.db, next.snapshot);
         await applyOperation(db, 'profile.update', null, { name: 'Confirmed edit' });
@@ -399,10 +444,10 @@ describe('account caches and transactional intent', () => {
         release();
         await sending;
         expect(await db.outbox.count()).toBe(0);
-        expect((await db.users.get(1))?.revision).toBe(2);
+        expect((await db.users.get(ACCOUNT_A))?.revision).toBe(2);
         expect((await db.syncMetadata.get('state'))?.accountGeneration).toBe(1);
         expect(await next.db.outbox.count()).toBe(0);
-        expect(await next.db.users.get(2)).toEqual(next.snapshot.profile);
+        expect(await next.db.users.get(ACCOUNT_B)).toEqual(next.snapshot.profile);
     });
     it.each([
         [401, 'unauthorized', 'paused'], [403, 'forbidden', 'failed'],
@@ -423,7 +468,7 @@ describe('account caches and transactional intent', () => {
         await flushPendingMutations(db);
         expect(fetch).toHaveBeenCalledTimes(2);
         expect((await db.outbox.toArray())[0]).toMatchObject({ state, error, command: before });
-        expect((await db.users.get(1))?.name).toBe('Keep rejected intent');
+        expect((await db.users.get(ACCOUNT_A))?.name).toBe('Keep rejected intent');
     });
     it('prevents concurrent local starts and leaves rejected validation out of the queue', async () => {
         const { db, snapshot } = fixture();

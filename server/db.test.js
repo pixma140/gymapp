@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { v7 as uuidv7 } from 'uuid';
 import { openDatabase } from './db.js';
 import { createApp } from './app.js';
 
@@ -9,7 +10,7 @@ describe('database lifecycle and serialization', () => {
         try {
             await Promise.all([first.initDatabase({ seedDevData: false }), second.initDatabase({ seedDevData: false })]);
             expect(createApp({ database: first }).app).not.toBe(createApp({ database: second }).app);
-            await first.runSql("INSERT INTO users (name) VALUES ('First')");
+            await first.runSql("INSERT INTO users (id, name) VALUES (?, 'First')", [uuidv7()]);
             expect(await second.allSql('SELECT * FROM users')).toEqual([]);
         } finally {
             await Promise.all([first.close(), second.close()]);

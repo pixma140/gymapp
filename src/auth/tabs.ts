@@ -1,3 +1,5 @@
+import { v7 as uuidv7 } from 'uuid';
+
 const SESSION_LOCK = 'gymapp-session';
 const CHANNEL = 'gymapp-session';
 const EPOCH_KEY = 'gymapp-session-epoch';
@@ -5,7 +7,7 @@ export function sessionEpoch(): string | null {
     try { return localStorage.getItem(EPOCH_KEY); } catch { return null; }
 }
 function advanceEpoch(): void {
-    try { localStorage.setItem(EPOCH_KEY, crypto.randomUUID()); } catch { /* BroadcastChannel remains available. */ }
+    try { localStorage.setItem(EPOCH_KEY, uuidv7()); } catch { /* BroadcastChannel remains available. */ }
 }
 type SessionMessage = 'changing' | 'changed';
 

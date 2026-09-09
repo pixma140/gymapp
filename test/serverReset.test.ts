@@ -53,7 +53,7 @@ async function login(baseUrl: string): Promise<string> {
 
 async function bootstrap(baseUrl: string, cookie: string) {
     const response = await fetch(`${baseUrl}/api/bootstrap`, { headers: { Cookie: cookie } });
-    return response.json() as Promise<{ installationId: string; user: { id: number }; snapshot: Snapshot }>;
+    return response.json() as Promise<{ installationId: string; user: { id: string }; snapshot: Snapshot }>;
 }
 
 describe('server reset replay isolation', () => {

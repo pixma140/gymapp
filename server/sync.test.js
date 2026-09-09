@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { randomUUID } from 'node:crypto';
+import { v7 as uuidv7 } from 'uuid';
 import { createApp } from './app.js';
 import { openDatabase } from './db.js';
 
@@ -14,8 +15,8 @@ async function request(method, route, { body, cookie } = {}) {
     return { status: res.status, body: await res.json(), cookie: res.headers.get('set-cookie')?.split(';')[0] ?? cookie };
 }
 const command = (operation, payload, options = {}) => ({
-    accountId: userId, installationId, mutationId: randomUUID(), operation,
-    targetId: operation === 'profile.update' ? null : randomUUID(), expectedRevision: null, payload, ...options,
+    accountId: userId, installationId, mutationId: uuidv7(), operation,
+    targetId: operation === 'profile.update' ? null : uuidv7(), expectedRevision: null, payload, ...options,
 });
 const send = (body, cookie = userCookie) => request('POST', '/api/sync', { body, cookie });
 const snapshot = cookie => request('GET', '/api/sync/snapshot', { cookie });
@@ -71,10 +72,26 @@ describe('replacement sync contract', () => {
         expect((await request('GET', '/api/auth/me', { cookie: userCookie })).status).toBe(200);
     });
     it('binds delivery to both the installation and authenticated account', async () => {
-        for (const options of [{ accountId: adminId }, { installationId: randomUUID() }]) {
+        for (const options of [{ accountId: adminId }, { installationId: uuidv7() }]) {
             const result = await send(command('profile.update', { name: 'Wrong' }, { expectedRevision: 1, ...options }));
             expect(result.body.error).toBe('account_binding_mismatch');
         }
+    });
+    it('rejects non-v7 command IDs before mutation', async () => {
+        expect((await send({ ...command('profile.update', { name: 'Invalid' }, { expectedRevision: 1 }), accountId: 1 })).body.error).toBe('invalid_binding');
+        const invalidIds = [randomUUID(), '00000000-0000-7000-c000-000000000001'];
+        for (const id of invalidIds) {
+            const measurement = command('measurement.create', { weight: 80, bodyFat: null, timestamp: 1 });
+            for (const field of ['accountId', 'installationId', 'mutationId', 'targetId']) {
+                const result = await send({ ...measurement, [field]: id });
+                expect(result.status).toBe(400);
+                expect(result.body.error).toBe(field === 'targetId' ? 'invalid_target' : 'invalid_binding');
+            }
+            const workout = await send(command('workout.start', { gymId: id, startTime: 1 }));
+            expect(workout.status).toBe(400);
+            expect(workout.body.error).toBe('invalid_payload');
+        }
+        expect((await snapshot(userCookie)).body.measurements).toEqual([]);
     });
     it('restricts shared gym writes to current administrators', async () => {
         const create = command('gym.create', { name: 'Shared Gym', location: 'City' });
@@ -130,7 +147,7 @@ describe('replacement sync contract', () => {
         expect((await send(foreign, adminCookie)).status).toBe(404);
         const profile = command('profile.update', { name: 'New name' }, { expectedRevision: 1 });
         expect((await send(profile)).body.revision).toBe(2);
-        expect((await send({ ...profile, mutationId: randomUUID() })).body.error).toBe('revision_conflict');
+        expect((await send({ ...profile, mutationId: uuidv7() })).body.error).toBe('revision_conflict');
         expect((await snapshot(userCookie)).body.accountGeneration).toBe(3);
     });
     it('rejects another active session and allows finishing at an archived gym', async () => {

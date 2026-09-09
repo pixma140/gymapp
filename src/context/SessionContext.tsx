@@ -16,7 +16,7 @@ interface SessionState {
     error: Error | null;
 }
 interface SessionContextValue extends SessionState {
-    userId: number | null;
+    userId: string | null;
     isAdmin: boolean;
     isLoading: boolean;
     refresh: () => Promise<void>;
