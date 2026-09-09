@@ -260,3 +260,10 @@ was introduced.
 - Version bumped to `0.2.0-alpha` and the obsolete `exercise` package keyword
   removed. RELEASE_NOTES.md now records the A–G rewrite and its fresh-database
   requirement.
+- Hosted verification is proven: run
+  <https://github.com/pixma140/gymapp/actions/runs/34324003865> on commit
+  `b8e1a23` passed the verify job (Vitest, ESLint, build, nine Chromium
+  workflows) in 1m48s and the amd64/arm64 image build in 4m38s, while the
+  publish job was skipped for the non-tag ref. Actions were then bumped to
+  `checkout@v5`, `setup-node@v5`, and `upload-artifact@v5` to clear the
+  Node 20 deprecation warning.
