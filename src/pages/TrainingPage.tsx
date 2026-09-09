@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { GymList } from '@/components/GymList';
 import { useActiveWorkout } from '@/hooks/useActiveWorkout';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -14,7 +13,6 @@ export function TrainingPage() {
                 <p className="text-[var(--muted-foreground)] mt-1">{t('training.subtitle.select')}</p>
             </header>
 
-            {active && <Link className="inline-block p-4 bg-[var(--primary)] rounded-xl" to={`/workout/${active.gymId}`}>{t('timed.resume')}</Link>}
             <GymList activeGymId={active?.gymId} />
         </div>
     );
