@@ -3,8 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useDatabase } from '@/context/SessionContext';
 import { applyOperation } from '@/db/operations';
 import type { Gym } from '@/db/db';
-import { ArrowLeft, Trash2, Edit2, Save, X, Plus, MapPin } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Trash2, Edit2, Save, X, Plus, MapPin } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
 
 export function ManageGymsPage() {
@@ -67,9 +66,6 @@ export function ManageGymsPage() {
         <div className="space-y-6 animate-in fade-in duration-500 max-w-md mx-auto pb-20 p-4">
             {failed && <p role="alert">{t('sync.operationFailed')}</p>}
             <header className="flex items-center gap-4">
-                <Link aria-label={t('common.back')} to="/settings" className="text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
-                    <ArrowLeft className="size-6" />
-                </Link>
                 <div className="flex-1">
                     <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">{t('manageGyms.title')}</h1>
                 </div>

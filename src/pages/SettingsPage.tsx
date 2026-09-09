@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Database, Moon, Trash, Dumbbell, Earth, Bell, Palette, Github, LogOut, Shield } from 'lucide-react';
+import { Database, Moon, Trash, Earth, Bell, Palette, Github, LogOut, Shield } from 'lucide-react';
 import { useDatabase } from '@/context/SessionContext';
 import { applyOperation } from '@/db/operations';
 import type { Theme } from '@/context/ThemeContext';
@@ -152,15 +152,6 @@ export function SettingsPage() {
                         </select>
                     </div>
 
-                    {isAdmin && <Link to="/settings/gyms" className="w-full flex items-center justify-between p-4 hover:bg-[var(--accent)] transition-colors border-b border-[var(--border)] border-dashed">
-                        <div className="flex items-center gap-3">
-                            <Dumbbell className="size-5 text-[var(--muted-foreground)]" />
-                            <div className="text-left">
-                                <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.manage_gyms')}</h3>
-                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.manage_gyms.desc')}</p>
-                            </div>
-                        </div>
-                    </Link>}
                 </div>
 
                 {isAdmin && (
