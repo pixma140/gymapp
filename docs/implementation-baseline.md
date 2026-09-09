@@ -280,3 +280,9 @@ was introduced.
   as pre-releases. `v0.2.0-alpha` was created manually before this job existed;
   the missing `v0.1.4-alpha` and `v0.1.5-alpha` releases were backfilled, the
   latter noting that its 2026-03-10 build failed and published no image.
+  The release job itself has not yet run on a tag: branch run
+  <https://github.com/pixma140/gymapp/actions/runs/34326515021> passed
+  verification and the amd64/arm64 build with the publish and release jobs
+  correctly skipped. Its notes extraction and pre-release detection were checked
+  locally against `v0.2.0-alpha`, `v0.1.4-alpha`, and `v0.1.0-alpha`; the next
+  release tag is its first hosted execution.
