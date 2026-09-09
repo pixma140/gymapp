@@ -125,6 +125,11 @@ Keep changes consistent with existing patterns and scripts.
 - Deployment usernames, fixture passwords, and OIDC client credentials come only from the server environment. Tests generate disposable credentials.
 - Configuration APIs use explicit non-secret allowlists. Environment-managed fields are read-only in the admin UI and enforced by the API; unset OIDC fields remain editable.
 
+## Completion and Commits
+- After completing each feature, fix, refactor, documentation update, or other change, run the relevant checks and create a Git commit before reporting completion, unless the user explicitly asks otherwise.
+- Review the diff and stage only files belonging to the completed work; keep secrets and unrelated user changes out of the commit.
+- Use a concise commit message describing the change. Pushes, tags, and releases require a separate user request.
+
 ## Adding Features
 - Match current UI patterns (card layout, bold headers, muted text).
 - Keep layouts mobile-first; many screens center on `max-w-md`.
