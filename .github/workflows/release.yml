@@ -142,3 +142,18 @@ jobs:
           else
             gh release create "$TAG" --verify-tag "${options[@]}"
           fi
+
+      - name: Align latest Git tag with the published release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          commit="$(git rev-parse HEAD)"
+          if gh api "repos/$GH_REPO/git/ref/tags/latest" --silent; then
+            gh api --method PATCH "repos/$GH_REPO/git/refs/tags/latest" \
+              -f sha="$commit" -F force=true --silent
+          else
+            gh api --method POST "repos/$GH_REPO/git/refs" \
+              -f ref=refs/tags/latest -f sha="$commit" --silent
+          fi

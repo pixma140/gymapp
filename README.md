@@ -185,7 +185,11 @@ Its three jobs run in order:
 | --- | --- | --- |
 | `verify` | always | Installs dependencies and Chromium, then Vitest, ESLint (including server/shared JavaScript), the production build, and the Playwright workflows. Uploads the report as an artifact when a browser run fails. |
 | `publish-image` | tags, after `verify` | Builds the amd64 and arm64 images and pushes `:latest`, `:<tag>`, and `:<sha>` to GHCR, so a failing tag publishes nothing. |
-| `create-release` | `v*` tags, after `publish-image` | Creates or updates the GitHub release from the `## <tag>` section of [RELEASE_NOTES.md](RELEASE_NOTES.md), falling back to a commit summary. Tags with a suffix such as `-alpha` are marked as pre-releases. |
+| `create-release` | `v*` tags, after `publish-image` | Creates or updates the GitHub release from the `## <tag>` section of [RELEASE_NOTES.md](RELEASE_NOTES.md), falling back to a commit summary. Tags with a suffix such as `-alpha` are marked as pre-releases. Finally moves the Git `latest` tag to the published release commit. |
+
+The Git `latest` tag tracks the most recently published release, including alpha
+releases, alongside the Docker `:latest` image. Automation updates it using
+`GITHUB_TOKEN`, so that tag update does not trigger another workflow run.
 
 To verify a branch without tagging it, start the workflow manually from the
 Actions tab (`gh workflow run Release --ref <branch>`); the `publish-image` and
