@@ -267,3 +267,10 @@ was introduced.
   publish job was skipped for the non-tag ref. Actions were then bumped to
   `checkout@v5`, `setup-node@v5`, and `upload-artifact@v5` to clear the
   Node 20 deprecation warning.
+- Release `v0.2.0-alpha` (commit `bb22435`) ran
+  <https://github.com/pixma140/gymapp/actions/runs/34325555288>: verification
+  passed in 1m30s and the publish job pushed
+  `ghcr.io/pixma140/gymapp:latest`, `:v0.2.0-alpha`, and `:bb22435d…` as a
+  multi-architecture manifest, digest
+  `sha256:90dd709dccd8882401e021eac079a3d70ce6d2fd430680c35ef4bb491e405177`.
+  The branch-only image-build job was correctly skipped for the tag.
