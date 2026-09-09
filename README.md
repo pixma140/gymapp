@@ -146,4 +146,8 @@ server/shared JavaScript), the production build, and the Playwright workflows;
 failed browser runs upload their report as an artifact. Branch and pull-request
 runs additionally build amd64 and arm64 images without publishing. Only release
 tags publish to GHCR, and only after verification passes; the publish job builds
-both architectures itself, so a broken image never reaches the registry.
+both architectures itself, so a broken image never reaches the registry. A final
+job then creates or updates the matching GitHub release, taking its body from
+the `## <tag>` section of [RELEASE_NOTES.md](RELEASE_NOTES.md) and falling back
+to a commit summary when that section is missing. Tags containing a suffix such
+as `-alpha` are marked as pre-releases.

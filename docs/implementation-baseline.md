@@ -274,3 +274,9 @@ was introduced.
   multi-architecture manifest, digest
   `sha256:90dd709dccd8882401e021eac079a3d70ce6d2fd430680c35ef4bb491e405177`.
   The branch-only image-build job was correctly skipped for the tag.
+- Releases are now part of the tag pipeline: a `release` job with
+  `contents: write` runs after publishing and creates or updates the GitHub
+  release from the matching `RELEASE_NOTES.md` section, marking suffixed tags
+  as pre-releases. `v0.2.0-alpha` was created manually before this job existed;
+  the missing `v0.1.4-alpha` and `v0.1.5-alpha` releases were backfilled, the
+  latter noting that its 2026-03-10 build failed and published no image.
