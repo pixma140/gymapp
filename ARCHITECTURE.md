@@ -3,8 +3,8 @@
 Current implementation checkpoint: Phases A–G are implemented, including
 deterministic fixtures, account authorization, transactional bootstrap,
 account-local tab coordination, durable revisioned synchronization, timed-workout
-UI, and CI publication gates. Local checks pass; hosted GitLab execution and
-arm64 image verification remain open in PLAN.md.
+UI, and CI publication gates. Local checks pass; hosted verification and the
+arm64 image build run in GitHub Actions.
 
 ## Runtime and modules
 
@@ -119,7 +119,7 @@ automatic merging is promised. Gym catalog operations share the sync service's
 authorization, revisions, and receipt transaction rather than a separate gym
 service. These are the final module placements from the proposed plan.
 
-CI runs tests, lint, the production build, and Chromium workflows before an
-amd64/arm64 image-build gate. Only release tags can publish. Local Docker build
-verification has passed; hosted GitLab and arm64 execution still need runner
-evidence. Registry publication has not been performed.
+GitHub Actions runs tests, lint, the production build, and Chromium workflows
+before any image work. Branch and pull-request runs build amd64/arm64 images
+without publishing; only release tags publish to GHCR, and only after
+verification passes. GitLab CI was removed; GitHub is the single release path.

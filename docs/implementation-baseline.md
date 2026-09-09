@@ -249,3 +249,14 @@ was introduced.
   authorization to push or trigger its branch pipeline are still needed. Record
   the pipeline URL, tested commit, and successful verification/image-build jobs
   before closing this item. No push, registry publication, or database reset ran.
+
+## Release checkpoint — 2026-09-09
+
+- GitLab CI was removed; GitHub Actions is the single verification and release
+  path. `.github/workflows/verify-and-publish.yml` runs Vitest, ESLint, the
+  production build, and the Chromium workflows on branch pushes, pull requests,
+  and release tags. Branch and pull-request runs build amd64/arm64 images
+  without publishing; release tags publish to GHCR only after verification.
+- Version bumped to `0.2.0-alpha` and the obsolete `exercise` package keyword
+  removed. RELEASE_NOTES.md now records the A–G rewrite and its fresh-database
+  requirement.

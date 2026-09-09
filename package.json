@@ -8,7 +8,6 @@
   "keywords": [
     "gym",
     "training",
-    "exercise",
     "workout",
     "tracker",
     "log",
@@ -20,7 +19,7 @@
     "type": "git",
     "url": "https://github.com/pixma140/gymapp.git"
   },
-  "version": "0.1.5-alpha",
+  "version": "0.2.0-alpha",
   "private": true,
   "type": "module",
   "scripts": {

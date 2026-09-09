@@ -1,6 +1,6 @@
 # Implementation plan
 
-Status: Phase G implementation and local verification are complete. All 113 Vitest tests, nine Chromium workflows (including the audit follow-up), lint, production build, and the local Docker image build pass. GitLab now gates tag-only multi-architecture publication on verification and image builds; the hosted pipeline and arm64 build still require a GitLab runner execution. The development database was last explicitly reset and seeded during Phase B on 2026-09-08; no further reset was needed. See `docs/implementation-baseline.md` for checkpoint details.
+Status: Phase G implementation and local verification are complete. All 113 Vitest tests, nine Chromium workflows (including the audit follow-up), lint, production build, and the local Docker image build pass. GitHub Actions now runs verification on branches, pull requests, and release tags, and gates tag-only multi-architecture GHCR publication on it; GitLab CI was removed. The development database was last explicitly reset and seeded during Phase B on 2026-09-08; no further reset was needed. See `docs/implementation-baseline.md` for checkpoint details.
 
 Sources: [SUGGESTIONS.md](SUGGESTIONS.md), [ARCHITECTURE.md](ARCHITECTURE.md), and the user's appendix. The appendix takes precedence: this is a work-in-progress reset, default test users and shared gyms are required, and the existing exercise implementation must be removed. External exercise integration belongs to a later task.
 
@@ -179,7 +179,7 @@ The 2026-09-08 repository audit re-ran all Vitest tests, lint, and the productio
 - [x] Add browser smoke coverage for the surviving workflows. Keep the setup small; choose a browser runner in implementation only if the available environment has no reusable harness. Wire its install/run commands explicitly if introduced.
 - [x] Extend ESLint to server/shared JavaScript with appropriate globals. Keep formatting/line-ending normalization isolated from behavior changes.
 - [x] Run `npm test`, `npm run lint`, and `npm run build`; fix failures. Measure the resulting initial bundle and verify charts/admin code actually load separately.
-- [x] Update GitLab workflow rules so verification runs for branches/merge requests as well as release tags. Make multi-architecture image publication depend on passing checks, while retaining tag-only publishing.
+- [x] Update the release workflow so verification runs for branches and pull requests as well as release tags. Make multi-architecture image publication depend on passing checks, while retaining tag-only publishing.
 - [x] Update Docker/Compose and README with the fixture flag, reset command, exact test logins, shared-gym permissions, offline/refresh limitations, and the temporary absence of exercise logging. Keep non-fixture setup documented.
 - [x] Update `ARCHITECTURE.md`, stale `AGENTS.md` assumptions, new test-file listings, and the suggestions disposition. Do not mark the future external exercise integration complete.
 
@@ -228,4 +228,4 @@ Completion means all applicable checkboxes and acceptance cases pass for this re
 - [x] Catch history-deletion failures, show translated feedback, and disable deletion while pending. Browser regression covers canceled confirmation, failed local storage with no lost workout or queued command, and successful retry. All 113 Vitest tests, lint, and the production build pass.
 - [x] Remove confirmed unused starter files (`src/App.css`, `src/assets/react.svg`, `public/vite.svg`) and reconcile current documentation with completed phases and final module placement. Historical checkpoint notes are explicitly labeled.
 - [x] Rebuild the local Docker image after the follow-up changes and record the final local verification results in `docs/implementation-baseline.md`: 113 Vitest tests, nine Chromium workflows, lint, production build, and Docker build pass.
-- [ ] Run a hosted GitLab branch pipeline and record its URL, commit, and successful verification plus amd64/arm64 image-build jobs. This requires separate authorization to push or trigger the remote pipeline; tag-only registry publication is not needed to close this check. Only a GitHub origin is configured locally, so the target GitLab project must also be supplied.
+- [ ] Run the hosted GitHub Actions pipeline and record its URL, commit, and successful verification plus amd64/arm64 image jobs. GitLab CI was removed on 2026-09-09; GitHub is the only release path, and tag pushes publish to GHCR after verification.
