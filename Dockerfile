@@ -4,6 +4,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+ARG VITE_GIT_COMMIT
+ARG VITE_RELEASE_TAG
 RUN npm run build
 
 # Stage 2: Run app server with SQLite

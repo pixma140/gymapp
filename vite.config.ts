@@ -7,9 +7,9 @@ import { execSync } from 'child_process'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const gitCommit = (() => {
+const gitCommit = process.env.VITE_GIT_COMMIT || (() => {
   try {
-    return execSync('git rev-parse --short HEAD').toString().trim()
+    return execSync('git rev-parse HEAD').toString().trim()
   } catch {
     return 'unknown'
   }
@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
   define: {
     'import.meta.env.VITE_GIT_COMMIT': JSON.stringify(gitCommit),
+    'import.meta.env.VITE_RELEASE_TAG': JSON.stringify(process.env.VITE_RELEASE_TAG || ''),
   },
   resolve: {
     alias: {
