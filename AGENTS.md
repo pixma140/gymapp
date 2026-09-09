@@ -128,7 +128,10 @@ Keep changes consistent with existing patterns and scripts.
 ## Completion and Commits
 - After completing each feature, fix, refactor, documentation update, or other change, run the relevant checks and create a Git commit before reporting completion, unless the user explicitly asks otherwise.
 - Review the diff and stage only files belonging to the completed work; keep secrets and unrelated user changes out of the commit.
-- Use a concise commit message describing the change. Pushes, tags, and releases require a separate user request.
+- Use Conventional Commits: `<type>[optional scope][!]: <description>`. Choose the appropriate type, such as `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `build`, `ci`, `perf`, or `style`.
+- Keep the description concise and imperative, for example `fix(sync): preserve pending changes on retry` or `docs: clarify database reset instructions`.
+- Mark breaking changes with `!` and explain them in a `BREAKING CHANGE:` footer, including required setup actions. This applies during alpha too.
+- Pushes, tags, and releases require a separate user request.
 
 ## Adding Features
 - Match current UI patterns (card layout, bold headers, muted text).
