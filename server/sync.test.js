@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { v7 as uuidv7 } from 'uuid';
 import { createApp } from './app.js';
 import { openDatabase } from './db.js';
+import { EXERCISES } from '../shared/exercises.js';
 
 const database = openDatabase(':memory:');
 const { app } = createApp({ database });
@@ -101,7 +102,7 @@ describe('replacement sync contract', () => {
         const [admin, user] = await Promise.all([snapshot(adminCookie), snapshot(userCookie)]);
         expect(user.body.gyms).toEqual(admin.body.gyms);
         expect(user.body.gyms[0].id).toBe(gymId);
-        expect(user.body).not.toHaveProperty('exercises');
+        expect(user.body.workoutExercises).toEqual([]);
         for (const [operation, payload] of [['gym.update', { name: 'Hacked' }], ['gym.archive', { archived: true }]]) {
             expect((await send(command(operation, payload, { targetId: gymId, expectedRevision: 1 }))).status).toBe(403);
         }
@@ -149,6 +150,15 @@ describe('replacement sync contract', () => {
         expect((await send(profile)).body.revision).toBe(2);
         expect((await send({ ...profile, mutationId: uuidv7() })).body.error).toBe('revision_conflict');
         expect((await snapshot(userCookie)).body.accountGeneration).toBe(3);
+    });
+    it('records catalog exercise uses for only the active workout owner', async () => {
+        const use = command('workoutExercise.create', { workoutId, exerciseId: EXERCISES[0].id });
+        expect((await send({ ...use, payload: { workoutId, exerciseId: 'missing' } })).body.error).toBe('exercise_unavailable');
+        expect((await send({ ...use, accountId: adminId }, adminCookie)).body.error).toBe('workout_unavailable');
+        expect((await send(use)).status).toBe(200);
+        expect((await send(command('workoutExercise.create', use.payload))).body.error).toBe('exercise_already_selected');
+        expect((await snapshot(userCookie)).body.workoutExercises).toEqual([expect.objectContaining(use.payload)]);
+        expect((await snapshot(adminCookie)).body.workoutExercises).toEqual([]);
     });
     it('rejects another active session and allows finishing at an archived gym', async () => {
         expect((await send(command('workout.start', { gymId, startTime: 11 }))).body.error).toBe('active_workout_exists');

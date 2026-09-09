@@ -31,6 +31,7 @@ Keep changes consistent with existing patterns and scripts.
   - `server/adminUsers.test.js`: HTTP integration test of `/api/admin/users` routes (list/create/promote/demote/password-reset/delete authz and guards).
   - `test/api.test.ts`: typed API error classification, malformed bootstrap responses, and failed logout.
   - `test/*.test.ts`: client-side logic (account-cache isolation, hydration, transactional outbox, and dependent acknowledgements via `fake-indexeddb`).
+  - `test/exerciseCatalog.test.ts`: bundled exercise catalog grouping, cardio additions, filtering, and usage-weighted ranking.
   - `test/serverReset.test.ts`: end-to-end installation reset isolation between the real server sync contract and account-specific IndexedDB caches.
 - `server/app.js` exports `createApp({ database, ...config })` without opening a database or binding a port. Tests explicitly initialize and close handles from `server/db.js`; `server/index.js` owns process startup.
   - `server/seed.test.js`: fixture authentication/restart behavior, fresh-schema invariants, and scoped reset/lease guards.

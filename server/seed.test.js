@@ -76,7 +76,7 @@ describe('fresh schema and development fixtures', () => {
                 const snapshot = await fetch(`${base}/api/sync/snapshot`, { headers: { Cookie: response.headers.get('set-cookie').split(';')[0] } });
                 const data = await snapshot.json();
                 expect(data.profile.name).toBe(name);
-                expect(data.workouts).toEqual([]); expect(data.measurements).toEqual([]);
+                expect(data.workouts).toEqual([]); expect(data.workoutExercises).toEqual([]); expect(data.measurements).toEqual([]);
                 catalogs.push(data.gyms.map(({ id, name, location }) => ({ id, name, location })));
             }
             expect(catalogs[0]).toEqual(DEVELOPMENT_GYMS);
@@ -84,6 +84,7 @@ describe('fresh schema and development fixtures', () => {
             expect(await db.getSql('SELECT COUNT(*) AS count FROM users')).toEqual({ count: 2 });
             const tables = (await db.allSql("SELECT name FROM sqlite_master WHERE type = 'table'")).map(row => row.name);
             for (const name of ['exercises', 'gymEquipments', 'workoutSets']) expect(tables).not.toContain(name);
+            expect(tables).toContain('workoutExercises');
             expect(await db.getSql("SELECT value FROM app_settings WHERE key = 'dev.seed.completed'")).toEqual({ value: 'v1' });
         } finally {
             if (server) await new Promise(resolve => server.close(resolve));

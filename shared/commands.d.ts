@@ -39,6 +39,12 @@ export interface Workout {
     endTime: number | null;
     revision: Revision;
 }
+export interface WorkoutExercise {
+    id: UUID;
+    workoutId: UUID;
+    exerciseId: string;
+    revision: Revision;
+}
 export interface GymFields {
     name: string;
     location: string;
@@ -56,6 +62,7 @@ export interface CommandPayloads {
     'workout.start': { gymId: UUID; startTime: number };
     'workout.finish': { endTime: number };
     'workout.delete': Record<string, never>;
+    'workoutExercise.create': { workoutId: UUID; exerciseId: string };
     'gym.create': GymFields;
     'gym.update': Partial<GymFields>;
     'gym.archive': { archived: boolean };
@@ -83,6 +90,7 @@ export interface Snapshot extends AccountBinding {
     profile: Profile;
     gyms: Gym[];
     workouts: Workout[];
+    workoutExercises: WorkoutExercise[];
     measurements: Measurement[];
 }
 

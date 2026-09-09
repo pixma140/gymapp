@@ -7,6 +7,7 @@ export const COMMAND_FIELDS = Object.freeze({
     'workout.start': ['gymId', 'startTime'],
     'workout.finish': ['endTime'],
     'workout.delete': [],
+    'workoutExercise.create': ['workoutId', 'exerciseId'],
     'gym.create': ['name', 'location'],
     'gym.update': ['name', 'location'],
     'gym.archive': ['archived'],
@@ -21,7 +22,7 @@ export function validateCommand(command) {
     if (Object.keys(command).length !== keys.length || keys.some(key => !Object.hasOwn(command, key))) return 'invalid_command';
     if (!isUuid(command.mutationId) || !isUuid(command.installationId) || !isUuid(command.accountId)) return 'invalid_binding';
     if (command.operation === 'profile.update' ? command.targetId !== null : !isUuid(command.targetId)) return 'invalid_target';
-    const create = ['measurement.create', 'workout.start', 'gym.create'].includes(command.operation);
+    const create = ['measurement.create', 'workout.start', 'workoutExercise.create', 'gym.create'].includes(command.operation);
     if (create ? command.expectedRevision !== null : !Number.isSafeInteger(command.expectedRevision) || command.expectedRevision < 1) return 'invalid_revision';
     const payload = command.payload;
     if (!object(payload) || Object.keys(payload).some(key => !COMMAND_FIELDS[command.operation].includes(key))) return 'invalid_payload';
@@ -42,6 +43,8 @@ export function validateCommand(command) {
         if (key === 'language' && !['en', 'de'].includes(value)) return 'invalid_payload';
         if (key === 'theme' && !['light', 'dark', 'oled', 'system'].includes(value)) return 'invalid_payload';
         if (key === 'gymId' && !isUuid(value)) return 'invalid_payload';
+        if (key === 'workoutId' && !isUuid(value)) return 'invalid_payload';
+        if (key === 'exerciseId' && (typeof value !== 'string' || !value || value.length > 100)) return 'invalid_payload';
         if (key === 'archived' && typeof value !== 'boolean') return 'invalid_payload';
     }
     return null;

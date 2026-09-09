@@ -1,6 +1,7 @@
 import { v7 as uuidv7 } from 'uuid';
 import { isUuid, PROFILE_COLUMNS, validateCommand } from '@shared/commands';
 import { ApiError, isObject } from '@/lib/api';
+import { EXERCISE_IDS } from '@shared/exercises';
 import type { Snapshot } from '@shared/commands';
 import type { AccountDatabase, MutationIntent, PendingMutation } from './db';
 import { applyIntent } from './operations';
@@ -16,18 +17,29 @@ export function isSnapshot(value: unknown): value is Snapshot {
     if (!isObject(value) || !isUuid(value.installationId) || !isUuid(value.accountId)
         || !generation(value.accountGeneration) || !generation(value.catalogGeneration)
         || !isObject(value.profile) || value.profile.id !== value.accountId || !revision(value.profile.revision)
-        || !Array.isArray(value.gyms) || !Array.isArray(value.workouts) || !Array.isArray(value.measurements)) return false;
+        || !Array.isArray(value.gyms) || !Array.isArray(value.workouts) || !Array.isArray(value.workoutExercises)
+        || !Array.isArray(value.measurements)) return false;
     const profile = value.profile;
     if (!PROFILE_COLUMNS.every(key => Object.hasOwn(profile, key))
         || !validPayload('profile.update', Object.fromEntries(PROFILE_COLUMNS.map(key => [key, profile[key]])))) return false;
     const unique = (rows: unknown[]) => new Set(rows.map(row => isObject(row) ? row.id : null)).size === rows.length;
-    if (![value.gyms, value.workouts, value.measurements].every(unique)) return false;
+    if (![value.gyms, value.workouts, value.workoutExercises, value.measurements].every(unique)) return false;
     if (!value.gyms.every(row => isObject(row) && isUuid(row.id) && revision(row.revision) && typeof row.archived === 'boolean'
         && validPayload('gym.create', { name: row.name, location: row.location }))) return false;
     const gyms = new Set(value.gyms.map(row => row.id));
     if (!value.workouts.every(row => isObject(row) && isUuid(row.id) && revision(row.revision) && gyms.has(row.gymId)
         && validPayload('workout.start', { gymId: row.gymId, startTime: row.startTime })
         && (row.endTime === null || (Number.isSafeInteger(row.endTime) && Number(row.endTime) >= Number(row.startTime))))) return false;
+    const workouts = new Set(value.workouts.map(row => row.id));
+    const uses = new Set<string>();
+    if (!value.workoutExercises.every(row => {
+        if (!isObject(row) || !isUuid(row.id) || !revision(row.revision) || !workouts.has(row.workoutId)
+            || typeof row.exerciseId !== 'string' || !EXERCISE_IDS.has(row.exerciseId)) return false;
+        const key = `${row.workoutId}:${row.exerciseId}`;
+        if (uses.has(key)) return false;
+        uses.add(key);
+        return true;
+    })) return false;
     return value.measurements.every(row => isObject(row) && isUuid(row.id) && revision(row.revision)
         && validPayload('measurement.create', { weight: row.weight, bodyFat: row.bodyFat, timestamp: row.timestamp }));
 }
@@ -65,7 +77,7 @@ export async function prepareAccountCache(db: AccountDatabase, snapshot: Snapsho
 export async function hydrateFromServer(db: AccountDatabase, snapshot: Snapshot): Promise<{ status: 'success' | 'empty' }> {
     if (!isSnapshot(snapshot)) throw new ApiError('malformed', 'invalid_snapshot');
     if (snapshot.accountId !== db.binding.accountId || snapshot.installationId !== db.binding.installationId) throw new Error('account_binding_mismatch');
-    await db.transaction('rw', [db.users, db.gyms, db.workouts, db.userMeasurements, db.outbox, db.syncMetadata], async () => {
+    await db.transaction('rw', [db.users, db.gyms, db.workouts, db.workoutExercises, db.userMeasurements, db.outbox, db.syncMetadata], async () => {
         if (await db.outbox.count()) throw new Error('pending_work');
         await replaceAccountData(db, snapshot);
     });
@@ -73,10 +85,11 @@ export async function hydrateFromServer(db: AccountDatabase, snapshot: Snapshot)
 }
 
 async function replaceAccountData(db: AccountDatabase, snapshot: Snapshot): Promise<void> {
-    await Promise.all([db.users.clear(), db.gyms.clear(), db.workouts.clear(), db.userMeasurements.clear(), db.syncMetadata.clear()]);
+    await Promise.all([db.users.clear(), db.gyms.clear(), db.workouts.clear(), db.workoutExercises.clear(), db.userMeasurements.clear(), db.syncMetadata.clear()]);
     await db.users.put(snapshot.profile);
     await db.gyms.bulkPut(snapshot.gyms);
     await db.workouts.bulkPut(snapshot.workouts);
+    await db.workoutExercises.bulkPut(snapshot.workoutExercises);
     await db.userMeasurements.bulkPut(snapshot.measurements);
     const refreshedAt = Date.now();
     await db.syncMetadata.put({ key: 'state', ...db.binding, accountGeneration: snapshot.accountGeneration,
@@ -93,7 +106,7 @@ function assertPendingUnchanged(entries: PendingMutation[], expectedMutationIds:
 export async function discardPendingChanges(db: AccountDatabase, snapshot: Snapshot, expectedMutationIds: string[]): Promise<void> {
     if (!isSnapshot(snapshot)) throw new ApiError('malformed', 'invalid_snapshot');
     if (snapshot.accountId !== db.binding.accountId || snapshot.installationId !== db.binding.installationId) throw new Error('account_binding_mismatch');
-    await db.transaction('rw', [db.users, db.gyms, db.workouts, db.userMeasurements, db.outbox, db.syncMetadata], async () => {
+    await db.transaction('rw', [db.users, db.gyms, db.workouts, db.workoutExercises, db.userMeasurements, db.outbox, db.syncMetadata], async () => {
         assertPendingUnchanged(await db.outbox.orderBy('sequence').toArray(), expectedMutationIds);
         await db.outbox.clear();
         await replaceAccountData(db, snapshot);
@@ -104,7 +117,7 @@ export async function resolvePendingConflict(db: AccountDatabase, snapshot: Snap
     resolution: 'discard' | 'reapply'): Promise<void> {
     if (!isSnapshot(snapshot)) throw new ApiError('malformed', 'invalid_snapshot');
     if (snapshot.accountId !== db.binding.accountId || snapshot.installationId !== db.binding.installationId) throw new Error('account_binding_mismatch');
-    await db.transaction('rw', [db.users, db.gyms, db.workouts, db.userMeasurements, db.outbox, db.syncMetadata], async () => {
+    await db.transaction('rw', [db.users, db.gyms, db.workouts, db.workoutExercises, db.userMeasurements, db.outbox, db.syncMetadata], async () => {
         const entries = await db.outbox.orderBy('sequence').toArray();
         assertPendingUnchanged(entries, expectedMutationIds);
         const rejected = entries.filter(entry => entry.state === 'conflict');

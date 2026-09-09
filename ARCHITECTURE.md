@@ -3,7 +3,7 @@
 The rewrite described by the former PLAN.md is complete and its plan file was
 removed: deterministic fixtures, account authorization, transactional bootstrap,
 account-local tab coordination, durable revisioned synchronization, the
-timed-workout UI without exercise logging, and gated publication all shipped in
+timed-workout UI, and gated publication all shipped in
 `v0.2.0-alpha`. Verification runs locally and in GitHub Actions, including the
 amd64/arm64 image build. `docs/implementation-baseline.md` keeps the historical
 checkpoint log.
@@ -42,13 +42,13 @@ lazy-loaded; body charts reside in the analysis chunk.
 
 SQLite enables foreign keys. `users.id` is a server-generated UUID v7 primary key;
 all account foreign keys are text. Recreating an account generates a new identity.
-Shared `gyms`, private `workouts`, and `userMeasurements` use UUID v7 primary keys.
+Shared `gyms`, private `workouts`, `workoutExercises`, and `userMeasurements` use UUID v7 primary keys.
 The `uuid` package generates RFC 9562 v7 identifiers on both client and server,
 including account, installation, and mutation IDs. Shared validators and initial SQLite
 constraints enforce the version, variant, and canonical lowercase format.
 Timestamp-prefixed IDs improve index locality; explicit timestamps and outbox
 sequences still determine domain and delivery order across device clocks.
-Account deletion cascades sessions, workouts, measurements, and mutation
+Account deletion cascades sessions, workouts, workout exercise uses, measurements, and mutation
 receipts; it does not delete shared gyms. Referenced gyms cannot be deleted.
 Archiving prevents new workouts but allows already-started sessions to finish.
 A partial unique index enforces one unfinished workout per account.
@@ -67,20 +67,21 @@ During alpha, schema changes assume fresh databases and edit the initial
 definitions directly; see the [alpha database policy](README.md#alpha-database-policy-and-reset).
 
 IndexedDB names are `GymApp:<installation UUID>:<account ID>`. Initial version 1
-stores contain profile (`users`), shared catalog cache (`gyms`), private workouts,
+stores contain profile (`users`), shared gym cache (`gyms`), private workouts and exercise uses,
 measurements, ordered outbox, and sync metadata. Entity IDs are UUID v7 strings;
 the outbox sequence is auto-incrementing. The outbox persists immutable intent,
 an immutable prepared envelope once its server revision is known, dependency,
 attempt count, state, error, and next retry time. Each prepared envelope carries
 the account/installation binding checked by the server.
 
-There are no exercise, equipment, or set stores, seeds, routes, or provider calls.
-`history.csv` is a standalone source export excluded from Docker input.
+The read-only exercise catalog is generated into `shared/exercises.js` from a pinned
+`exercises-dataset` revision. Runtime exercise selection is offline; only private
+workout-to-catalog usage rows are persisted and synchronized. Licensed media is not imported.
 
 ## Commands and account lifecycle
 
 Commands are profile update, measurement create/update/delete, timed workout
-start/finish/delete, and gym create/update/archive. Input allowlists exclude
+start/finish/delete, workout exercise create, and gym create/update/archive. Input allowlists exclude
 account roles and credentials. Server revisions detect stale writes. Receipts
 are stored atomically with successful mutations; a reused mutation UUID with
 different content is rejected. Updates never resurrect deleted records.
@@ -142,7 +143,7 @@ row as a regression, not a preference.
 | Server reset with a cached browser session | Installation mismatch prevents replay into reset accounts. |
 | Two devices, same account | New record IDs are distinct; competing active sessions or stale edits return conflicts; reviewed reapplication works. |
 | Refresh with pending/failed work | No silent data replacement; failure and resolution are visible. |
-| Exercise removal | No exercise/equipment/set stores, routes, controls, seeds, or provider network calls remain. Source export is not imported. |
+| Exercise selection | The pinned catalog works offline; selections are private, synchronized, deduplicated per workout, and ranked by historical use. |
 | Surviving UX | Start/resume/finish/cancel, history deletion, profile/measurements, language/theme, logout, and keyboard/mobile navigation work. |
 | Release checks | Test, lint, build, browser workflows, and the multi-architecture image build pass; publishing is gated on them. |
 
@@ -154,8 +155,8 @@ automatic merging is promised. Gym catalog operations share the sync service's
 authorization, revisions, and receipt transaction rather than a separate gym
 service. These are the final module placements.
 
-External exercise integration is a separate future task: there is no provider
-credential, request, adapter, or placeholder table in the codebase.
+Exercise catalog updates are explicit build-time imports through `npm run exercises:import`.
+There is no runtime provider request or credential.
 
 GitHub Actions runs only on release tags and manual dispatch: tests, lint, the
 production build, and the Chromium workflows gate the amd64/arm64 image build

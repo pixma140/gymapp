@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useDatabase } from '@/context/SessionContext';
 import { useWorkoutSession } from '@/hooks/useWorkoutSession';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { ExerciseSelector } from '@/components/ExerciseSelector';
 export function WorkoutPage() {
     const { gymId = '' } = useParams();
     const db = useDatabase();
@@ -22,11 +23,11 @@ export function WorkoutPage() {
     return <div className="space-y-6 max-w-md mx-auto">
         <Link to="/">{t('common.back')}</Link>
         <h1 className="text-2xl font-bold">{gym?.name ?? t('common.unknownGym')}</h1>
-        <p className="text-[var(--muted-foreground)]">{t('timed.notice')}</p>
         {failed && <p role="alert">{t('sync.operationFailed')}</p>}
         {workout ? <>
             <p className="text-4xl font-mono">{Math.max(0, Math.floor((now - workout.startTime) / 1000))} {t('timed.seconds')}</p>
             {workout.gymId !== gymId && <Link to={`/workout/${workout.gymId}`}>{t('timed.resume')}</Link>}
+            <ExerciseSelector workoutId={workout.id} />
             <button disabled={busy} className="p-4 bg-[var(--primary)] rounded-xl" onClick={() => void act(finishWorkout, true)}>{t('timed.finish')}</button>
             <button disabled={busy} className="p-4" onClick={() => { if (window.confirm(t('history.deleteConfirm'))) void act(cancelWorkout, true); }}>{t('timed.cancel')}</button>
         </> : <button disabled={busy || !gym || gym.archived} className="p-4 bg-[var(--primary)] rounded-xl disabled:opacity-50" onClick={() => void act(startWorkout)}>{t('timed.start')}</button>}

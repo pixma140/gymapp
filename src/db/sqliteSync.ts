@@ -88,9 +88,10 @@ export async function flushPendingMutations(db: AccountDatabase, active: () => b
                 if (bindingChanged && typeof window !== 'undefined') window.dispatchEvent(new Event(AUTHORIZATION_FAILURE));
                 return;
             }
-            await db.transaction('rw', [db.users, db.gyms, db.workouts, db.userMeasurements, db.outbox, db.syncMetadata], async () => {
+            await db.transaction('rw', [db.users, db.gyms, db.workouts, db.workoutExercises, db.userMeasurements, db.outbox, db.syncMetadata], async () => {
                 const domain = command.operation.split('.')[0];
-                const table = domain === 'profile' ? db.users : domain === 'gym' ? db.gyms : domain === 'workout' ? db.workouts : db.userMeasurements;
+                const table = domain === 'profile' ? db.users : domain === 'gym' ? db.gyms : domain === 'workout' ? db.workouts
+                    : domain === 'workoutExercise' ? db.workoutExercises : db.userMeasurements;
                 await db.table(table.name).update(command.targetId ?? db.binding.accountId, { revision: receipt.revision });
                 const dependents = await db.outbox.filter(candidate => candidate.dependency === entry.sequence).toArray();
                 for (const next of dependents) {

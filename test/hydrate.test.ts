@@ -16,7 +16,7 @@ function fixture(accountId = ACCOUNT_A, installationId = uuidv7()): { db: Accoun
     return { db, snapshot: { accountId, installationId, accountGeneration: 0, catalogGeneration: 1,
         profile: { id: accountId, revision: 1, name: 'Test', email: null, weight: null, height: null, bodyFat: null, age: null, gender: null,
             reminderFrequency: 'never', language: 'en', theme: 'dark', mainColor: null },
-        gyms: [{ id: uuidv7(), revision: 1, name: 'Shared', location: 'City', archived: false }], workouts: [], measurements: [] } };
+        gyms: [{ id: uuidv7(), revision: 1, name: 'Shared', location: 'City', archived: false }], workouts: [], workoutExercises: [], measurements: [] } };
 }
 afterEach(async () => {
     vi.unstubAllGlobals();
@@ -65,14 +65,14 @@ describe('account caches and transactional intent', () => {
         }
         expect(await db.gyms.count()).toBe(0);
     });
-    it('uses UUID-keyed, exercise-free stores isolated by account and installation', async () => {
+    it('uses UUID-keyed account stores isolated by account and installation', async () => {
         const first = fixture();
         const second = fixture(ACCOUNT_B, first.snapshot.installationId);
         const reset = fixture(ACCOUNT_A);
         await hydrateFromServer(first.db, first.snapshot);
         expect(await second.db.users.count()).toBe(0);
         expect(await reset.db.gyms.count()).toBe(0);
-        expect(first.db.tables.map(table => table.name).sort()).toEqual(['gyms', 'outbox', 'syncMetadata', 'userMeasurements', 'users', 'workouts']);
+        expect(first.db.tables.map(table => table.name).sort()).toEqual(['gyms', 'outbox', 'syncMetadata', 'userMeasurements', 'users', 'workoutExercises', 'workouts']);
         expect(first.db.verno).toBe(1);
         expect(first.db.gyms.schema.primKey.auto).toBeFalsy();
         expect(first.db.outbox.schema.primKey.auto).toBe(true);
@@ -165,7 +165,7 @@ describe('account caches and transactional intent', () => {
     it('rolls back both local state and outgoing intent on transaction failure', async () => {
         const { db, snapshot } = fixture();
         await hydrateFromServer(db, snapshot);
-        await expect(db.transaction('rw', [db.users, db.gyms, db.workouts, db.userMeasurements, db.outbox], async () => {
+        await expect(db.transaction('rw', [db.users, db.gyms, db.workouts, db.workoutExercises, db.userMeasurements, db.outbox], async () => {
             await applyOperation(db, 'profile.update', null, { name: 'Must roll back' });
             throw new Error('abort');
         })).rejects.toThrow('abort');
