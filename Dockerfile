@@ -1,6 +1,7 @@
 # Stage 1: Build the application
 FROM node:25.8.2-alpine AS builder
 WORKDIR /app
+RUN apk add --no-cache git
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
