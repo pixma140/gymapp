@@ -6,6 +6,7 @@ import { MapPin, ChevronRight } from 'lucide-react';
 import { useDatabase } from '@/context/SessionContext';
 import { useLanguage } from '@/i18n/LanguageContext';
 import { startOrResumeWorkout } from '@/db/operations';
+import { getRankedGyms } from '@/db/gymCatalog';
 
 export function GymList({ activeGymId }: { activeGymId?: string }) {
     const db = useDatabase();
@@ -13,38 +14,14 @@ export function GymList({ activeGymId }: { activeGymId?: string }) {
     const navigate = useNavigate();
     const [starting, setStarting] = useState(false);
     const [failed, setFailed] = useState(false);
-    const gymsWithVisits = useLiveQuery(async () => {
-        const gyms = await db.gyms.filter(gym => !gym.archived).toArray();
-
-        // Calculate visit count from completed workouts
-        const gymsWithCounts = await Promise.all(
-            gyms.map(async (gym) => {
-                const completedWorkouts = await db.workouts
-                    .where('gymId')
-                    .equals(gym.id)
-                    .filter(w => w.endTime !== null)
-                    .toArray();
-
-                const visitCount = completedWorkouts.length;
-                const lastVisited = completedWorkouts.length > 0
-                    ? Math.max(...completedWorkouts.map(w => w.endTime || 0))
-                    : 0;
-
-                return { ...gym, visitCount, lastVisited };
-            })
-        );
-
-        // Sort by visit count descending
-        return gymsWithCounts.sort((a, b) => b.visitCount - a.visitCount);
-    });
-
-    const gyms = gymsWithVisits;
+    const gyms = useLiveQuery(() => getRankedGyms(db), [db]);
 
     if (!gyms) return <div className="text-[var(--muted-foreground)] text-center py-8">{t('gyms.loading')}</div>;
 
     return (
         <div className="space-y-4">
             {failed && <p role="alert">{t('sync.operationFailed')}</p>}
+            {gyms.length > 0 && <p className="text-xs text-[var(--muted-foreground)]">{t('gyms.sortedByUsage')}</p>}
             {gyms.length === 0 ? (
                 <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--card)]">
                     <div className="size-12 bg-[var(--accent)] rounded-full flex items-center justify-center mx-auto mb-4">

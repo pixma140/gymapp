@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useDatabase } from '@/context/SessionContext';
 import { applyOperation } from '@/db/operations';
+import { getRankedGyms } from '@/db/gymCatalog';
 import type { Gym } from '@/db/db';
 import { Trash2, Edit2, Save, X, Plus, MapPin } from 'lucide-react';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -9,7 +10,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 export function ManageGymsPage() {
     const db = useDatabase();
     const { t } = useLanguage();
-    const gyms = useLiveQuery(() => db.gyms.filter(gym => !gym.archived).toArray());
+    const gyms = useLiveQuery(() => getRankedGyms(db), [db]);
     const [failed, setFailed] = useState(false);
     const perform = async (operation: () => Promise<unknown>) => {
         setFailed(false);
@@ -75,6 +76,7 @@ export function ManageGymsPage() {
             </header>
 
             <div className="space-y-3">
+                {!!gyms?.length && <p className="text-xs text-[var(--muted-foreground)]">{t('gyms.sortedByUsage')}</p>}
                 {isAdding && (
                     <div className="bg-[var(--card)] border border-[var(--primary)]/50 rounded-xl p-4 flex items-start gap-2 animate-in slide-in-from-top-2">
                         <div className="flex-1 space-y-2">

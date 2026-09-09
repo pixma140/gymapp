@@ -149,8 +149,15 @@ test('demo workout flow logs sets, creates exercises, and edits completed histor
     expect(snapshot.workoutExercises[0].sets).toEqual([expect.objectContaining({ weight: 80, reps: 8, type: 'working' })]);
     // Reusing the exercise in a second workout puts it first and exposes its history.
     await page.getByRole('link', { name: 'Training', exact: true }).click();
+    await expect(page.locator('a[href^="/workout/"]').first()).toContainText('Foundry District');
     await page.getByRole('link', { name: /Foundry District/ }).click();
     await page.getByRole('button', { name: 'Add Exercise', exact: true }).click();
+    await expect(modal.getByRole('listitem').first()).toContainText('barbell bench press');
+    await modal.getByLabel('Muscle group', { exact: true }).selectOption('chest');
+    await expect(modal.getByRole('listitem').first()).toContainText('barbell bench press');
+    await modal.getByRole('textbox', { name: 'Search exercises…' }).fill('press');
+    await expect(modal.getByRole('listitem').first()).toContainText('barbell bench press');
+    await modal.getByLabel('Muscle group', { exact: true }).selectOption('');
     await expect(modal.getByRole('listitem').first()).toContainText('barbell bench press');
     await modal.getByRole('listitem').first().getByRole('button').click();
     await expect(first.getByRole('button', { name: 'Toggle warmup set' })).toHaveAttribute('aria-pressed', 'true');

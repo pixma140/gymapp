@@ -206,6 +206,7 @@ export const translations = {
         'gyms.empty.subtitle': 'An administrator can add a gym to the shared catalog.',
         'gyms.addNew': 'Add New Gym',
         'gyms.visits': 'Visits',
+        'gyms.sortedByUsage': 'Your most frequently visited gyms appear first.',
 
         // Workout history
         'history.loading': 'Loading ...',
@@ -587,6 +588,7 @@ export const translations = {
         'gyms.empty.subtitle': 'Ein Administrator kann ein Studio zum gemeinsamen Katalog hinzufügen.',
         'gyms.addNew': 'Neues Studio hinzufügen',
         'gyms.visits': 'Besuche',
+        'gyms.sortedByUsage': 'Deine am häufigsten besuchten Studios erscheinen zuerst.',
 
         // Workout history
         'history.loading': 'Laden ...',
