@@ -19,7 +19,7 @@ export function SettingsPage() {
     const navigate = useNavigate();
     const { t, language, setLanguage, timeFormat, setTimeFormat } = useLanguage();
     const { theme, setTheme, mainColor, setColor } = useTheme();
-    const { isAdmin, logout, defaultTimeFormat } = useSession();
+    const { isAdmin, logout } = useSession();
 
     const colors = [
         { name: t('color.blue'), value: '#2563eb' },
@@ -128,17 +128,11 @@ export function SettingsPage() {
                             <Clock className="size-5 shrink-0 text-[var(--muted-foreground)]" />
                             <div className="text-left">
                                 <h3 className="text-sm font-medium text-[var(--foreground)]">{t('settings.timeFormat')}</h3>
-                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.timeFormat.desc')}</p>
-                                <p id="settings-time-format-env" className="mt-1 text-xs text-[var(--muted-foreground)]">
-                                    <code>DEFAULT_TIME_FORMAT={defaultTimeFormat}</code>
-                                    <span className="block">{t('settings.timeFormat.env')}</span>
-                                </p>
                             </div>
                         </div>
                         <label htmlFor="settings-time-format" className="sr-only">{t('settings.timeFormat')}</label>
                         <select
                             id="settings-time-format"
-                            aria-describedby="settings-time-format-env"
                             value={timeFormat}
                             onChange={(e) => setTimeFormat(e.target.value as User['timeFormat'])}
                             className="bg-[var(--input)] border border-[var(--border)] rounded-lg text-xs p-2 text-[var(--foreground)] focus:outline-none focus:border-[var(--primary)] transition-colors"
