@@ -139,19 +139,17 @@ account switching, private history, and deletion against a throwaway server.
 See [ARCHITECTURE.md](ARCHITECTURE.md) for module boundaries, persistence
 details, and the behavior contract the test suites enforce.
 
-GitHub Actions (`.github/workflows/verify-and-publish.yml`) runs only for
-release tags (`latest` or `v*`) and manual `workflow_dispatch` runs; ordinary
-commits and pull requests do not start a pipeline, so run the local checks above
-before tagging. A tag first runs verification: dependencies and Chromium, then
-Vitest, ESLint (including server/shared JavaScript), the production build, and
-the Playwright workflows, uploading the report as an artifact when a browser run
-fails. Only after that does the publish job build the amd64 and arm64 images and
-push them to GHCR, so a failing tag publishes nothing. A final job then creates
-or updates the matching GitHub release, taking its body from the `## <tag>`
-section of [RELEASE_NOTES.md](RELEASE_NOTES.md) and falling back to a commit
-summary when that section is missing. Tags containing a suffix such as `-alpha`
-are marked as pre-releases.
+The `Release` workflow (`.github/workflows/release.yml`) runs only for release
+tags (`latest` or `v*`) and manual `workflow_dispatch` runs; ordinary commits and
+pull requests start no pipeline, so run the local checks above before tagging.
+Its three jobs run in order:
+
+| Job | Runs when | Does |
+| --- | --- | --- |
+| `verify` | always | Installs dependencies and Chromium, then Vitest, ESLint (including server/shared JavaScript), the production build, and the Playwright workflows. Uploads the report as an artifact when a browser run fails. |
+| `publish-image` | tags, after `verify` | Builds the amd64 and arm64 images and pushes `:latest`, `:<tag>`, and `:<sha>` to GHCR, so a failing tag publishes nothing. |
+| `create-release` | `v*` tags, after `publish-image` | Creates or updates the GitHub release from the `## <tag>` section of [RELEASE_NOTES.md](RELEASE_NOTES.md), falling back to a commit summary. Tags with a suffix such as `-alpha` are marked as pre-releases. |
 
 To verify a branch without tagging it, start the workflow manually from the
-Actions tab (`gh workflow run "Verify and publish Docker image to GHCR" --ref
-<branch>`); publishing stays skipped unless the selected ref is a tag.
+Actions tab (`gh workflow run Release --ref <branch>`); the `publish-image` and
+`create-release` jobs stay skipped unless the selected ref is a tag.

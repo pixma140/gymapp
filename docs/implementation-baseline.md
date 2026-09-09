@@ -254,7 +254,8 @@ was introduced.
 ## Release checkpoint — 2026-09-09
 
 - GitLab CI was removed; GitHub Actions is the single verification and release
-  path. `.github/workflows/verify-and-publish.yml` runs Vitest, ESLint, the
+  path. `.github/workflows/verify-and-publish.yml` (later renamed
+  `release.yml`) runs Vitest, ESLint, the
   production build, and the Chromium workflows on branch pushes, pull requests,
   and release tags. Branch and pull-request runs build amd64/arm64 images
   without publishing; release tags publish to GHCR only after verification.
@@ -306,3 +307,6 @@ architectures. Verification still gates publication, so an untested tag cannot
 reach GHCR; the accepted tradeoff is that a broken commit surfaces at tag time
 instead of at push time, and local `npm test`/`lint`/`build`/`test:browser` runs
 are the pre-tag safety net.
+The workflow was then renamed to `Release` in `.github/workflows/release.yml`
+with jobs `verify`, `publish-image`, and `create-release`, matching the
+tag-triggered reality; earlier runs remain under the retired workflow name.
