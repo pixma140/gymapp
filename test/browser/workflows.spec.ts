@@ -283,7 +283,7 @@ test('failed bootstrap preserves pending intent and retries without onboarding',
     await expectPendingChanges(page, 0);
 });
 
-test('discard is confirmed, failure-atomic, exportable, and scoped to the current account', async ({ page, context }) => {
+test('advanced recovery is failed-only, confirmed, failure-atomic, exportable, and account-scoped', async ({ page, context }) => {
     const register = async (username: string) => {
         expect((await page.request.post('/api/auth/register', {
             data: { username, password: testPassword },
@@ -297,7 +297,7 @@ test('discard is confirmed, failure-atomic, exportable, and scoped to the curren
         await expectPendingChanges(page, 1);
     };
 
-    await context.route('**/api/sync', route => route.abort());
+    await context.route('**/api/sync', route => route.fulfill({ status: 422, json: { error: 'rejected' } }));
     await register('discard-account-a');
     await queueWorkout();
     await page.getByRole('link', { name: 'Settings', exact: true }).click();
@@ -306,7 +306,8 @@ test('discard is confirmed, failure-atomic, exportable, and scoped to the curren
     await register('discard-account-b');
     await queueWorkout();
     await page.getByRole('link', { name: 'Settings', exact: true }).click();
-    const discard = page.getByRole('button', { name: /Discard pending changes/ });
+    await page.getByText('Advanced recovery', { exact: true }).click();
+    const discard = page.getByRole('button', { name: 'Discard all unsynced changes', exact: true });
     page.once('dialog', dialog => dialog.dismiss());
     await discard.click();
     await expect(discard).toBeEnabled();
@@ -332,9 +333,10 @@ test('discard is confirmed, failure-atomic, exportable, and scoped to the curren
     await expectPendingChanges(page, 1);
 
     page.once('dialog', dialog => dialog.accept());
-    await page.getByRole('button', { name: /Discard pending changes/ }).click();
+    await page.getByText('Advanced recovery', { exact: true }).click();
+    await page.getByRole('button', { name: 'Discard all unsynced changes', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Discard pending changes/ })).toBeDisabled();
+    await expect(page.getByText('Advanced recovery', { exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: /Log out|Logout/i }).click();
     expect((await page.request.post('/api/auth/login', {
         data: { username: 'discard-account-a', password: testPassword },
@@ -344,8 +346,9 @@ test('discard is confirmed, failure-atomic, exportable, and scoped to the curren
     await expectPendingChanges(page, 1);
 
     await page.getByRole('link', { name: 'Settings', exact: true }).click();
+    await page.getByText('Advanced recovery', { exact: true }).click();
     page.once('dialog', dialog => dialog.accept());
-    await page.getByRole('button', { name: /Discard pending changes/ }).click();
+    await page.getByRole('button', { name: 'Discard all unsynced changes', exact: true }).click();
     await context.unroute('**/api/sync');
 });
 
@@ -412,7 +415,7 @@ test('an external cookie switch pauses stale intent and rebinds the visible tab'
     await expectPendingChanges(page, 0);
     expect((await (await page.request.get('/api/sync/snapshot')).json()).workouts).toEqual([]);
 
-    await page.route('**/api/sync', route => route.abort());
+    await page.route('**/api/sync', route => route.fulfill({ status: 422, json: { error: 'rejected' } }));
     expect((await page.request.post('/api/auth/login', {
         data: { username: 'external-cookie-a', password: testPassword },
     })).ok()).toBe(true);
@@ -423,8 +426,9 @@ test('an external cookie switch pauses stale intent and rebinds the visible tab'
     await expect(page.getByRole('button', { name: 'Finish workout', exact: true })).toBeVisible();
     await expectPendingChanges(page, 1);
     await page.getByRole('link', { name: 'Settings', exact: true }).click();
+    await page.getByText('Advanced recovery', { exact: true }).click();
     page.once('dialog', dialog => dialog.accept());
-    await page.getByRole('button', { name: /Discard pending changes/ }).click();
+    await page.getByRole('button', { name: 'Discard all unsynced changes', exact: true }).click();
     await page.unroute('**/api/sync');
 });
 

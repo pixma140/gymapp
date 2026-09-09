@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Database, Moon, Trash, Earth, Bell, Palette, Github, LogOut, Shield } from 'lucide-react';
+import { Database, Moon, Earth, Bell, Palette, Github, LogOut, Shield } from 'lucide-react';
 import { useDatabase } from '@/context/SessionContext';
 import { applyOperation } from '@/db/operations';
 import type { Theme } from '@/context/ThemeContext';
@@ -20,9 +19,7 @@ export function SettingsPage() {
     const navigate = useNavigate();
     const { t, language, setLanguage } = useLanguage();
     const { theme, setTheme, mainColor, setColor } = useTheme();
-    const { isAdmin, logout, discardLocalChanges } = useSession();
-    const pendingCount = useLiveQuery(() => db.outbox.count(), [db]);
-    const [discarding, setDiscarding] = useState(false);
+    const { isAdmin, logout } = useSession();
 
     const colors = [
         { name: t('color.blue'), value: '#2563eb' },
@@ -34,13 +31,6 @@ export function SettingsPage() {
         { name: t('color.cyan'), value: '#0891b2' },
         { name: t('color.yellow'), value: '#ca8a04' },
     ];
-
-    const handleClearData = async () => {
-        if (!confirm(t('sync.discardConfirm'))) return;
-        setDiscarding(true);
-        try { await discardLocalChanges(); } catch { /* Session error view offers a safe retry. */ }
-        finally { setDiscarding(false); }
-    };
 
     const handleFrequencyChange = async (freq: User['reminderFrequency']) => {
         if (!user) return;
@@ -216,22 +206,6 @@ export function SettingsPage() {
                             <div className="text-left">
                                 <h3 className="text-sm font-medium">{t('settings.logout')}</h3>
                                 <p className="text-xs text-[var(--muted-foreground)]">{t('settings.logout.desc')}</p>
-                            </div>
-                        </div>
-                    </button>
-                </div>
-
-                <div className="bg-red-500/10 border border-red-500/20 rounded-2xl overflow-hidden">
-                    <button
-                        onClick={handleClearData}
-                        disabled={discarding || !pendingCount}
-                        className="w-full flex items-center justify-between p-4 hover:bg-red-500/20 transition-colors text-red-500 disabled:opacity-50"
-                    >
-                        <div className="flex items-center gap-3">
-                            <Trash className="size-5" />
-                            <div className="text-left">
-                                <h3 className="text-sm font-bold">{t('settings.reset')}</h3>
-                                <p className="text-xs text-red-500/70">{t('settings.reset.desc')}</p>
                             </div>
                         </div>
                     </button>
