@@ -68,7 +68,7 @@ export function UsersTab() {
 
     const formatDate = (ts: number | null) =>
         ts
-            ? new Date(ts).toLocaleDateString(language === 'de' ? 'de-DE' : 'en-US', {
+            ? new Date(ts).toLocaleDateString(language, {
                   year: 'numeric',
                   month: 'short',
                   day: 'numeric'

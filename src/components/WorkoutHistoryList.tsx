@@ -8,7 +8,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 
 export function WorkoutHistoryList() {
     const db = useDatabase();
-    const { t } = useLanguage();
+    const { language, t } = useLanguage();
     const [deleting, setDeleting] = useState(false);
     const [failed, setFailed] = useState(false);
     const workouts = useLiveQuery(async () => {
@@ -42,11 +42,11 @@ export function WorkoutHistoryList() {
                             <div className="flex items-center gap-3 text-sm text-[var(--muted-foreground)] mt-1">
                                 <div className="flex items-center gap-1">
                                     <Calendar className="size-3" />
-                                    {new Date(workout.startTime).toLocaleDateString()}
+                                    {new Date(workout.startTime).toLocaleDateString(language)}
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <Clock className="size-3" />
-                                    {new Date(workout.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    {new Date(workout.startTime).toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                             </div>
                         </div>

@@ -29,7 +29,6 @@ export const translations = {
         'sync.discardConfirm': 'Discard all unsynced changes and reload server data? This cannot be undone.',
         'gyms.archiveConfirm': 'Archive this gym? Existing workout history will be preserved.',
         'sync.pending': 'Pending changes',
-        'sync.blocked': 'Sync needs attention. Export pending changes before discarding them in Settings.',
         'sync.statusPending': 'Waiting to synchronize.',
         'sync.statusPaused': 'Synchronization is paused until you sign in again.',
         'sync.statusFailed': 'A change was rejected. Export it or discard pending changes in Settings.',
@@ -50,8 +49,6 @@ export const translations = {
         // Settings
         'settings.title': 'Settings',
         'settings.subtitle': 'App configuration',
-        'settings.appearance': 'Appearance',
-        'settings.appearance.desc': 'Dark mode enabled',
         'settings.language': 'Language',
         'settings.language.desc': 'Select your preferred language',
         'settings.theme': 'Theme',
@@ -62,8 +59,6 @@ export const translations = {
         'theme.system': 'System',
         'settings.reminders': 'Body Reminders',
         'settings.reminders.desc': 'How often to update stats',
-        'settings.manage_gyms': 'Manage Gyms',
-        'settings.manage_gyms.desc': 'Edit or remove gyms',
         'settings.export': 'Export Data',
         'settings.export.desc': 'Download all data as JSON',
         'settings.logout': 'Log out',
@@ -93,17 +88,13 @@ export const translations = {
 
         // Training
         'training.title': 'Training',
-        'training.subtitle.add': 'Add a new location',
         'training.subtitle.select': 'Select a gym to start',
-        'training.activeWorkoutConfirmPrefix': 'You have an active workout at',
-        'training.activeWorkoutConfirmSuffix': 'You must finish it before starting a new one. Go to active workout?',
 
         // Analysis
         'analysis.title': 'Analysis',
         'analysis.subtitle': 'Track your progress',
         'analysis.tab.workout': 'Workout Analysis',
         'analysis.tab.body': 'Body Analysis',
-        'analysis.section.progress': 'Progress',
         'analysis.section.recent': 'Recent Workouts',
         'analysis.section.bodyMetrics': 'Body Metrics',
         'analysis.section.bodyMetrics.desc': 'Track your weight and body fat over time.',
@@ -124,7 +115,6 @@ export const translations = {
         'onboarding.creating': 'Creating Profile...',
         'onboarding.language': 'Language',
         'onboarding.reminders': 'Body Measurement Reminders',
-        'onboarding.reminders.desc': 'How often ensuring you update your stats?',
         'onboarding.reminders.never': 'Never',
         'onboarding.reminders.daily': 'Daily',
         'onboarding.reminders.weekly': 'Weekly',
@@ -152,14 +142,11 @@ export const translations = {
         'gyms.empty.title': 'No gyms added',
         'gyms.empty.subtitle': 'An administrator can add a gym to the shared catalog.',
         'gyms.addNew': 'Add New Gym',
-        'gyms.addAnother': 'Add Another Gym',
         'gyms.visits': 'Visits',
-        'gyms.noLocation': 'No location',
 
         // Workout history
         'history.loading': 'Loading ...',
         'history.empty': 'No completed workouts yet.',
-        'history.edit': 'Edit workout',
         'history.delete': 'Delete workout',
         'history.view': 'View details',
         'history.deleteConfirm': 'Are you sure you want to delete this workout?',
@@ -170,14 +157,8 @@ export const translations = {
         'manageGyms.noLocation': 'No location',
 
         // Add gym
-        'addGym.title': 'Add New Gym',
-        'addGym.nameLabel': 'Gym Name',
         'addGym.namePlaceholder': 'e.g. Gold\'s Gym',
-        'addGym.locationLabel': 'Location',
         'addGym.locationPlaceholder': 'e.g. Venice Beach',
-        'addGym.cancel': 'Cancel',
-        'addGym.save': 'Save Gym',
-        'addGym.saving': 'Saving...',
 
         // Charts
         'charts.loading': 'Loading charts...',
@@ -212,8 +193,6 @@ export const translations = {
         'auth.login': 'Log in',
         'auth.register': 'Create account',
         'auth.submitting': 'Please wait...',
-        'auth.switchToRegister': 'Need an account? Register',
-        'auth.switchToLogin': 'Already have an account? Log in',
         'auth.switchToRegister.prompt': 'Need an account?',
         'auth.switchToLogin.prompt': 'Already have an account?',
         'auth.error.invalidCredentials': 'Invalid username or password.',
@@ -244,7 +223,6 @@ export const translations = {
         'admin.tab.oidc': 'OIDC',
         'admin.tab.general': 'General',
         'admin.tab.users': 'Users',
-        'admin.comingSoon': 'Coming soon',
         'admin.oidc.title': 'OIDC / SSO',
         'admin.oidc.desc': 'Configure single sign-on with your identity provider.',
         'admin.oidc.enabled': 'Enable OIDC login',
@@ -334,7 +312,6 @@ export const translations = {
         // Generic
         'common.save': 'Save',
         'common.cancel': 'Cancel',
-        'common.delete': 'Delete',
         'common.edit': 'Edit',
         'common.loading': 'Loading...',
         'common.optional': 'Optional',
@@ -370,7 +347,6 @@ export const translations = {
         'sync.discardConfirm': 'Alle nicht synchronisierten Änderungen verwerfen und Serverdaten neu laden? Dies kann nicht rückgängig gemacht werden.',
         'gyms.archiveConfirm': 'Dieses Studio archivieren? Der Trainingsverlauf bleibt erhalten.',
         'sync.pending': 'Ausstehende Änderungen',
-        'sync.blocked': 'Die Synchronisierung benötigt deine Aufmerksamkeit. Exportiere ausstehende Änderungen, bevor du sie in den Einstellungen verwirfst.',
         'sync.statusPending': 'Wartet auf Synchronisierung.',
         'sync.statusPaused': 'Die Synchronisierung ist pausiert, bis du dich erneut anmeldest.',
         'sync.statusFailed': 'Eine Änderung wurde abgelehnt. Exportiere sie oder verwirf ausstehende Änderungen in den Einstellungen.',
@@ -391,8 +367,6 @@ export const translations = {
         // Settings
         'settings.title': 'Einstellungen',
         'settings.subtitle': 'App Konfiguration',
-        'settings.appearance': 'Erscheinungsbild',
-        'settings.appearance.desc': 'Dunkelmodus aktiviert',
         'settings.language': 'Sprache',
         'settings.language.desc': 'Wähle deine bevorzugte Sprache',
         'settings.theme': 'Design',
@@ -403,8 +377,6 @@ export const translations = {
         'theme.system': 'System',
         'settings.reminders': 'Körper-Erinnerungen',
         'settings.reminders.desc': 'Wie oft Statistiken aktualisieren',
-        'settings.manage_gyms': 'Fitnessstudios verwalten',
-        'settings.manage_gyms.desc': 'Studios bearbeiten oder löschen',
         'settings.export': 'Daten exportieren',
         'settings.export.desc': 'Alle Daten als JSON herunterladen',
         'settings.logout': 'Abmelden',
@@ -434,17 +406,13 @@ export const translations = {
 
         // Training
         'training.title': 'Training',
-        'training.subtitle.add': 'Neuen Ort hinzufügen',
         'training.subtitle.select': 'Wähle ein Studio, um zu starten',
-        'training.activeWorkoutConfirmPrefix': 'Du hast ein aktives Workout bei',
-        'training.activeWorkoutConfirmSuffix': 'Du musst es beenden, bevor du ein neues startest. Zum aktiven Workout gehen?',
 
         // Analysis
         'analysis.title': 'Analyse',
         'analysis.subtitle': 'Verfolge deinen Fortschritt',
         'analysis.tab.workout': 'Workout Analyse',
         'analysis.tab.body': 'Körperanalyse',
-        'analysis.section.progress': 'Fortschritt',
         'analysis.section.recent': 'Letzte Workouts',
         'analysis.section.bodyMetrics': 'Körperwerte',
         'analysis.section.bodyMetrics.desc': 'Verfolge dein Gewicht und Körperfett im Verlauf.',
@@ -465,7 +433,6 @@ export const translations = {
         'onboarding.creating': 'Profil wird erstellt...',
         'onboarding.language': 'Sprache',
         'onboarding.reminders': 'Körper-Erinnerungen',
-        'onboarding.reminders.desc': 'Wie oft möchtest du daran erinnert werden?',
         'onboarding.reminders.never': 'Nie',
         'onboarding.reminders.daily': 'Täglich',
         'onboarding.reminders.weekly': 'Wöchentlich',
@@ -493,14 +460,11 @@ export const translations = {
         'gyms.empty.title': 'Keine Studios hinzugefügt',
         'gyms.empty.subtitle': 'Ein Administrator kann ein Studio zum gemeinsamen Katalog hinzufügen.',
         'gyms.addNew': 'Neues Studio hinzufügen',
-        'gyms.addAnother': 'Weiteres Studio hinzufügen',
         'gyms.visits': 'Besuche',
-        'gyms.noLocation': 'Kein Standort',
 
         // Workout history
         'history.loading': 'Laden ...',
         'history.empty': 'Noch keine abgeschlossenen Workouts.',
-        'history.edit': 'Workout bearbeiten',
         'history.delete': 'Workout löschen',
         'history.view': 'Details anzeigen',
         'history.deleteConfirm': 'Möchtest du dieses Workout wirklich löschen?',
@@ -511,14 +475,8 @@ export const translations = {
         'manageGyms.noLocation': 'Kein Standort',
 
         // Add gym
-        'addGym.title': 'Neues Studio hinzufügen',
-        'addGym.nameLabel': 'Studioname',
         'addGym.namePlaceholder': 'z.B. Gold\'s Gym',
-        'addGym.locationLabel': 'Standort',
         'addGym.locationPlaceholder': 'z.B. Venice Beach',
-        'addGym.cancel': 'Abbrechen',
-        'addGym.save': 'Studio speichern',
-        'addGym.saving': 'Speichern...',
 
         // Charts
         'charts.loading': 'Diagramme werden geladen...',
@@ -553,8 +511,6 @@ export const translations = {
         'auth.login': 'Einloggen',
         'auth.register': 'Konto erstellen',
         'auth.submitting': 'Bitte warten...',
-        'auth.switchToRegister': 'Noch kein Konto? Registrieren',
-        'auth.switchToLogin': 'Schon registriert? Einloggen',
         'auth.switchToRegister.prompt': 'Noch kein Konto?',
         'auth.switchToLogin.prompt': 'Schon registriert?',
         'auth.error.invalidCredentials': 'Benutzername oder Passwort ist ungueltig.',
@@ -585,7 +541,6 @@ export const translations = {
         'admin.tab.oidc': 'OIDC',
         'admin.tab.general': 'Allgemein',
         'admin.tab.users': 'Nutzer',
-        'admin.comingSoon': 'Demnaechst verfuegbar',
         'admin.oidc.title': 'OIDC / SSO',
         'admin.oidc.desc': 'Single Sign-On mit deinem Identity Provider konfigurieren.',
         'admin.oidc.enabled': 'OIDC-Login aktivieren',
@@ -675,7 +630,6 @@ export const translations = {
         // Generic
         'common.save': 'Speichern',
         'common.cancel': 'Abbrechen',
-        'common.delete': 'Löschen',
         'common.edit': 'Bearbeiten',
         'common.loading': 'Laden...',
         'common.optional': 'Optional',

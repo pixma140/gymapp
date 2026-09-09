@@ -7,7 +7,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 export function SyncStatus() {
     const db = useDatabase();
     const { refresh, drain, discardLocalChanges, resolveConflict } = useSession();
-    const { t } = useLanguage();
+    const { language, t } = useLanguage();
     const [busy, setBusy] = useState(false);
     const [blocked, setBlocked] = useState(false);
     const [discarding, setDiscarding] = useState(false);
@@ -33,8 +33,8 @@ export function SyncStatus() {
             }}>{t('sync.refresh')}</button>
         </div>
         {metadata && <div className="space-y-1 text-xs text-[var(--muted-foreground)]">
-            <p>{t('sync.lastSuccessful')}: {new Date(metadata.lastSuccessfulSync).toLocaleString()}</p>
-            <p>{t('sync.lastRefreshed')}: {new Date(metadata.lastRefreshed).toLocaleString()}</p>
+            <p>{t('sync.lastSuccessful')}: {new Date(metadata.lastSuccessfulSync).toLocaleString(language)}</p>
+            <p>{t('sync.lastRefreshed')}: {new Date(metadata.lastRefreshed).toLocaleString(language)}</p>
         </div>}
         {!conflict && !failed && !paused && !pending?.length && <p>{t('sync.statusCurrent')}</p>}
         {!conflict && !failed && !paused && Boolean(pending?.length) && <p>{t('sync.statusPending')}</p>}

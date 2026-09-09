@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useSession } from '@/context/SessionContext';
 import { applyOperation } from '@/db/operations';
@@ -20,6 +20,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     const user = useLiveQuery(() => db?.users.get(db.binding.accountId), [db]);
     const [fallbackLanguage, setFallbackLanguage] = useState<Language>('en');
     const language = user?.language ?? fallbackLanguage;
+
+    useEffect(() => {
+        document.documentElement.lang = language;
+    }, [language]);
 
     const setLanguage = async (lang: Language) => {
         if (user && db) {
