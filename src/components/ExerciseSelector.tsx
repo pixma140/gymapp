@@ -7,6 +7,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 import { rankExercises } from '@/lib/exerciseCatalog';
 import { Modal } from '@/components/Modal';
 import { MuscleGroupSelect } from '@/components/MuscleGroupSelect';
+import { MuscleGroupPicker } from '@/components/MuscleGroupPicker';
 import type { MuscleGroup } from '@shared/exercises';
 
 export function ExerciseSelector({ workoutId, onClose }: { workoutId: string; onClose: () => void }) {
@@ -51,7 +52,7 @@ export function ExerciseSelector({ workoutId, onClose }: { workoutId: string; on
                 <input autoFocus aria-label={t('exercise.search')} placeholder={t('exercise.search')} value={search}
                     onChange={event => setSearch(event.target.value)} className="min-w-0 flex-1 bg-transparent py-3 outline-none" />
             </label>
-            <MuscleGroupSelect value={muscleGroup} onChange={setMuscleGroup} />
+            <MuscleGroupPicker value={muscleGroup} onChange={setMuscleGroup} />
             <p className="text-xs text-[var(--muted-foreground)]">{t('exercise.sortedByUsage')}</p>
             <ul className="max-h-[40dvh] space-y-2 overflow-y-auto">
                 {exercises.map(exercise => <li key={exercise.id}>

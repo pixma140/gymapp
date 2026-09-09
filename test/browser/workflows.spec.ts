@@ -90,7 +90,8 @@ test('demo workout flow logs sets, creates exercises, and edits completed histor
     await context.setOffline(true);
     await page.getByRole('button', { name: 'Add Exercise', exact: true }).click();
     const modal = page.getByRole('dialog');
-    await modal.getByLabel('Muscle group', { exact: true }).selectOption('chest');
+    await modal.getByRole('button', { name: 'All muscle groups', exact: true }).click();
+    await page.getByRole('dialog', { name: 'Muscles', exact: true }).getByRole('button', { name: 'Chest', exact: true }).click();
     await modal.getByRole('textbox', { name: 'Search exercises…' }).fill('barbell bench press');
     await modal.getByRole('button', { name: 'barbell bench press Chest', exact: true }).click();
     await expect(modal).toHaveCount(0);
@@ -153,11 +154,13 @@ test('demo workout flow logs sets, creates exercises, and edits completed histor
     await page.getByRole('link', { name: /Foundry District/ }).click();
     await page.getByRole('button', { name: 'Add Exercise', exact: true }).click();
     await expect(modal.getByRole('listitem').first()).toContainText('barbell bench press');
-    await modal.getByLabel('Muscle group', { exact: true }).selectOption('chest');
+    await modal.getByRole('button', { name: 'All muscle groups', exact: true }).click();
+    await page.getByRole('dialog', { name: 'Muscles', exact: true }).getByRole('button', { name: 'Chest', exact: true }).click();
     await expect(modal.getByRole('listitem').first()).toContainText('barbell bench press');
     await modal.getByRole('textbox', { name: 'Search exercises…' }).fill('press');
     await expect(modal.getByRole('listitem').first()).toContainText('barbell bench press');
-    await modal.getByLabel('Muscle group', { exact: true }).selectOption('');
+    await modal.getByRole('button', { name: 'Chest', exact: true }).click();
+    await page.getByRole('dialog', { name: 'Muscles', exact: true }).getByRole('button', { name: 'All muscle groups', exact: true }).click();
     await expect(modal.getByRole('listitem').first()).toContainText('barbell bench press');
     await modal.getByRole('listitem').first().getByRole('button').click();
     await expect(first.getByRole('button', { name: 'Toggle warmup set' })).toHaveAttribute('aria-pressed', 'true');
@@ -167,6 +170,54 @@ test('demo workout flow logs sets, creates exercises, and edits completed histor
     await modal.getByRole('button', { name: 'Close' }).click();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     expect(errors).toEqual([]);
+});
+
+test('visual muscle picker filters exercises and preserves search when selecting or dismissing', async ({ page }, testInfo) => {
+    expect((await page.request.post('/api/auth/register', {
+        data: { username: `muscles-${uuidv7()}`, password: testPassword },
+    })).ok()).toBe(true);
+    await page.goto('/');
+    await page.getByRole('link', { name: /Foundry District/ }).click();
+    await page.getByRole('button', { name: 'Add Exercise', exact: true }).click();
+    const exercises = page.getByRole('dialog', { name: 'Select Exercise', exact: true });
+    const muscles = page.getByRole('dialog', { name: 'Muscles', exact: true });
+    await exercises.getByRole('textbox', { name: 'Search exercises…' }).fill('press');
+    const allPresses = await exercises.getByRole('listitem').count();
+    await exercises.getByRole('button', { name: 'All muscle groups', exact: true }).click();
+    await expect(muscles.getByRole('heading', { name: 'Upper body', exact: true })).toBeVisible();
+    await expect(muscles.getByRole('region', { name: 'Upper body' }).getByRole('button')).toHaveCount(10);
+    await expect(muscles.getByRole('region', { name: 'Lower body' }).getByRole('button')).toHaveCount(6);
+    await expect(muscles.getByRole('region', { name: 'Cardio' }).getByRole('button')).toHaveCount(1);
+    await page.screenshot({ path: testInfo.outputPath('muscle-picker-mobile.png') });
+    await muscles.getByRole('button', { name: 'Chest', exact: true }).click();
+    await expect(muscles).toHaveCount(0);
+    await expect(exercises.getByRole('textbox')).toHaveValue('press');
+    const filtered = exercises.getByRole('listitem');
+    expect(await filtered.count()).toBeGreaterThan(0);
+    expect(await filtered.count()).toBeLessThan(allPresses);
+    for (const item of await filtered.all()) await expect(item).toContainText('Chest');
+    await expect(exercises.getByRole('button', { name: 'Chest', exact: true })).toBeFocused();
+    await exercises.getByRole('button', { name: 'Chest', exact: true }).click();
+    await expect(muscles.getByRole('button', { name: 'Chest', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await page.keyboard.press('Escape');
+    await expect(muscles).toHaveCount(0);
+    await expect(exercises).toBeVisible();
+    await expect(exercises.getByRole('textbox')).toHaveValue('press');
+    await exercises.getByRole('button', { name: 'Chest', exact: true }).click();
+    await muscles.getByRole('button', { name: 'All muscle groups', exact: true }).click();
+    await expect(exercises.getByRole('listitem')).toHaveCount(allPresses);
+    await exercises.getByRole('textbox').fill('');
+    await exercises.getByRole('button', { name: 'All muscle groups', exact: true }).click();
+    await muscles.getByRole('button', { name: 'Calves', exact: true }).click();
+    await expect(exercises.getByRole('listitem').first()).toContainText('Calves');
+    await exercises.getByRole('button', { name: 'Calves', exact: true }).click();
+    await muscles.getByRole('button', { name: 'Cardio', exact: true }).click();
+    await expect(exercises.getByRole('listitem').first()).toContainText('Cardio');
+    await exercises.getByRole('button', { name: 'Cardio', exact: true }).click();
+    await muscles.getByRole('button', { name: 'Close', exact: true }).click();
+    await expect(muscles).toHaveCount(0);
+    await expect(exercises.getByRole('button', { name: 'Cardio', exact: true })).toBeFocused();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
 async function expectPendingChanges(page: Page, count: number) {
@@ -303,7 +354,7 @@ test('fixture users share gyms and retain private timed workouts through logout 
     await expect(bannerTime).toHaveAttribute('datetime', new Date(started[0].startTime).toISOString());
     await expect(bannerTime).toHaveText(await page.evaluate(timestamp => new Date(timestamp).toLocaleString('en', { dateStyle: 'medium', timeStyle: 'short' }), started[0].startTime));
     await expect(page.getByText('Moonshot Barbell Club', { exact: true })).toBeVisible();
-    await page.getByRole('link', { name: 'Resume workout', exact: true }).click();
+    await page.getByRole('link', { name: /Workout session active/ }).click();
     await page.getByRole('button', { name: 'Finish workout', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     await expectPendingChanges(page, 0);
@@ -361,7 +412,7 @@ test('offline timed intent, cancellation, profile measurements, and catalog edit
     await page.getByRole('button', { name: 'Refresh', exact: true }).click();
     await expect(page.getByText('Pending changes must be synchronized or explicitly discarded before refreshing.')).toBeVisible();
     await page.getByRole('link', { name: 'Training', exact: true }).click();
-    await page.getByRole('link', { name: 'Resume workout', exact: true }).click();
+    await page.getByRole('link', { name: /Workout session active/ }).click();
     page.once('dialog', dialog => dialog.accept());
     await page.getByRole('button', { name: 'Cancel workout', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
@@ -369,7 +420,7 @@ test('offline timed intent, cancellation, profile measurements, and catalog edit
     await context.setOffline(false);
     await expectPendingChanges(page, 0);
     await page.reload();
-    await expect(page.getByRole('link', { name: 'Resume workout', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: /Workout session active/ })).toHaveCount(0);
     await page.getByRole('link', { name: 'Profile', exact: true }).click();
     await page.getByLabel('Weight (kg)').fill('80');
     await page.getByRole('button', { name: 'Save Profile', exact: true }).click();
@@ -506,7 +557,7 @@ test('advanced recovery is failed-only, confirmed, failure-atomic, exportable, a
         data: { username: 'discard-account-a', password: testPassword },
     })).ok()).toBe(true);
     await page.goto('/');
-    await expect(page.getByRole('link', { name: 'Resume workout', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Workout session active/ })).toBeVisible();
     await expectPendingChanges(page, 1);
 
     await page.getByRole('link', { name: 'Settings', exact: true }).click();
@@ -641,9 +692,9 @@ test('two tabs serialize senders and propagate logout and account switches', asy
     await second.locator('input[autocomplete=current-password]').fill(testPassword);
     await second.getByRole('button', { name: 'Log in', exact: true }).click();
     await expectPendingChanges(second, 0);
-    await expect(second.getByRole('link', { name: 'Resume workout', exact: true })).toBeVisible();
+    await expect(second.getByRole('link', { name: /Workout session active/ })).toBeVisible();
     second.once('dialog', dialog => dialog.accept());
-    await second.getByRole('link', { name: 'Resume workout', exact: true }).click();
+    await second.getByRole('link', { name: /Workout session active/ }).click();
     await second.getByRole('button', { name: 'Cancel workout', exact: true }).click();
     await expect.poll(async () => (await (await second.request.get('/api/sync/snapshot')).json()).workouts).toEqual([]);
     await second.close();
