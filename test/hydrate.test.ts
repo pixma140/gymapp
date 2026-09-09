@@ -44,6 +44,30 @@ describe('account caches and transactional intent', () => {
         await expect(hydrateFromServer(db, snapshot)).rejects.toThrow('pending_work');
         expect((await db.users.get(1))?.name).toBe('Offline edit');
     });
+    it('delivers persisted offline intent once after reopening the account cache', async () => {
+        const { db, snapshot } = fixture();
+        await hydrateFromServer(db, snapshot);
+        await applyOperation(db, 'profile.update', null, { name: 'Persisted edit' });
+        const queued = (await db.outbox.toArray())[0].intent;
+        db.close();
+        await db.open();
+        vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) =>
+            (args.at(-1) as () => Promise<void>)() } });
+        const delivery = vi.fn(async (_url: unknown, options?: RequestInit) => {
+            const sent = JSON.parse(String(options?.body));
+            expect(sent).toMatchObject({ ...queued, ...db.binding, expectedRevision: 1 });
+            return new Response(JSON.stringify({ ok: true, ...db.binding, mutationId: sent.mutationId,
+                revision: 2, accountGeneration: 1, catalogGeneration: 1 }));
+        });
+        vi.stubGlobal('fetch', vi.fn((url: unknown, options?: RequestInit) => String(url).endsWith('/snapshot')
+            ? Promise.resolve(new Response(JSON.stringify({ ok: true, ...snapshot })))
+            : delivery(url, options)));
+        await flushPendingMutations(db);
+        await flushPendingMutations(db);
+        expect(delivery).toHaveBeenCalledTimes(1);
+        expect(await db.outbox.count()).toBe(0);
+        expect(await db.users.get(1)).toMatchObject({ name: 'Persisted edit', revision: 2 });
+    });
     it('atomically discards pending intent into a validated authoritative snapshot for only one account', async () => {
         const first = fixture();
         const second = fixture(2, first.snapshot.installationId);

@@ -185,3 +185,24 @@ suite passed (80 tests including the in-progress client regressions).
 - Phase E remains open for backoff/Retry-After, immutable-envelope refinements,
   freezing local writes during snapshot replacement, and reviewed conflict
   reapplication. No application database reset or schema migration was needed.
+
+## Phase G regression checkpoint — 2026-09-09
+
+- Extended HTTP coverage for catalog rename visibility on the next user snapshot
+  and administrator denial when deleting another account's measurement. Fixed
+  the concurrent-start receipt test to mutate the actual winning payload, so its
+  result no longer depends on request ordering.
+- Added fake-IndexedDB coverage proving a persisted offline edit delivers exactly
+  once after cache reopening and commits the acknowledged revision.
+- ESLint now checks server/shared JavaScript and the browser server harness with
+  Node globals; generated browser reports are excluded. No formatting sweep or
+  application behavior change was required.
+- All 113 Vitest tests in nine files and the expanded lint check pass.
+
+Acceptance coverage remains in the existing suites: seed tests cover fresh,
+restart, non-fixture, and reset behavior; admin/sync HTTP tests cover roles,
+shared/private data, deletion, revision conflicts, and receipts; hydrate/API/reset
+integration tests cover rollback, persisted queues, account/installation binding,
+refresh and conflict resolution; browser workflows cover timed sessions,
+measurements, preferences, navigation, and multi-tab lifecycle. No new test file
+was introduced.

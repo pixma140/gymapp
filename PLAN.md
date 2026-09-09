@@ -173,9 +173,9 @@ The 2026-09-08 repository audit re-ran all Vitest tests, lint, and the productio
 
 ### Phase G — Verification, CI, and documentation
 
-- [ ] Extend existing Vitest HTTP and fake-IndexedDB tests for the matrix below. Replace old schema/exercise fixtures; preserve relevant password/OIDC/authz tests.
+- [x] Extend existing Vitest HTTP and fake-IndexedDB tests for the matrix below. Replace old schema/exercise fixtures; preserve relevant password/OIDC/authz tests.
 - [x] Add browser smoke coverage for the surviving workflows. Keep the setup small; choose a browser runner in implementation only if the available environment has no reusable harness. Wire its install/run commands explicitly if introduced.
-- [ ] Extend ESLint to server/shared JavaScript with appropriate globals. Keep formatting/line-ending normalization isolated from behavior changes.
+- [x] Extend ESLint to server/shared JavaScript with appropriate globals. Keep formatting/line-ending normalization isolated from behavior changes.
 - [x] Run `npm test`, `npm run lint`, and `npm run build`; fix failures. Measure the resulting initial bundle and verify charts/admin code actually load separately.
 - [ ] Update GitLab workflow rules so verification runs for branches/merge requests as well as release tags. Make multi-architecture image publication depend on passing checks, while retaining tag-only publishing.
 - [x] Update Docker/Compose and README with the fixture flag, reset command, exact test logins, shared-gym permissions, offline/refresh limitations, and the temporary absence of exercise logging. Keep non-fixture setup documented.

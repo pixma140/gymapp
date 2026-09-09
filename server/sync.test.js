@@ -89,6 +89,18 @@ describe('replacement sync contract', () => {
             expect((await send(command(operation, payload, { targetId: gymId, expectedRevision: 1 }))).status).toBe(403);
         }
     });
+    it('exposes administrator catalog renames on the next user snapshot', async () => {
+        const before = (await snapshot(userCookie)).body;
+        const rename = command('gym.update', { name: 'Renamed Shared Gym' }, {
+            targetId: gymId, expectedRevision: 1, accountId: adminId,
+        });
+        expect((await send(rename, adminCookie)).status).toBe(200);
+        const after = (await snapshot(userCookie)).body;
+        expect(after.gyms).toEqual((await snapshot(adminCookie)).body.gyms);
+        expect(after.gyms[0]).toMatchObject({ id: gymId, name: 'Renamed Shared Gym', revision: 2 });
+        expect(after.catalogGeneration).toBe(before.catalogGeneration + 1);
+        expect(after.accountGeneration).toBe(before.accountGeneration);
+    });
     it('applies private commands once, detects revision conflicts, and isolates snapshots', async () => {
         const starts = [10, 11].map(startTime => command('workout.start', { gymId, startTime }));
         const results = await Promise.all(starts.map(start => send(start)));
@@ -103,9 +115,14 @@ describe('replacement sync contract', () => {
             .toEqual({ count: 1 });
         expect((await database.getSql('SELECT id FROM workouts WHERE userId = ? AND endTime IS NULL', [userId])).id).toBe(workoutId);
         expect((await send(start)).body).toEqual(result.body);
-        expect((await send({ ...start, payload: { gymId, startTime: 11 } })).body.error).toBe('mutation_id_reused');
+        expect((await send({ ...start, payload: { gymId, startTime: start.payload.startTime + 1 } })).body.error).toBe('mutation_id_reused');
         const measurement = command('measurement.create', { weight: 80, bodyFat: 20, timestamp: 10 });
         expect((await send(measurement)).status).toBe(200);
+        const beforeForeignDelete = (await snapshot(userCookie)).body;
+        expect((await send(command('measurement.delete', {}, {
+            targetId: measurement.targetId, expectedRevision: 1, accountId: adminId,
+        }), adminCookie)).status).toBe(404);
+        expect((await snapshot(userCookie)).body).toEqual(beforeForeignDelete);
         expect((await snapshot(adminCookie)).body.workouts).toEqual([]);
         expect((await snapshot(adminCookie)).body.measurements).toEqual([]);
         expect((await snapshot(userCookie)).body.workouts).toHaveLength(1);
@@ -118,7 +135,7 @@ describe('replacement sync contract', () => {
     });
     it('rejects another active session and allows finishing at an archived gym', async () => {
         expect((await send(command('workout.start', { gymId, startTime: 11 }))).body.error).toBe('active_workout_exists');
-        const archive = command('gym.archive', { archived: true }, { targetId: gymId, expectedRevision: 1, accountId: adminId });
+        const archive = command('gym.archive', { archived: true }, { targetId: gymId, expectedRevision: 2, accountId: adminId });
         expect((await send(archive, adminCookie)).status).toBe(200);
         expect((await send(command('workout.finish', { endTime: 9 }, { targetId: workoutId, expectedRevision: 1 }))).status).toBe(409);
         expect((await send(command('workout.finish', { endTime: 20 }, { targetId: workoutId, expectedRevision: 1 }))).body.revision).toBe(2);
