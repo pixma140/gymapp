@@ -206,3 +206,21 @@ integration tests cover rollback, persisted queues, account/installation binding
 refresh and conflict resolution; browser workflows cover timed sessions,
 measurements, preferences, navigation, and multi-tab lifecycle. No new test file
 was introduced.
+
+## Phase G CI checkpoint — 2026-09-09
+
+- Branches, merge requests, and release tags now run test/lint/build/Chromium
+  verification. Open merge requests suppress duplicate branch push pipelines.
+- Both amd64 and arm64 image builds must pass after verification; only `latest`
+  and `v*` tags can publish, with explicit dependencies on both gate jobs.
+  The runner needs privileged Docker-in-Docker and binfmt support.
+- Final local validation: 113 Vitest tests, eight Chromium workflows, lint,
+  production build, CI YAML parsing/dependency inspection, and
+  `docker build --tag gymapp:phase-g .` all pass. Browser installation was needed;
+  HTTP/browser tests and Docker used approved sandbox escalation.
+- Initial JS remains 461.83 kB / gzip 141.62 kB. Admin (17.11 kB) and analysis
+  (348.52 kB) remain separate chunks. Docker built image
+  `sha256:5b794e0cbf32fc4bcfed57fea1314ce685d75166bb516232a276beb27a31c152`.
+- Hosted GitLab execution, the arm64 build, and registry publication have not
+  been run locally. Publication remains tag-only; nothing was pushed. No
+  development database reset or external exercise integration was performed.

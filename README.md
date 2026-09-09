@@ -138,3 +138,12 @@ account switching, private history, and deletion against a throwaway server.
 
 See [PLAN.md](PLAN.md) for remaining work and [ARCHITECTURE.md](ARCHITECTURE.md)
 for module boundaries and persistence details.
+
+GitLab runs verification on branches, merge requests, and release tags (`latest`
+or `v*`), suppressing duplicate push pipelines for branches with open merge
+requests. Verification installs dependencies and Chromium, then runs Vitest,
+ESLint (including server/shared JavaScript), the production build, and browser
+workflows. A subsequent job builds both amd64 and arm64 Docker images without
+publishing. Only release-tag pipelines publish, after both jobs succeed. Docker
+jobs require a runner configured for privileged Docker-in-Docker and binfmt.
+The workflow follows [GitLab's branch/merge-request rules](https://docs.gitlab.com/ci/yaml/workflow/).
