@@ -225,6 +225,7 @@ HTTP authorization, command validation/idempotency/scoping, fixture/reset
 behavior, and account-local IndexedDB hydration and durable operations.
 Playwright exercises mobile-width login, shared gyms, timed workouts,
 account switching, private history, and deletion against a throwaway server.
+The per-file test inventory is maintained in [AGENTS.md](AGENTS.md).
 `npm run test:watch` starts Vitest watch mode; `npm run preview` previews a build.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for module boundaries, persistence
