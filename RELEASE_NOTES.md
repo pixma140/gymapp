@@ -1,5 +1,33 @@
 # Release notes
 
+## v0.5.1-alpha
+
+No database reset is required when upgrading from `v0.4.1-alpha`. Deploy frontend
+and server together, then visit online once to cache the app and prepare the
+account before launching offline.
+
+This is the published offline/PWA feature release. The `v0.5.0-alpha` tag failed
+its browser-test gate before publishing images or a GitHub release; this version
+fixes the test timing and includes the complete feature set described below.
+
+- Install Gym App on Android/desktop Chromium and reopen a prepared account
+  offline to record workouts, exercises, and sets.
+- Verify identity before reconnect delivery; lock local access across tabs on
+  logout, retain pending work, and defer server invalidation until reachable.
+- Cache static app resources only, and confirm waiting updates before reloading
+  open tabs. Saved workouts and pending changes are preserved.
+- Use lightweight generation preflight, typed local-operation errors, a
+  same-origin CSP, consistent JSON parser errors, and development server watch mode.
+- Cover account changes, server-reset setup, storage failures, stale logout
+  notifications, and real service-worker offline/update behavior in tests.
+- Publish amd64/arm64 images with native frontend builds and registry caching;
+  hosted checks use Ubuntu 24.04 and Node 24.20.0 LTS.
+- Make browser tests wait for persisted sets before reload and remove
+  timing-dependent sign-out response interception.
+
+Android home-screen installation still needs a real-device check. Closed-app
+background sync is not promised; durable local state requires writable storage.
+
 ## v0.5.0-alpha
 
 No database-breaking changes: existing `v0.4.1-alpha` SQLite databases and
