@@ -4,7 +4,7 @@ import type { ProfileFields } from '@shared/commands';
 import { AUTHORIZATION_FAILURE, ApiError } from '@/lib/api';
 import { finishPendingLogout, getBootstrap, logoutSession, type Capabilities, type SessionUser } from '@/auth/session';
 import { forgetAccount, localSession, lockLocalSession, rememberAccount } from '@/auth/localSession';
-import { readSession, subscribeSession, notifySession, sessionEpoch } from '@/auth/tabs';
+import { readSession, subscribeSession, notifyLocalLogout, notifySession, sessionEpoch } from '@/auth/tabs';
 import { AccountDatabase } from '@/db/db';
 import { discardPendingChanges, prepareAccountCache, resolvePendingConflict } from '@/db/hydrate';
 import { flushPendingMutations } from '@/db/sqliteSync';
@@ -136,6 +136,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const logout = useCallback(async () => {
         // Persist the lock before waiting for an in-flight sender to finish.
         lockLocalSession();
+        notifyLocalLogout();
         const version = await stop();
         if (version !== generation.current) return;
         try {

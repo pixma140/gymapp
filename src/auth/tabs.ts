@@ -11,6 +11,14 @@ function advanceEpoch(): void {
 }
 type SessionMessage = 'changing' | 'changed' | 'locked';
 
+export function notifyLocalLogout(): void {
+    advanceEpoch();
+    if (typeof BroadcastChannel === 'undefined') return;
+    const channel = new BroadcastChannel(CHANNEL);
+    channel.postMessage({ type: 'locked', epoch: sessionEpoch() });
+    channel.close();
+}
+
 export function notifySession(message: SessionMessage): void {
     if (typeof BroadcastChannel === 'undefined') return;
     const channel = new BroadcastChannel(CHANNEL);
@@ -22,7 +30,9 @@ export function subscribeSession(listener: (message: SessionMessage) => void): (
     if (typeof BroadcastChannel === 'undefined') return () => {};
     const channel = new BroadcastChannel(CHANNEL);
     channel.onmessage = event => {
-        if (event.data === 'changing' || event.data === 'changed' || event.data === 'locked') listener(event.data);
+        if (event.data === 'changing' || event.data === 'changed') listener(event.data);
+        // A suspended tab must not replay logout against a newer login cookie.
+        if (event.data?.type === 'locked' && event.data.epoch === sessionEpoch()) listener('locked');
     };
     return () => channel.close();
 }

@@ -2,7 +2,7 @@ import { isUuid } from '@shared/commands';
 import type { ProfileFields, Snapshot } from '@shared/commands';
 import { actionRequest, isObject, jsonBody, requestJson, type ActionResponse } from '@/lib/api';
 import { isSnapshot } from '@/db/hydrate';
-import { changeSession, notifySession } from './tabs';
+import { changeSession, notifyLocalLogout, notifySession } from './tabs';
 import { completeLocalLogout, forgetAccount, localSession, lockLocalSession, unlockLocalSession } from './localSession';
 
 export interface SessionUser {
@@ -61,7 +61,7 @@ export interface SetupInput { username: string; password: string; name: string; 
 export const setupInitialAdmin = (input: SetupInput) => authenticate('/api/setup', input);
 export async function logoutSession(): Promise<void> {
     lockLocalSession();
-    notifySession('locked');
+    notifyLocalLogout();
     await changeSession(finishPendingLogout);
 }
 // Call under the exclusive session lock, before any new cookie is established.

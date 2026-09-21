@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, isObject, requestJson } from '@/lib/api';
-import { changeSession, readSession, sessionEpoch, subscribeSession } from '@/auth/tabs';
+import { changeSession, notifyLocalLogout, readSession, sessionEpoch, subscribeSession } from '@/auth/tabs';
 import { getBootstrap, isBootstrap, logoutSession } from '@/auth/session';
 import { finishPendingLogout, loginWithUsername } from '@/auth/session';
 import { localSession, rememberAccount, unlockLocalSession } from '@/auth/localSession';
@@ -9,6 +9,34 @@ import { v7 as uuidv7 } from 'uuid';
 afterEach(() => vi.unstubAllGlobals());
 const valid = (value: unknown): value is { ok: true } => isObject(value) && value.ok === true;
 describe('typed API and bootstrap failures', () => {
+    it('ignores a delayed logout notification after a newer session change', async () => {
+        const storage = new Map<string, string>();
+        vi.stubGlobal('localStorage', {
+            getItem: (key: string) => storage.get(key) ?? null,
+            setItem: (key: string, value: string) => storage.set(key, value),
+        });
+        vi.stubGlobal('navigator', {});
+        const channels: Channel[] = [];
+        const messages: unknown[] = [];
+        class Channel {
+            onmessage: ((event: { data: unknown }) => void) | null = null;
+            constructor() { channels.push(this); }
+            postMessage(message: unknown) { messages.push(message); }
+            close() {}
+        }
+        vi.stubGlobal('BroadcastChannel', Channel);
+        const listener = vi.fn();
+        const unsubscribe = subscribeSession(listener);
+        notifyLocalLogout();
+        const message = messages[0];
+        channels[0].onmessage?.({ data: message });
+        expect(listener).toHaveBeenCalledWith('locked');
+        listener.mockClear();
+        await changeSession(async () => {});
+        channels[0].onmessage?.({ data: message });
+        expect(listener).not.toHaveBeenCalled();
+        unsubscribe();
+    });
     it('revokes offline eligibility on confirmed sign-out even if the next request fails', async () => {
         const storage = new Map<string, string>();
         vi.stubGlobal('localStorage', {
