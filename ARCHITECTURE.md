@@ -1,12 +1,11 @@
 # Architecture
 
-The rewrite described by the former PLAN.md is complete and its plan file was
-removed: deterministic fixtures, account authorization, transactional bootstrap,
-account-local tab coordination, durable revisioned synchronization, the
-timed-workout UI, and gated publication all shipped in
-`v0.2.0-alpha`. Verification runs locally and in GitHub Actions, including the
-amd64/arm64 image build. `docs/implementation-baseline.md` keeps the historical
-checkpoint log.
+This document describes the current design: deterministic fixtures, account
+authorization, transactional bootstrap, account-local tab coordination, durable
+revisioned synchronization, the timed-workout UI, and gated publication.
+Verification runs locally and in GitHub Actions, including the amd64/arm64 image
+build. Historical plans and checkpoints live in Git history and
+[RELEASE_NOTES.md](RELEASE_NOTES.md), not in the tree.
 
 ## Runtime and modules
 
