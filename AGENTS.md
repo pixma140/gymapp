@@ -169,12 +169,12 @@ Use this procedure only after the user explicitly requests a tag or release.
 5. Review the release diff and commit only the release-note/version files with
    `chore(release): prepare <tag>`. Confirm the worktree is clean and the release
    commit contains the intended files.
-6. Publish `main` before the tag. If the configured SSH remote stalls, use GitHub
-   CLI authentication over HTTPS without changing Git configuration:
-   `git -c credential.helper='!gh auth git-credential' push https://github.com/{owner}/{repo}.git main:main`.
+6. Publish `main` before the tag with `git push origin main`. The repository's
+   `origin` uses HTTPS because outbound SSH on port 22 may be unavailable; `gh
+   auth setup-git` configures Git to use the active GitHub CLI credentials.
 7. Create an annotated tag on the release commit with
-   `git tag -a <tag> -m "Release <tag>"`, then push that tag using the same
-   authenticated HTTPS form. Do not create the GitHub release manually: the tag
+   `git tag -a <tag> -m "Release <tag>"`, then push it with `git push origin
+   <tag>`. Do not create the GitHub release manually: the tag
    starts `.github/workflows/release.yml`, which verifies the commit, publishes
    multi-architecture images, creates the prerelease when the tag has a suffix,
    and moves `latest`.
