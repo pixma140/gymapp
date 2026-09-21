@@ -13,6 +13,43 @@ test.beforeEach(async ({ context }, testInfo) => {
     await context.setExtraHTTPHeaders({ 'X-Forwarded-For': `192.0.2.${testInfo.line % 250 + 3}` });
 });
 
+test('a locally logged-out browser can discover setup after an installation reset', async ({ page }) => {
+    await page.request.post('/api/auth/register', { data: { username: `reset-lock-${uuidv7()}`, password: testPassword } });
+    await page.goto('/settings');
+    await page.getByRole('button', { name: /Log out|Logout/i }).click();
+    await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
+    await page.route('**/api/bootstrap', route => route.fulfill({ json: {
+        ok: true, status: 'setup', installationId: uuidv7(), defaultTimeFormat: 'system',
+    } }));
+    await page.goto('/');
+    await expect(page).toHaveURL(/\/setup$/);
+    await expect(page.locator('input[autocomplete=username]')).toBeVisible();
+});
+
+test('confirmed sign-out cannot reopen a previous account after a failed reconnect refresh', async ({ page }) => {
+    const registered = await (await page.request.post('/api/auth/register', {
+        data: { username: `revoked-cache-${uuidv7()}`, password: testPassword },
+    })).json();
+    expect(registered.ok).toBe(true);
+    const bootstrap = await (await page.request.get('/api/bootstrap')).json();
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+    await page.route('**/api/bootstrap', route => route.abort());
+    await page.reload();
+    await expect(page.getByRole('status')).toContainText('Offline access');
+    await page.unroute('**/api/bootstrap');
+    let calls = 0;
+    await page.route('**/api/bootstrap', route => ++calls === 1
+        ? route.fulfill({ json: { ok: true, status: 'signedOut', installationId: bootstrap.installationId, defaultTimeFormat: 'system' } })
+        : route.abort());
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+    await expect(page.getByRole('button', { name: 'Log in', exact: true })
+        .or(page.getByRole('button', { name: 'Retry', exact: true }))).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Training', exact: true })).toHaveCount(0);
+    await expect(page.getByText('Could not load your account. Local data has been preserved.')).toBeVisible();
+});
+
 test('reopens a prepared account when bootstrap is unreachable and locks it on offline logout', async ({ page, context }) => {
     expect((await page.request.post('/api/auth/register', {
         data: { username: `offline-resume-${uuidv7()}`, password: testPassword },

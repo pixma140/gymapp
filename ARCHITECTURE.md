@@ -133,6 +133,12 @@ senders; server invalidation is deferred when unreachable and serialized before
 new authentication. Only explicit authentication unlocks local access. Storage
 events supplement BroadcastChannel for session changes. Offline-resumed accounts
 verify the server session before sending; old account/installation queues remain isolated.
+Confirmed identity changes revoke offline eligibility before any subsequent
+request. Same-account preparation retains the existing eligible reference until
+success. A logged-out browser may still discover public first-admin setup after
+an installation reset. Storage write failures use an in-memory lock and a
+cross-tab lock notification while server invalidation is attempted; durable
+offline state requires writable storage.
 Browsers without Web Locks retain queues without sending.
 
 Server-side envelope identity checks additionally protect against externally

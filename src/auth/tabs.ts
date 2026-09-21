@@ -9,7 +9,7 @@ export function sessionEpoch(): string | null {
 function advanceEpoch(): void {
     try { localStorage.setItem(EPOCH_KEY, uuidv7()); } catch { /* BroadcastChannel remains available. */ }
 }
-type SessionMessage = 'changing' | 'changed';
+type SessionMessage = 'changing' | 'changed' | 'locked';
 
 export function notifySession(message: SessionMessage): void {
     if (typeof BroadcastChannel === 'undefined') return;
@@ -22,7 +22,7 @@ export function subscribeSession(listener: (message: SessionMessage) => void): (
     if (typeof BroadcastChannel === 'undefined') return () => {};
     const channel = new BroadcastChannel(CHANNEL);
     channel.onmessage = event => {
-        if (event.data === 'changing' || event.data === 'changed') listener(event.data);
+        if (event.data === 'changing' || event.data === 'changed' || event.data === 'locked') listener(event.data);
     };
     return () => channel.close();
 }

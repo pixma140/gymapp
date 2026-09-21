@@ -232,6 +232,9 @@ Updates wait for **Update app** confirmation, which reloads open app tabs while
 retaining saved data and pending changes. Complete unsaved form edits first.
 Sync runs while the app is open; closed-app background delivery is not promised.
 Browser storage clearing/eviction removes offline resources and local data.
+Offline reopening and logout persistence require writable browser storage. If
+storage writes fail, the current document stays locally locked and still attempts
+server logout, but persistence across browser restarts cannot be guaranteed.
 Breaking alpha schema releases still require the documented database reset.
 
 Express serves a same-origin Content Security Policy for scripts, connections,

@@ -3,12 +3,27 @@ import { ApiError, isObject, requestJson } from '@/lib/api';
 import { changeSession, readSession, sessionEpoch, subscribeSession } from '@/auth/tabs';
 import { getBootstrap, isBootstrap, logoutSession } from '@/auth/session';
 import { finishPendingLogout, loginWithUsername } from '@/auth/session';
-import { localSession, rememberAccount } from '@/auth/localSession';
+import { localSession, rememberAccount, unlockLocalSession } from '@/auth/localSession';
 import { v7 as uuidv7 } from 'uuid';
 
 afterEach(() => vi.unstubAllGlobals());
 const valid = (value: unknown): value is { ok: true } => isObject(value) && value.ok === true;
 describe('typed API and bootstrap failures', () => {
+    it('revokes offline eligibility on confirmed sign-out even if the next request fails', async () => {
+        const storage = new Map<string, string>();
+        vi.stubGlobal('localStorage', {
+            getItem: (key: string) => storage.get(key) ?? null,
+            setItem: (key: string, value: string) => storage.set(key, value),
+        });
+        unlockLocalSession();
+        rememberAccount({ accountId: uuidv7(), installationId: uuidv7(), defaultTimeFormat: 'system' });
+        vi.stubGlobal('fetch', vi.fn()
+            .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true, status: 'signedOut', installationId: uuidv7(), defaultTimeFormat: 'system' })))
+            .mockRejectedValueOnce(new TypeError('offline')));
+        expect((await getBootstrap()).status).toBe('signedOut');
+        await expect(getBootstrap()).rejects.toMatchObject({ kind: 'network' });
+        expect(localSession().account).toBeNull();
+    });
     it('supports session operations without Web Locks or BroadcastChannel', async () => {
         vi.stubGlobal('navigator', {});
         vi.stubGlobal('localStorage', undefined);
@@ -106,5 +121,23 @@ describe('typed API and bootstrap failures', () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true, user }))));
         expect((await loginWithUsername('test', 'password')).ok).toBe(true);
         expect(localSession()).toMatchObject({ locked: false, pendingLogout: false });
+    });
+    it('locks and invalidates the server session even when storage writes fail', async () => {
+        const storage = new Map<string, string>();
+        const setItem = vi.fn((key: string, value: string) => { storage.set(key, value); });
+        vi.stubGlobal('localStorage', { getItem: (key: string) => storage.get(key) ?? null, setItem,
+            removeItem: (key: string) => storage.delete(key) });
+        vi.stubGlobal('navigator', {});
+        vi.stubGlobal('BroadcastChannel', undefined);
+        unlockLocalSession();
+        rememberAccount({ accountId: uuidv7(), installationId: uuidv7(), defaultTimeFormat: 'system' });
+        setItem.mockImplementation(() => { throw new DOMException('quota exceeded', 'QuotaExceededError'); });
+        const fetch = vi.fn().mockResolvedValue(new Response('{"ok":true}'));
+        vi.stubGlobal('fetch', fetch);
+        await logoutSession();
+        expect(fetch).toHaveBeenCalledTimes(1);
+        expect(localSession()).toEqual({ locked: true, pendingLogout: false, account: null });
+        setItem.mockImplementation((key: string, value: string) => { storage.set(key, value); });
+        unlockLocalSession();
     });
 });

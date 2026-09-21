@@ -34,7 +34,15 @@ export function isBootstrap(value: unknown): value is Bootstrap {
     return ['manageUsers', 'manageOidc', 'manageGyms'].every(key => capabilities[key] === user.isAdmin)
         && value.snapshot.accountId === value.user.id && value.snapshot.installationId === value.installationId;
 }
-export const getBootstrap = () => requestJson('/api/bootstrap', isBootstrap, undefined, false);
+export async function getBootstrap(): Promise<Bootstrap> {
+    const bootstrap = await requestJson('/api/bootstrap', isBootstrap, undefined, false);
+    const saved = localSession().account;
+    // A confirmed identity change revokes offline eligibility immediately, even
+    // if subsequent preparation or another request fails.
+    if (saved && (bootstrap.status !== 'authenticated' || bootstrap.user.id !== saved.accountId
+        || bootstrap.installationId !== saved.installationId)) forgetAccount();
+    return bootstrap;
+}
 
 interface AuthResponse extends ActionResponse { user?: SessionUser }
 const isAuthResponse = (value: unknown): value is AuthResponse => isObject(value) && value.ok === true && isSessionUser(value.user);
@@ -53,6 +61,7 @@ export interface SetupInput { username: string; password: string; name: string; 
 export const setupInitialAdmin = (input: SetupInput) => authenticate('/api/setup', input);
 export async function logoutSession(): Promise<void> {
     lockLocalSession();
+    notifySession('locked');
     await changeSession(finishPendingLogout);
 }
 // Call under the exclusive session lock, before any new cookie is established.

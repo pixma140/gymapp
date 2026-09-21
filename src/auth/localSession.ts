@@ -9,8 +9,21 @@ export interface OfflineAccount extends AccountBinding {
 interface LocalSession { locked: boolean; pendingLogout: boolean; account: OfflineAccount | null }
 const empty: LocalSession = { locked: false, pendingLogout: false, account: null };
 let fallback = empty;
+let storageFailed = false;
+function write(state: LocalSession): void {
+    fallback = state;
+    try {
+        localStorage.setItem(KEY, JSON.stringify(state));
+        storageFailed = false;
+    } catch {
+        // Keep this document locked even if the browser refuses persistence.
+        storageFailed = true;
+        try { localStorage.removeItem(KEY); } catch { /* Server logout is still attempted. */ }
+    }
+}
 
 export function localSession(): LocalSession {
+    if (storageFailed) return fallback;
     try {
         let raw: string | null;
         try { raw = localStorage.getItem(KEY); } catch { return fallback; }
@@ -27,21 +40,18 @@ export function localSession(): LocalSession {
 }
 export function rememberAccount(account: OfflineAccount): void {
     if (localSession().locked) return;
-    try { localStorage.setItem(KEY, JSON.stringify({ ...empty, account })); } catch { /* Online-only if storage is unavailable. */ }
+    write({ ...empty, account });
 }
 export function forgetAccount(): void {
     const state = localSession();
-    try { localStorage.setItem(KEY, JSON.stringify({ ...state, account: null })); } catch { /* No offline access without storage. */ }
+    write({ ...state, account: null });
 }
 export function lockLocalSession(): void {
-    fallback = { locked: true, pendingLogout: true, account: null };
-    localStorage.setItem(KEY, JSON.stringify({ locked: true, pendingLogout: true, account: null }));
+    write({ locked: true, pendingLogout: true, account: null });
 }
 export function completeLocalLogout(): void {
-    fallback = { locked: true, pendingLogout: false, account: null };
-    localStorage.setItem(KEY, JSON.stringify({ locked: true, pendingLogout: false, account: null }));
+    write({ locked: true, pendingLogout: false, account: null });
 }
 export function unlockLocalSession(): void {
-    fallback = empty;
-    localStorage.setItem(KEY, JSON.stringify(empty));
+    write(empty);
 }

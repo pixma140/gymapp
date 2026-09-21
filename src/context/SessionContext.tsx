@@ -63,7 +63,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
                 const preparingEpoch = sessionEpoch();
                 if (localSession().locked) {
                     await finishPendingLogout().catch(() => {});
-                    if (version === generation.current) setState(detached('signedOut'));
+                    // Setup is public installation state, not access to a retained account.
+                    const bootstrap = await getBootstrap().catch(() => null);
+                    if (version === generation.current) setState(detached(bootstrap?.status === 'setup' ? 'setup' : 'signedOut'));
                     return;
                 }
                 let bootstrap;
@@ -93,7 +95,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
                     return;
                 }
                 const { user, capabilities, snapshot, defaultTimeFormat } = bootstrap;
-                forgetAccount();
                 setState({ ...detached('preparing'), user, capabilities, defaultTimeFormat });
                 database = new AccountDatabase({ accountId: user.id, installationId: bootstrap.installationId });
                 await database.open();
@@ -212,6 +213,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const initialRefresh = window.setTimeout(() => void refresh(), 0);
         const unsubscribe = subscribeSession(message => {
+            if (message === 'locked') lockLocalSession();
             if (message === 'changing') void stop();
             else void refresh();
         });
