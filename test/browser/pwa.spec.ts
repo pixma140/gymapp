@@ -73,6 +73,7 @@ test('cold starts offline, retains workout edits, and verifies identity before d
     await reopened.getByRole('article').first().getByLabel('Weight (kg)', { exact: true }).fill('40');
     await reopened.getByRole('article').first().getByLabel('Reps', { exact: true }).fill('10');
     await reopened.getByRole('article').first().getByRole('button', { name: 'Add set', exact: true }).click();
+    await expect(reopened.getByRole('article').first().getByRole('listitem')).toHaveCount(1);
     await reopened.reload();
     await expect(reopened.getByRole('status')).toContainText('Offline access');
     await expect(reopened.getByRole('article').first().getByRole('listitem')).toHaveCount(1);

@@ -34,17 +34,16 @@ test('confirmed sign-out cannot reopen a previous account after a failed reconne
     const bootstrap = await (await page.request.get('/api/bootstrap')).json();
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
-    await page.route('**/api/bootstrap', route => route.abort());
-    await page.reload();
-    await expect(page.getByRole('status')).toContainText('Offline access');
-    await page.unroute('**/api/bootstrap');
-    let calls = 0;
-    await page.route('**/api/bootstrap', route => ++calls === 1
+    let responseMode: 'offline' | 'signedOut' = 'offline';
+    await page.route('**/api/bootstrap', route => responseMode === 'signedOut'
         ? route.fulfill({ json: { ok: true, status: 'signedOut', installationId: bootstrap.installationId, defaultTimeFormat: 'system' } })
         : route.abort());
+    await page.reload();
+    await expect(page.getByRole('status')).toContainText('Offline access');
+    responseMode = 'signedOut';
     await page.evaluate(() => window.dispatchEvent(new Event('online')));
-    await expect(page.getByRole('button', { name: 'Log in', exact: true })
-        .or(page.getByRole('button', { name: 'Retry', exact: true }))).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
+    responseMode = 'offline';
     await page.reload();
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toHaveCount(0);
     await expect(page.getByText('Could not load your account. Local data has been preserved.')).toBeVisible();
