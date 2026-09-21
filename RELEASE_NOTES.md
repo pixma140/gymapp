@@ -1,5 +1,29 @@
 # Release notes
 
+## v0.4.1-alpha
+
+No breaking changes. Existing `v0.4.0-alpha` databases and browser caches keep
+working; no reset is required.
+
+### Fixes
+
+- Settings: simplify the clock-format section to a single description and drop
+  the `DEFAULT_TIME_FORMAT` environment readout from the page.
+
+### Maintenance
+
+- Split the server into `server/routes/*` routers plus session and OIDC-settings
+  services; `server/app.js` is now a small wiring factory. Routes, status codes,
+  error identifiers, and cookies are unchanged.
+- Split translations into typed per-language files under `src/i18n/locales/`;
+  a missing or extra German key now fails the TypeScript build.
+- Consolidate documentation on `README.md`, `ARCHITECTURE.md`, and `AGENTS.md`:
+  remove historical planning files and the `docs/` folder, move unimplemented
+  ideas into a README roadmap, and document the release procedure.
+- Add `test/docs.test.ts`, which fails when a test file is missing from the
+  AGENTS.md inventory, a documented npm script does not exist, or an extra
+  Markdown file appears.
+
 ## v0.4.0-alpha
 
 **Breaking alpha release:** account and domain identifiers now use canonical
