@@ -50,6 +50,7 @@ Three documents lead; keep each within its role and update the one that owns a f
   - `test/exerciseCatalog.test.ts`: bundled exercise catalog grouping, cardio additions, filtering, and per-account usage ranking with history deletion.
   - `test/gymCatalog.test.ts`: personal gym visit ranking, account isolation, and history-driven updates.
   - `test/serverReset.test.ts`: end-to-end installation reset isolation between the real server sync contract and account-specific IndexedDB caches.
+  - `test/docs.test.ts`: documentation drift guard; fails when a test file is missing from this inventory, a documented `npm run` script does not exist, or a Markdown file outside the leading documents appears.
 - Browser tests (Playwright, not part of `npm test`):
   - `test/browser/workflows.spec.ts`: mobile-width account, timed-workout, history-deletion failure/retry, bootstrap-retry, and two-tab lifecycle tests; `test/browser/server.mjs` owns its temporary database. Run `npm run build`, `npm run test:browser:install` once, then `npm run test:browser`.
 
@@ -139,6 +140,7 @@ Three documents lead; keep each within its role and update the one that owns a f
 ## Completion and Commits
 - After completing each feature, fix, refactor, documentation update, or other change, run the relevant checks and create a Git commit before reporting completion, unless the user explicitly asks otherwise.
 - Review the diff and stage only files belonging to the completed work; keep secrets and unrelated user changes out of the commit.
+- When a change adds a test file, npm script, top-level module, or schema entity, update `AGENTS.md` (and `ARCHITECTURE.md` or `README.md` if they own the fact) in the same commit; `test/docs.test.ts` enforces part of this.
 - Use Conventional Commits: `<type>[optional scope][!]: <description>`. Choose the appropriate type, such as `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `build`, `ci`, `perf`, or `style`.
 - Keep the description concise and imperative, for example `fix(sync): preserve pending changes on retry` or `docs: clarify database reset instructions`.
 - Mark breaking changes with `!` and explain them in a `BREAKING CHANGE:` footer, including required setup actions. This applies during alpha too.
