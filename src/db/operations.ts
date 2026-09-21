@@ -1,8 +1,19 @@
 import { v7 as uuidv7 } from 'uuid';
-import type { Command, CommandPayloads, Operation, ProfileFields, WorkoutSet } from '@shared/commands';
+import type { Command, CommandPayloads, Operation, ProfileFields, ValidationError, WorkoutSet } from '@shared/commands';
 import { validateCommand } from '@shared/commands';
 import { EXERCISE_IDS } from '@shared/exercises';
 import type { AccountDatabase, MutationIntent } from './db';
+
+export type OperationErrorCode = ValidationError | 'record_not_found' | 'record_exists' | 'invalid_workout_times'
+    | 'active_workout_exists' | 'gym_unavailable' | 'workout_unavailable' | 'exercise_unavailable' | 'exercise_already_selected';
+export class OperationError extends Error {
+    readonly code: OperationErrorCode;
+    constructor(code: OperationErrorCode) {
+        super(code);
+        this.name = 'OperationError';
+        this.code = code;
+    }
+}
 
 export async function applyOperation<K extends Operation>(db: AccountDatabase, operation: K, targetId: string | null, payload: CommandPayloads[K]): Promise<string | null> {
     const domain = operation.split('.')[0];
@@ -36,31 +47,31 @@ export async function applyIntent(db: AccountDatabase, intent: MutationIntent): 
     const table = domain === 'profile' ? db.users : domain === 'gym' ? db.gyms : domain === 'workout' ? db.workouts
         : domain === 'workoutExercise' ? db.workoutExercises : domain === 'customExercise' ? db.customExercises : db.userMeasurements;
     const create = action === 'create' || action === 'start';
-    if (domain !== 'profile' && targetId === null) throw new Error('invalid_target');
+    if (domain !== 'profile' && targetId === null) throw new OperationError('invalid_target');
     const id = domain === 'profile' ? db.binding.accountId : targetId as string;
     await db.transaction('rw', [db.users, db.gyms, db.workouts, db.workoutExercises, db.customExercises, db.userMeasurements, db.outbox], async () => {
         const current = await db.table(table.name).get(id);
-        if (!create && !current) throw new Error('record_not_found');
-        if (create && current) throw new Error('record_exists');
+        if (!create && !current) throw new OperationError('record_not_found');
+        if (create && current) throw new OperationError('record_exists');
         if (operation === 'workout.update') {
             const times = payload as CommandPayloads['workout.update'];
             if (current.endTime === null ? times.endTime !== undefined : (times.endTime ?? current.endTime) < times.startTime) {
-                throw new Error('invalid_workout_times');
+                throw new OperationError('invalid_workout_times');
             }
         }
         if (operation === 'workout.start') {
-            if (await db.workouts.filter(workout => workout.endTime === null).count()) throw new Error('active_workout_exists');
+            if (await db.workouts.filter(workout => workout.endTime === null).count()) throw new OperationError('active_workout_exists');
             const start = payload as CommandPayloads['workout.start'];
             const gym = await db.gyms.get(start.gymId);
-            if (!gym || gym.archived) throw new Error('gym_unavailable');
+            if (!gym || gym.archived) throw new OperationError('gym_unavailable');
         }
         if (operation === 'workoutExercise.create') {
             const use = payload as CommandPayloads['workoutExercise.create'];
             const workout = await db.workouts.get(use.workoutId);
-            if (!workout) throw new Error('workout_unavailable');
-            if (!EXERCISE_IDS.has(use.exerciseId) && !await db.customExercises.get(use.exerciseId)) throw new Error('exercise_unavailable');
+            if (!workout) throw new OperationError('workout_unavailable');
+            if (!EXERCISE_IDS.has(use.exerciseId) && !await db.customExercises.get(use.exerciseId)) throw new OperationError('exercise_unavailable');
             if (await db.workoutExercises.where('[workoutId+exerciseId]').equals([use.workoutId, use.exerciseId]).count()) {
-                throw new Error('exercise_already_selected');
+                throw new OperationError('exercise_already_selected');
             }
         }
         const previous = await db.outbox.filter(entry => entry.intent.operation.split('.')[0] === domain
@@ -80,7 +91,7 @@ export async function applyIntent(db: AccountDatabase, intent: MutationIntent): 
         const candidate = Object.freeze({ ...db.binding, ...intent,
             expectedRevision: create ? null : previous ? 1 : current.revision }) as Command;
         const invalid = validateCommand(candidate);
-        if (invalid) throw new Error(invalid);
+        if (invalid) throw new OperationError(invalid);
         const command = previous ? null : candidate;
         if (action === 'delete') {
             if (domain === 'workout') await db.workoutExercises.where('workoutId').equals(id).delete();
@@ -115,7 +126,7 @@ export async function startOrResumeWorkout(db: AccountDatabase, gymId: string): 
 export async function editWorkoutSets(db: AccountDatabase, id: string, edit: (sets: WorkoutSet[]) => WorkoutSet[]) {
     await db.transaction('rw', [db.users, db.gyms, db.workouts, db.workoutExercises, db.customExercises, db.userMeasurements, db.outbox], async () => {
         const exercise = await db.workoutExercises.get(id);
-        if (!exercise) throw new Error('record_not_found');
+        if (!exercise) throw new OperationError('record_not_found');
         await applyOperation(db, 'workoutExercise.update', id, { sets: edit(exercise.sets) });
     });
 }

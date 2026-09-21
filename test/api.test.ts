@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, isObject, requestJson } from '@/lib/api';
-import { changeSession, sessionEpoch } from '@/auth/tabs';
+import { changeSession, readSession, sessionEpoch, subscribeSession } from '@/auth/tabs';
 import { getBootstrap, isBootstrap, logoutSession } from '@/auth/session';
 import { finishPendingLogout, loginWithUsername } from '@/auth/session';
 import { localSession, rememberAccount } from '@/auth/localSession';
@@ -9,6 +9,16 @@ import { v7 as uuidv7 } from 'uuid';
 afterEach(() => vi.unstubAllGlobals());
 const valid = (value: unknown): value is { ok: true } => isObject(value) && value.ok === true;
 describe('typed API and bootstrap failures', () => {
+    it('supports session operations without Web Locks or BroadcastChannel', async () => {
+        vi.stubGlobal('navigator', {});
+        vi.stubGlobal('BroadcastChannel', undefined);
+        const listener = vi.fn();
+        const unsubscribe = subscribeSession(listener);
+        expect(await readSession(async () => 'ready')).toBe('ready');
+        expect(await changeSession(async () => 'changed')).toBe('changed');
+        unsubscribe();
+        expect(listener).not.toHaveBeenCalled();
+    });
     it('validates UUID v7 accounts in authenticated bootstrap responses', () => {
         const id = uuidv7();
         const installationId = uuidv7();

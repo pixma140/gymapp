@@ -117,4 +117,6 @@ export type Generations = Pick<Snapshot, 'accountId' | 'installationId' | 'accou
 export const PROFILE_COLUMNS: readonly (keyof ProfileFields)[];
 export const COMMAND_FIELDS: Readonly<Record<Operation, readonly string[]>>;
 export function isUuid(value: unknown): value is UUID;
-export function validateCommand(value: unknown): string | null;
+export type ValidationError = 'unsupported_operation' | 'invalid_command' | 'invalid_binding'
+    | 'invalid_target' | 'invalid_revision' | 'invalid_payload';
+export function validateCommand(value: unknown): ValidationError | null;

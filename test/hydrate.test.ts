@@ -67,6 +67,7 @@ describe('account caches and transactional intent', () => {
         await hydrateFromServer(db, snapshot);
         await expect(startOrResumeWorkout(db, snapshot.gyms[0].id)).rejects.toThrow('gym_unavailable');
         await expect(startOrResumeWorkout(db, uuidv7())).rejects.toThrow('gym_unavailable');
+        await expect(startOrResumeWorkout(db, uuidv7())).rejects.toMatchObject({ code: 'gym_unavailable' });
         expect(await db.workouts.count()).toBe(0);
         expect(await db.outbox.count()).toBe(0);
     });
