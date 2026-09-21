@@ -7,6 +7,37 @@ const fixtureCredentials = {
     user: { username: process.env.TEST_SEED_USER_USERNAME!, password: process.env.TEST_SEED_USER_PASSWORD! },
 };
 const testPassword = crypto.randomUUID();
+// API interception in these tests exercises page networking; PWA tests use the real worker.
+test.use({ serviceWorkers: 'block' });
+test.beforeEach(async ({ context }, testInfo) => {
+    await context.setExtraHTTPHeaders({ 'X-Forwarded-For': `192.0.2.${testInfo.line % 250 + 3}` });
+});
+
+test('reopens a prepared account when bootstrap is unreachable and locks it on offline logout', async ({ page, context }) => {
+    expect((await page.request.post('/api/auth/register', {
+        data: { username: `offline-resume-${uuidv7()}`, password: testPassword },
+    })).ok()).toBe(true);
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+    await context.route('**/api/bootstrap', route => route.abort());
+    await context.route('**/api/auth/logout', route => route.abort());
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+    await expect(page.getByRole('status')).toContainText('Offline access');
+    await page.getByRole('link', { name: /Foundry District/ }).click();
+    const second = await context.newPage();
+    await second.goto('/');
+    await expect(second.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+    await page.getByRole('link', { name: 'Settings', exact: true }).click();
+    await page.getByRole('button', { name: /Log out|Logout/i }).click();
+    await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
+    await expect(second.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
+    await context.unroute('**/api/bootstrap');
+    await context.unroute('**/api/auth/logout');
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
+    expect((await (await page.request.get('/api/bootstrap')).json()).status).toBe('signedOut');
+});
 
 test.describe('clock preference', () => {
     test.use({ locale: 'de-DE', timezoneId: 'Europe/Berlin' });
@@ -236,7 +267,7 @@ async function expectPendingChanges(page: Page, count: number) {
                 countRequest.onsuccess = () => { database.close(); resolve(countRequest.result); };
             };
         });
-    })).toBe(count);
+    }), { timeout: 15_000 }).toBe(count);
 }
 
 test('admin sees environment-managed settings without deployment credentials', async ({ page }) => {
@@ -502,7 +533,12 @@ test('advanced recovery is failed-only, confirmed, failure-atomic, exportable, a
         expect((await page.request.post('/api/auth/register', {
             data: { username, password: testPassword },
         })).ok()).toBe(true);
-        await page.goto('/');
+        await page.goto('/auth');
+        if (await page.getByRole('button', { name: 'Log in', exact: true }).isVisible()) {
+            await page.locator('input[autocomplete=username]').fill(username);
+            await page.locator('input[autocomplete=current-password]').fill(testPassword);
+            await page.getByRole('button', { name: 'Log in', exact: true }).click();
+        }
         await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     };
     const queueWorkout = async () => {
@@ -551,10 +587,9 @@ test('advanced recovery is failed-only, confirmed, failure-atomic, exportable, a
     await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
     await expect(page.getByText('Advanced recovery', { exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: /Log out|Logout/i }).click();
-    expect((await page.request.post('/api/auth/login', {
-        data: { username: 'discard-account-a', password: testPassword },
-    })).ok()).toBe(true);
-    await page.goto('/');
+    await page.locator('input[autocomplete=username]').fill('discard-account-a');
+    await page.locator('input[autocomplete=current-password]').fill(testPassword);
+    await page.getByRole('button', { name: 'Log in', exact: true }).click();
     await expect(page.getByRole('link', { name: /Workout session active/ })).toBeVisible();
     await expectPendingChanges(page, 1);
 

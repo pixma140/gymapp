@@ -3,6 +3,7 @@ import type { ProfileFields, Snapshot } from '@shared/commands';
 import { actionRequest, isObject, jsonBody, requestJson, type ActionResponse } from '@/lib/api';
 import { isSnapshot } from '@/db/hydrate';
 import { changeSession, notifySession } from './tabs';
+import { completeLocalLogout, forgetAccount, localSession, lockLocalSession, unlockLocalSession } from './localSession';
 
 export interface SessionUser {
     id: string;
@@ -38,15 +39,28 @@ export const getBootstrap = () => requestJson('/api/bootstrap', isBootstrap, und
 interface AuthResponse extends ActionResponse { user?: SessionUser }
 const isAuthResponse = (value: unknown): value is AuthResponse => isObject(value) && value.ok === true && isSessionUser(value.user);
 const authenticate = (path: string, body: unknown): Promise<AuthResponse> =>
-    changeSession(() => actionRequest(path, isAuthResponse, jsonBody(body), false));
+    changeSession(async () => {
+        await finishPendingLogout();
+        forgetAccount();
+        const response = await actionRequest(path, isAuthResponse, jsonBody(body), false);
+        if (response.ok) unlockLocalSession();
+        return response;
+    });
 
 export const loginWithUsername = (username: string, password: string) => authenticate('/api/auth/login', { username, password });
 export const registerWithUsername = (username: string, password: string) => authenticate('/api/auth/register', { username, password });
 export interface SetupInput { username: string; password: string; name: string; email?: string; language?: 'en' | 'de' }
 export const setupInitialAdmin = (input: SetupInput) => authenticate('/api/setup', input);
 export async function logoutSession(): Promise<void> {
-    await changeSession(() => requestJson('/api/auth/logout',
-        (value): value is { ok: true } => isObject(value) && value.ok === true, jsonBody({}), false));
+    lockLocalSession();
+    await changeSession(finishPendingLogout);
+}
+// Call under the exclusive session lock, before any new cookie is established.
+export async function finishPendingLogout(): Promise<void> {
+    if (!localSession().pendingLogout) return;
+    await requestJson('/api/auth/logout',
+        (value): value is { ok: true } => isObject(value) && value.ok === true, jsonBody({}), false);
+    completeLocalLogout();
 }
 export async function getOidcStatus(): Promise<boolean> {
     try {
@@ -55,10 +69,14 @@ export async function getOidcStatus(): Promise<boolean> {
         return result.enabled;
     } catch { return false; }
 }
-export function startOidcLogin(): void {
+export async function startOidcLogin(): Promise<void> {
     // Navigation leaves cookie handling to the OIDC callback. Server-side command
     // bindings still reject stale tabs if the browser changes its cookie externally.
-    sessionStorage.setItem('gymapp-oidc-return', 'true');
-    notifySession('changing');
-    window.location.href = '/api/auth/oidc/login';
+    await changeSession(async () => {
+        await finishPendingLogout();
+        unlockLocalSession();
+        sessionStorage.setItem('gymapp-oidc-return', 'true');
+        notifySession('changing');
+        window.location.href = '/api/auth/oidc/login';
+    });
 }

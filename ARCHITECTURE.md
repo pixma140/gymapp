@@ -38,6 +38,8 @@ built frontend and APIs; Vite proxies API requests during development.
 | `src/db/hydrate.ts` | Validated atomic snapshots, pending-work preservation, and explicit conflict resolution |
 | `src/lib/api.ts` | Typed network/HTTP/malformed-response handling shared by auth, admin, bootstrap, and sync |
 | `src/auth/tabs.ts` | Session locks, session-change notifications, and stale-sender epoch checks |
+| `src/auth/localSession.ts` | Last prepared account reference, durable local logout lock, deferred server logout |
+| `src/components/AppUpdate.tsx`, `vite.config.ts` | Prompted service-worker updates and static app-resource precaching |
 
 Providers are ordered session → language → theme. Domain routes mount only
 with a ready account cache. Preference providers use that account's profile
@@ -123,7 +125,14 @@ session lock exclusively, so cookie changes cannot overtake active senders.
 BroadcastChannel announces changing/changed sessions; a shared localStorage epoch
 also prevents sending before a delayed channel notification arrives. Returning
 tabs check identity on visibility changes while preserving a ready cache offline;
-OIDC return announces the changed cookie.
+OIDC return announces the changed cookie. A prepared account reference permits
+offline cold start only on network failure, with cached profile/metadata present
+and administrator capabilities disabled. HTTP and malformed-response failures do
+not become offline fallback. Local logout persists a lock before waiting for
+senders; server invalidation is deferred when unreachable and serialized before
+new authentication. Only explicit authentication unlocks local access. Storage
+events supplement BroadcastChannel for session changes. Offline-resumed accounts
+verify the server session before sending; old account/installation queues remain isolated.
 Browsers without Web Locks retain queues without sending.
 
 Server-side envelope identity checks additionally protect against externally
@@ -165,10 +174,16 @@ row as a regression, not a preference.
 ## Remaining limits
 
 OIDC protocol orchestration lives in `server/routes/oidc.js`; identity creation
-and password reset use the account service. No offline cold start, continuous
-pull, or automatic merging is promised. Gym catalog operations share the sync
+and password reset use the account service. No closed-app background sync,
+continuous pull, or automatic merging is promised. Gym catalog operations share the sync
 service's authorization, revisions, and receipt transaction rather than a
 separate gym service. These are the final module placements.
+
+Workbox precaches the built application and lazy chunks. API requests, including
+auth redirects and bootstrap, are network-only. Worker activation waits for user
+confirmation while tabs are open; controller changes reload tabs. IndexedDB and
+outboxes are independent of worker caches. Browser tests exercise actual workers,
+offline cold starts, reconnection, logout, account switching, and waiting updates.
 
 Exercise catalog updates are explicit build-time imports through `npm run exercises:import`.
 There is no runtime provider request or credential.

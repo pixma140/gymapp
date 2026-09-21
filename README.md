@@ -200,15 +200,37 @@ Network and server failures use persisted exponential backoff; rate limits honor
 before its first delivery. Refresh never replaces pending work silently.
 Conflicts can discard the rejected dependency chain or reapply reviewed intent
 against current server revisions with new mutation IDs. Settings can export all
-pending intent before either discard path. There is no automatic merge,
-continuous background pull, service worker, or offline cold start.
+pending intent before either discard path. There is no automatic merge or
+continuous background pull.
 
 Bootstrap failures offer Retry and preserve cached data and pending changes.
 Tabs coordinate senders and login/logout using Web Locks and session-change
 notifications. A tab following an account switch opens the new account's cache;
 the previous account's pending queue stays in its own cache. Browsers without
-Web Locks retain pending work without sending it. A new browser session still
-requires the server to authenticate and prepare its cache.
+Web Locks retain pending work without sending it.
+
+### Installation and offline access
+
+On HTTPS (or localhost), Android and desktop Chromium can install Gym App from
+the browser menu. After an online visit finishes preparing the account and caching
+the app resources, it can reopen offline and record workouts, exercises, and sets.
+The last prepared account reopens automatically on this browser/device until logout.
+Offline access uses retained local data; administrator capabilities require online
+session verification. First-time login and setup require a connection.
+
+Logout immediately locks local access in every tab and preserves unsynced work.
+If the server is unreachable, session invalidation is retried after reconnect or
+on the next launch, before any new login. An explicit login is required to reopen
+the retained account after logout. Reconnection verifies identity before sending
+offline work, including account/installation changes and conflict checks.
+
+The service worker caches only app resources, including lazy-loaded screens;
+account data stays in IndexedDB and API responses are never service-worker cached.
+Updates wait for **Update app** confirmation, which reloads open app tabs while
+retaining saved data and pending changes. Complete unsaved form edits first.
+Sync runs while the app is open; closed-app background delivery is not promised.
+Browser storage clearing/eviction removes offline resources and local data.
+Breaking alpha schema releases still require the documented database reset.
 
 ## Verification
 

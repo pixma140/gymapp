@@ -46,13 +46,14 @@ Three documents lead; keep each within its role and update the one that owns a f
   - `server/config.test.js`: environment validation, admin configuration authorization, env-only credentials, OIDC precedence and login wiring.
   - `server/db.test.js`: database isolation, transaction serialization, rollback isolation, and closed-handle guards.
 - Client tests (`test/*.test.ts`, IndexedDB via `fake-indexeddb`):
-  - `test/api.test.ts`: typed API error classification, malformed bootstrap responses, and failed logout.
+  - `test/api.test.ts`: typed API errors, malformed bootstrap responses, durable local logout, deferred invalidation, and explicit-login unlock.
   - `test/hydrate.test.ts`: account-cache isolation, hydration, transactional outbox, dependent acknowledgements, and conflict resolution.
   - `test/exerciseCatalog.test.ts`: bundled exercise catalog grouping, cardio additions, filtering, and per-account usage ranking with history deletion.
   - `test/gymCatalog.test.ts`: personal gym visit ranking, account isolation, and history-driven updates.
   - `test/serverReset.test.ts`: end-to-end installation reset isolation between the real server sync contract and account-specific IndexedDB caches.
   - `test/docs.test.ts`: documentation drift guard; fails when a test file is missing from this inventory, a documented `npm run` script does not exist, or a Markdown file outside the leading documents appears.
 - Browser tests (Playwright, not part of `npm test`):
+  - `test/browser/pwa.spec.ts`: real-service-worker offline cold starts, reconnection, account/cache isolation, durable local logout, and confirmed updates on Chromium.
   - `test/browser/workflows.spec.ts`: mobile-width account, timed-workout, history-deletion failure/retry, bootstrap-retry, and two-tab lifecycle tests; `test/browser/server.mjs` owns its temporary database. Run `npm run build`, `npm run test:browser:install` once, then `npm run test:browser`.
 
 ## Code Style (Observed)

@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, isObject, requestJson } from '@/lib/api';
 import { changeSession, sessionEpoch } from '@/auth/tabs';
 import { getBootstrap, isBootstrap, logoutSession } from '@/auth/session';
+import { finishPendingLogout, loginWithUsername } from '@/auth/session';
+import { localSession, rememberAccount } from '@/auth/localSession';
 import { v7 as uuidv7 } from 'uuid';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -75,9 +77,23 @@ describe('typed API and bootstrap failures', () => {
     });
     it('does not claim logout succeeded when the server rejects it', async () => {
         vi.stubGlobal('navigator', {});
-        vi.stubGlobal('localStorage', undefined);
+        const storage = new Map<string, string>();
+        vi.stubGlobal('localStorage', {
+            getItem: (key: string) => storage.get(key) ?? null,
+            setItem: (key: string, value: string) => storage.set(key, value),
+        });
         vi.stubGlobal('BroadcastChannel', undefined);
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"ok":false,"error":"logout_failed"}', { status: 500 })));
         await expect(logoutSession()).rejects.toBeInstanceOf(ApiError);
+        expect(localSession()).toMatchObject({ locked: true, pendingLogout: true, account: null });
+        rememberAccount({ accountId: uuidv7(), installationId: uuidv7(), defaultTimeFormat: 'system' });
+        expect(localSession().account).toBeNull();
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"ok":true}')));
+        await finishPendingLogout();
+        expect(localSession()).toMatchObject({ locked: true, pendingLogout: false });
+        const user = { id: uuidv7(), username: 'test', name: 'Test', language: 'en', theme: 'dark', isAdmin: false };
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true, user }))));
+        expect((await loginWithUsername('test', 'password')).ok).toBe(true);
+        expect(localSession()).toMatchObject({ locked: false, pendingLogout: false });
     });
 });

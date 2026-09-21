@@ -1,4 +1,8 @@
 export const en = {
+    'pwa.updateAvailable': 'An app update is ready. Install it when you are ready to reload.',
+    'pwa.update': 'Update app',
+    'pwa.updateConfirm': 'Reload all open app tabs to update? Saved workouts and pending changes will be retained. Finish any unsaved form edits first.',
+    'sync.offlineAccess': 'Offline access — changes stay on this device until your session is verified online.',
     'gyms.archive': 'Archive gym',
     'sync.lastRefreshed': 'Last refreshed',
     'sync.lastSuccessful': 'Last successful sync',

@@ -1,6 +1,10 @@
 import type { TranslationKey } from './en';
 
 export const de: Record<TranslationKey, string> = {
+    'pwa.updateAvailable': 'Ein App-Update ist bereit. Installiere es, wenn du neu laden möchtest.',
+    'pwa.update': 'App aktualisieren',
+    'pwa.updateConfirm': 'Alle geöffneten App-Tabs zum Aktualisieren neu laden? Gespeicherte Trainings und ausstehende Änderungen bleiben erhalten. Schließe ungespeicherte Formulareingaben vorher ab.',
+    'sync.offlineAccess': 'Offline-Zugriff — Änderungen bleiben auf diesem Gerät, bis deine Sitzung online bestätigt wurde.',
     'gyms.archive': 'Studio archivieren',
     'sync.lastRefreshed': 'Zuletzt aktualisiert',
     'common.back': 'Zurück',

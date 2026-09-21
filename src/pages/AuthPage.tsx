@@ -162,7 +162,7 @@ export function AuthPage() {
 
                             <button
                                 type="button"
-                                onClick={() => startOidcLogin()}
+                                onClick={() => void startOidcLogin().catch(() => setErrorKey('auth.oidc.error'))}
                                 className="w-full border border-[var(--border)] bg-[var(--input)] hover:bg-[var(--accent)] text-[var(--foreground)] py-3 rounded-xl font-semibold transition-colors"
                             >
                                 {t('auth.oidc.login')}

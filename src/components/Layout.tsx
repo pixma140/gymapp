@@ -3,7 +3,7 @@ import { Dumbbell, LineChart, User, Settings, AlertCircle, Timer, X } from 'luci
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 
-import { useDatabase } from '@/context/SessionContext';
+import { useDatabase, useSession } from '@/context/SessionContext';
 import { cn } from '@/lib/utils';
 import { useMeasurementReminder } from '@/hooks/useMeasurementReminder';
 import { useActiveWorkout } from '@/hooks/useActiveWorkout';
@@ -12,6 +12,7 @@ import { useLanguage } from '@/i18n/LanguageContext';
 export function Layout() {
     const location = useLocation();
     const db = useDatabase();
+    const { offlineAccess } = useSession();
     const showReminder = useMeasurementReminder();
     const activeWorkout = useActiveWorkout();
     const { formatDateTime, t } = useLanguage();
@@ -60,6 +61,7 @@ export function Layout() {
     return (
         <div className="flex flex-col h-dvh bg-[var(--background)] text-[var(--foreground)] font-sans transition-colors duration-300">
             <main ref={mainRef} className="flex-1 overflow-y-auto p-4 safe-area-top relative pb-[calc(5rem+env(safe-area-inset-bottom))]">
+                {offlineAccess && <p role="status" className="mb-4 rounded-xl border border-[var(--border)] p-3 text-sm">{t('sync.offlineAccess')}</p>}
                 {activeWorkout && !isOnWorkoutPage && (
                     <Link
                         to={`/workout/${activeWorkout.gymId}`}

@@ -22,12 +22,14 @@ import { OnboardingPage } from '@/pages/OnboardingPage';
 import { LanguageProvider } from '@/i18n/LanguageContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { SessionProvider } from '@/context/SessionContext';
+import { AppUpdate } from '@/components/AppUpdate';
 
 function App() {
   return (
     <SessionProvider>
     <LanguageProvider>
       <ThemeProvider>
+        <AppUpdate />
 
         <Suspense fallback={null}>
         <Routes>

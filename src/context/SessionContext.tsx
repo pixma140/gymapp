@@ -2,7 +2,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { ProfileFields } from '@shared/commands';
 import { AUTHORIZATION_FAILURE, ApiError } from '@/lib/api';
-import { getBootstrap, logoutSession, type Capabilities, type SessionUser } from '@/auth/session';
+import { finishPendingLogout, getBootstrap, logoutSession, type Capabilities, type SessionUser } from '@/auth/session';
+import { forgetAccount, localSession, lockLocalSession, rememberAccount } from '@/auth/localSession';
 import { readSession, subscribeSession, notifySession, sessionEpoch } from '@/auth/tabs';
 import { AccountDatabase } from '@/db/db';
 import { discardPendingChanges, prepareAccountCache, resolvePendingConflict } from '@/db/hydrate';
@@ -16,6 +17,7 @@ interface SessionState {
     capabilities: Capabilities | null;
     error: Error | null;
     defaultTimeFormat: ProfileFields['timeFormat'];
+    offlineAccess: boolean;
 }
 interface SessionContextValue extends SessionState {
     userId: string | null;
@@ -28,7 +30,7 @@ interface SessionContextValue extends SessionState {
     resolveConflict: (resolution: 'discard' | 'reapply') => Promise<void>;
 }
 const detached = (status: Status, error: Error | null = null): SessionState =>
-    ({ status, user: null, database: null, capabilities: null, error, defaultTimeFormat: 'system' });
+    ({ status, user: null, database: null, capabilities: null, error, defaultTimeFormat: 'system', offlineAccess: false });
 const SessionContext = createContext<SessionContextValue | undefined>(undefined);
 export function SessionProvider({ children }: { children: React.ReactNode }) {
     const [state, setState] = useState<SessionState>(detached('loading'));
@@ -37,10 +39,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const readyRole = useRef(false);
     const epoch = useRef<string | null>(null);
     const sender = useRef<Promise<void>>(Promise.resolve());
+    const verified = useRef(false);
+    const checking = useRef(false);
     const stop = useCallback(async () => {
         const version = ++generation.current;
         const database = current.current;
         current.current = null;
+        verified.current = false;
         setState(detached('loading'));
         await sender.current.catch(() => {});
         database?.close();
@@ -56,24 +61,52 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             await readSession(async () => {
                 if (version !== generation.current) return;
                 const preparingEpoch = sessionEpoch();
-                const bootstrap = await getBootstrap();
-                if (version !== generation.current) return;
+                if (localSession().locked) {
+                    await finishPendingLogout().catch(() => {});
+                    if (version === generation.current) setState(detached('signedOut'));
+                    return;
+                }
+                let bootstrap;
+                try { bootstrap = await getBootstrap(); }
+                catch (error) {
+                    const saved = localSession();
+                    if (!(error instanceof ApiError) || error.kind !== 'network' || saved.locked || !saved.account) throw error;
+                    database = new AccountDatabase({ accountId: saved.account.accountId, installationId: saved.account.installationId });
+                    await database.open();
+                    const profile = await database.users.get(saved.account.accountId);
+                    const metadata = await database.syncMetadata.get('state');
+                    if (!profile || !metadata || metadata.accountId !== saved.account.accountId
+                        || metadata.installationId !== saved.account.installationId) throw error;
+                    if (version !== generation.current || preparingEpoch !== sessionEpoch() || localSession().locked) { database.close(); return; }
+                    epoch.current = preparingEpoch;
+                    current.current = database;
+                    setState({ status: 'ready', database, offlineAccess: true, error: null,
+                        user: { ...profile, username: null, isAdmin: false },
+                        capabilities: { manageUsers: false, manageOidc: false, manageGyms: false },
+                        defaultTimeFormat: saved.account.defaultTimeFormat });
+                    return;
+                }
+                if (version !== generation.current || preparingEpoch !== sessionEpoch() || localSession().locked) return;
                 if (bootstrap.status !== 'authenticated') {
+                    forgetAccount();
                     setState({ ...detached(bootstrap.status), defaultTimeFormat: bootstrap.defaultTimeFormat });
                     return;
                 }
                 const { user, capabilities, snapshot, defaultTimeFormat } = bootstrap;
+                forgetAccount();
                 setState({ ...detached('preparing'), user, capabilities, defaultTimeFormat });
                 database = new AccountDatabase({ accountId: user.id, installationId: bootstrap.installationId });
                 await database.open();
                 const result = await prepareAccountCache(database, snapshot);
                 if (result.status === 'error') throw result.error;
                 if (version !== generation.current) { database.close(); return; }
-                if (preparingEpoch !== sessionEpoch()) { database.close(); return; }
+                if (preparingEpoch !== sessionEpoch() || localSession().locked) { database.close(); return; }
                 readyRole.current = user.isAdmin;
                 epoch.current = preparingEpoch;
                 current.current = database;
-                setState({ status: 'ready', user, capabilities, database, error: null, defaultTimeFormat });
+                verified.current = true;
+                rememberAccount({ ...database.binding, defaultTimeFormat });
+                setState({ status: 'ready', user, capabilities, database, error: null, defaultTimeFormat, offlineAccess: false });
             }, true);
         } catch (error) {
             // The locally opened handle belongs to this bootstrap, never a later account.
@@ -83,21 +116,33 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }, [stop]);
     const drain = useCallback(() => {
         const database = current.current;
+        if (localSession().locked) return refresh();
         if (database && epoch.current !== sessionEpoch()) return refresh();
+        if (database && !verified.current) {
+            if (checking.current || !navigator.onLine) return Promise.resolve();
+            checking.current = true;
+            const version = generation.current;
+            return readSession(getBootstrap).then(() => {
+                if (version === generation.current && current.current === database) return refresh();
+            }).catch(() => {}).finally(() => { checking.current = false; });
+        }
         const version = generation.current;
-        const active = () => generation.current === version && current.current === database && epoch.current === sessionEpoch();
+        const active = () => generation.current === version && current.current === database && epoch.current === sessionEpoch() && !localSession().locked;
         sender.current = sender.current.catch(() => {}).then(() =>
             database && active() ? flushPendingMutations(database, active) : undefined);
         return sender.current;
     }, [refresh]);
     const logout = useCallback(async () => {
+        // Persist the lock before waiting for an in-flight sender to finish.
+        lockLocalSession();
         const version = await stop();
         if (version !== generation.current) return;
         try {
             await logoutSession();
             if (version === generation.current) setState(detached('signedOut'));
         } catch (error) {
-            if (version === generation.current) setState(detached('failed', error instanceof Error ? error : new Error('logout_failed')));
+            if (version === generation.current) setState(localSession().locked ? detached('signedOut')
+                : detached('failed', error instanceof Error ? error : new Error('logout_failed')));
         }
     }, [stop]);
     const discardLocalChanges = useCallback(async () => {
@@ -119,11 +164,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
                 database = new AccountDatabase(binding);
                 await database.open();
                 await discardPendingChanges(database, bootstrap.snapshot, expectedMutationIds);
-                if (version !== generation.current || preparingEpoch !== sessionEpoch()) { database.close(); return; }
+                if (version !== generation.current || preparingEpoch !== sessionEpoch() || localSession().locked) { database.close(); return; }
                 readyRole.current = bootstrap.user.isAdmin;
                 epoch.current = preparingEpoch;
                 current.current = database;
-                setState({ status: 'ready', user: bootstrap.user, capabilities: bootstrap.capabilities, database, error: null, defaultTimeFormat: bootstrap.defaultTimeFormat });
+                verified.current = true;
+                setState({ status: 'ready', user: bootstrap.user, capabilities: bootstrap.capabilities, database, error: null, defaultTimeFormat: bootstrap.defaultTimeFormat, offlineAccess: false });
             }, true);
         } catch (error) {
             if (database) (database as AccountDatabase).close();
@@ -150,11 +196,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
                 database = new AccountDatabase(binding);
                 await database.open();
                 await resolvePendingConflict(database, bootstrap.snapshot, expectedMutationIds, resolution);
-                if (version !== generation.current || preparingEpoch !== sessionEpoch()) { database.close(); return; }
+                if (version !== generation.current || preparingEpoch !== sessionEpoch() || localSession().locked) { database.close(); return; }
                 readyRole.current = bootstrap.user.isAdmin;
                 epoch.current = preparingEpoch;
                 current.current = database;
-                setState({ status: 'ready', user: bootstrap.user, capabilities: bootstrap.capabilities, database, error: null, defaultTimeFormat: bootstrap.defaultTimeFormat });
+                verified.current = true;
+                setState({ status: 'ready', user: bootstrap.user, capabilities: bootstrap.capabilities, database, error: null, defaultTimeFormat: bootstrap.defaultTimeFormat, offlineAccess: false });
             }, true);
         } catch (error) {
             if (database) (database as AccountDatabase).close();
@@ -168,7 +215,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             if (message === 'changing') void stop();
             else void refresh();
         });
-        const revalidate = () => void refresh();
+        const revalidate = () => { forgetAccount(); void refresh(); };
+        const reconnect = () => { if (localSession().locked || !current.current) void refresh(); else void drain(); };
+        const storageChanged = (event: StorageEvent) => {
+            if (event.key === 'gymapp-session-epoch' || event.key === 'gymapp-local-session' || event.key === null) {
+                if (localSession().locked || epoch.current !== sessionEpoch()) void refresh();
+            }
+        };
         const resume = () => {
             const database = current.current;
             if (document.visibilityState !== 'visible' || !database) return;
@@ -185,6 +238,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             }).catch(() => {});
         };
         window.addEventListener(AUTHORIZATION_FAILURE, revalidate);
+        window.addEventListener('online', reconnect);
+        window.addEventListener('storage', storageChanged);
         document.addEventListener('visibilitychange', resume);
         // An OIDC redirect replaces the document, so the arriving document tells
         // waiting tabs to revalidate after the callback has set its cookie.
@@ -196,10 +251,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             clearTimeout(initialRefresh);
             unsubscribe();
             window.removeEventListener(AUTHORIZATION_FAILURE, revalidate);
+            window.removeEventListener('online', reconnect);
+            window.removeEventListener('storage', storageChanged);
             document.removeEventListener('visibilitychange', resume);
             void stop();
         };
-    }, [refresh, stop]);
+    }, [refresh, stop, drain]);
     useEffect(() => {
         if (state.status !== 'ready' || !state.database) return;
         const send = () => { void drain().catch(() => {}); };
