@@ -260,6 +260,19 @@ Its three jobs run in order:
 | `publish-image` | tags, after `verify` | Builds the amd64 and arm64 images and pushes `:latest`, `:<tag>`, and `:<sha>` to GHCR, so a failing tag publishes nothing. |
 | `create-release` | `v*` tags, after `publish-image` | Creates or updates the GitHub release from the `## <tag>` section of [RELEASE_NOTES.md](RELEASE_NOTES.md), falling back to a commit summary. Tags with a suffix such as `-alpha` are marked as pre-releases. Finally moves the Git `latest` tag to the published release commit. |
 
+Verification and both Docker stages use Node **24.20.0 LTS**. Keep the version
+in `actions/setup-node` and the Dockerfile's `NODE_VERSION` default aligned when
+updating Node. The frontend Docker builder runs on `$BUILDPLATFORM`, producing
+one set of architecture-independent assets for both images; runtime dependencies
+(including native SQLite bindings) are still installed for each target platform.
+
+Docker imports and exports a BuildKit registry cache at
+`ghcr.io/<owner>/gymapp:buildcache`. Its `mode=max` export includes intermediate
+builder layers and can be reused across release tags. The first run populates
+the cache; changing either package file (including a release version bump)
+invalidates dependency-install layers. This cache tag is separate from runnable
+release images.
+
 Jobs run on a pinned `ubuntu-24.04` runner image, and every action is pinned to
 a Node 24 major version, so runner-image or action migrations are deliberate
 edits to the workflow rather than surprises on the next release tag.

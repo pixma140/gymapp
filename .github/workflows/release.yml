@@ -26,7 +26,8 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 'lts/*'
+          # Keep aligned with NODE_VERSION in Dockerfile.
+          node-version: '24.20.0'
           cache: npm
 
       - name: Install dependencies
@@ -86,6 +87,9 @@ jobs:
           file: ./Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
+          # Registry cache is reusable across release tags, including builder layers.
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/gymapp:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/gymapp:buildcache,mode=max
           build-args: |
             VITE_GIT_COMMIT=${{ github.sha }}
             VITE_RELEASE_TAG=${{ github.ref_name }}

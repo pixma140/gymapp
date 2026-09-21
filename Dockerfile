@@ -1,5 +1,8 @@
-# Stage 1: Build the application
-FROM node:25.8.2-alpine AS builder
+# Keep this version aligned with actions/setup-node in the release workflow.
+ARG NODE_VERSION=24.20.0
+
+# Stage 1: Build architecture-independent assets once on the native platform.
+FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache git
 COPY package.json package-lock.json ./
@@ -9,8 +12,8 @@ ARG VITE_GIT_COMMIT
 ARG VITE_RELEASE_TAG
 RUN npm run build
 
-# Stage 2: Run app server with SQLite
-FROM node:25.8.2-alpine
+# Stage 2: Install native SQLite dependencies for each target platform.
+FROM node:${NODE_VERSION}-alpine
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
