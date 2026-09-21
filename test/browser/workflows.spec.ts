@@ -567,15 +567,16 @@ test('failed bootstrap preserves pending intent and retries without onboarding',
 
 test('advanced recovery is failed-only, confirmed, failure-atomic, exportable, and account-scoped', async ({ page, context }) => {
     const register = async (username: string) => {
-        expect((await page.request.post('/api/auth/register', {
-            data: { username, password: testPassword },
-        })).ok()).toBe(true);
         await page.goto('/auth');
-        if (await page.getByRole('button', { name: 'Log in', exact: true }).isVisible()) {
-            await page.locator('input[autocomplete=username]').fill(username);
-            await page.locator('input[autocomplete=current-password]').fill(testPassword);
-            await page.getByRole('button', { name: 'Log in', exact: true }).click();
-        }
+        await page.getByRole('button', { name: 'Create account', exact: true }).click();
+        await page.locator('input[autocomplete=username]').fill(username);
+        await page.locator('input[type=password]').nth(0).fill(testPassword);
+        await page.locator('input[type=password]').nth(1).fill(testPassword);
+        const registered = page.waitForResponse(response => response.url().endsWith('/api/auth/register') && response.status() === 200);
+        await page.getByRole('button', { name: 'Create account', exact: true }).click();
+        await registered;
+        await expect(page).toHaveURL(/\/onboarding$/);
+        await page.goto('/');
         await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     };
     const queueWorkout = async () => {
