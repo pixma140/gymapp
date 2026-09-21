@@ -1,5 +1,50 @@
 # Release notes
 
+## v0.5.0-alpha
+
+No database-breaking changes: existing `v0.4.1-alpha` SQLite databases and
+IndexedDB caches remain compatible; **no reset is required**. This minor alpha
+release adds substantial offline/PWA functionality. Deploy frontend and server
+together: the new client uses `/api/sync/generations`. Visit online once after
+upgrading to prepare the account and cache the app before relying on offline launch.
+
+### Offline app and account lifecycle
+
+- Add an installable PWA for HTTPS/localhost, with app icons, standalone display,
+  and precached application resources including lazy-loaded screens.
+- Reopen the last prepared account offline and record workouts, exercises, and
+  sets. Administrator capabilities require online verification; reconnect checks
+  identity before sending retained work.
+- Lock local access across tabs on logout, retain pending changes, and defer
+  server-session invalidation while unreachable. Explicit login unlocks access.
+- Prompt before activating a waiting app update while tabs are open; reloading
+  preserves saved workouts and pending commands. Finish unsaved form edits first.
+- Keep API responses out of service-worker caches. Sync runs while the app is
+  open; closed-app background delivery is not promised.
+- Handle confirmed identity changes, interrupted same-account preparation, setup
+  after server reset, storage-write failures, and delayed logout notifications.
+  Durable offline access requires writable browser storage.
+
+### Sync and server improvements
+
+- Replace full-history downloads during command preflight with a lightweight,
+  authenticated identity/generation response while retaining conflict checks.
+- Type command-validation codes and expected local-operation failures.
+- Add a same-origin Content Security Policy and prevent API response caching.
+  Malformed and oversized JSON requests now receive consistent JSON errors;
+  the existing 1 MB request limit remains enforced.
+- Restart the development API automatically using Node's watch mode.
+
+### Verification and release infrastructure
+
+- Add real-service-worker Chromium coverage for offline cold starts, reconnect,
+  account isolation, logout, and confirmed updates, plus lifecycle regressions.
+  Android home-screen installation still needs a real-device check.
+- Update the user documentation, architecture/behavior contract, and test inventory.
+- Pin hosted runners to Ubuntu 24.04 and Node 24.20.0 LTS, update Actions majors,
+  build frontend assets natively, and reuse registry build caches for
+  multi-architecture container publication.
+
 ## v0.4.1-alpha
 
 No breaking changes. Existing `v0.4.0-alpha` databases and browser caches keep
