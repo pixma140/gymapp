@@ -257,6 +257,9 @@ HTTP authorization, command validation/idempotency/scoping, fixture/reset
 behavior, and account-local IndexedDB hydration and durable operations.
 Playwright exercises mobile-width login, shared gyms, timed workouts,
 account switching, private history, and deletion against a throwaway server.
+Chromium PWA tests use real service workers for offline cold starts, reconnect,
+logout, and confirmed updates. Android home-screen installation still requires
+a real-device check; automated mobile-width tests do not verify that OS flow.
 The per-file test inventory is maintained in [AGENTS.md](AGENTS.md).
 `npm run test:watch` starts Vitest watch mode; `npm run preview` previews a build.
 

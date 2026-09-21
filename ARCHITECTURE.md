@@ -103,8 +103,11 @@ account roles and credentials. Server revisions detect stale writes. Receipts
 are stored atomically with successful mutations; a reused mutation UUID with
 different content is rejected. Updates never resurrect deleted records.
 
-Local operations update data and append intent in one Dexie transaction. Later
-edits to the same record depend on earlier queued commands and remain unprepared
+Local operations update data and append intent in one Dexie transaction.
+Expected local failures carry a typed `OperationError.code`; command validation
+returns a finite `ValidationError` union while accepting untrusted `unknown` input.
+Internal invariant failures remain ordinary errors.
+Later edits to the same record depend on earlier queued commands and remain unprepared
 until the earlier acknowledgement supplies the real server revision. An
 attempted command retains its original envelope for retry. Network/5xx failures
 use persisted exponential backoff, 429 honors `Retry-After`, and terminal errors
@@ -169,6 +172,9 @@ row as a regression, not a preference.
 | Private activity | A workout/measurement by one user is absent from the other's views, snapshot, and writes; gym visits are per user. |
 | Account deletion | All private rows/sessions/receipts are removed atomically; shared gyms survive; self/last-admin alternate paths are blocked. |
 | Offline edit and reload | Local state and queued command survive; eventual delivery occurs once. |
+| Offline cold start | A previously prepared account reopens from cached app resources and IndexedDB; admin capabilities remain disabled until online verification. |
+| Offline logout and reconnect | Local access stays locked across reload; server invalidation precedes a new explicit login. Stale logout notifications cannot invalidate a newer login. |
+| App update | A waiting worker activates after confirmation while tabs are open; reload retains saved workouts and pending commands. |
 | Transaction failure | Neither a partial local operation nor an outgoing command survives rollback. |
 | Switch/logout/session expiry | Previous account's queue is retained and paused; no cross-account delivery, including a second tab changing cookies. |
 | Server reset with a cached browser session | Installation mismatch prevents replay into reset accounts. |

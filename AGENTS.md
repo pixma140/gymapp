@@ -40,13 +40,13 @@ Three documents lead; keep each within its role and update the one that owns a f
   - `server/lib/crypto.test.js`: password hashing and cookie helpers.
   - `server/lib/oidc.test.js`: OIDC token verification.
 - Server integration tests (`server/*.test.js`, boot the Express app on an ephemeral port against a temp SQLite DB):
-  - `server/sync.test.js`: `/api/sync` authz/scoping, command validation, idempotency.
+  - `server/sync.test.js`: sync authz/scoping, command validation, idempotency, lightweight generations, CSP, and JSON parser errors.
   - `server/adminUsers.test.js`: `/api/admin/users` list/create/promote/demote/password-reset/delete authz and guards.
   - `server/seed.test.js`: fixture authentication/restart behavior, fresh-schema invariants, and scoped reset/lease guards.
   - `server/config.test.js`: environment validation, admin configuration authorization, env-only credentials, OIDC precedence and login wiring.
   - `server/db.test.js`: database isolation, transaction serialization, rollback isolation, and closed-handle guards.
 - Client tests (`test/*.test.ts`, IndexedDB via `fake-indexeddb`):
-  - `test/api.test.ts`: typed API errors, malformed bootstrap responses, durable local logout, deferred invalidation, and explicit-login unlock.
+  - `test/api.test.ts`: typed API errors, malformed bootstrap responses, durable local logout, deferred invalidation, explicit-login unlock, storage failures, and stale logout notifications.
   - `test/hydrate.test.ts`: account-cache isolation, hydration, transactional outbox, dependent acknowledgements, and conflict resolution.
   - `test/exerciseCatalog.test.ts`: bundled exercise catalog grouping, cardio additions, filtering, and per-account usage ranking with history deletion.
   - `test/gymCatalog.test.ts`: personal gym visit ranking, account isolation, and history-driven updates.
