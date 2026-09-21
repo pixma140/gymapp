@@ -25,24 +25,24 @@ Keep changes consistent with existing patterns and scripts.
 - Run a single test file: `npx vitest run server/lib/crypto.test.js`.
 - Run tests matching a name: `npx vitest run -t "rejects an expired token"`.
 - Config: `vitest.config.ts` (node environment, `@`/`@shared` aliases, `NODE_ENV=test`).
-- Layout:
-  - `server/lib/*.test.js`: pure server helpers (password hashing, cookies, OIDC verify).
-  - `server/sync.test.js`: HTTP integration test of `/api/sync` authz/scoping (boots the Express app on an ephemeral port against a temp SQLite DB).
-  - `server/adminUsers.test.js`: HTTP integration test of `/api/admin/users` routes (list/create/promote/demote/password-reset/delete authz and guards).
+- `server/app.js` exports `createApp({ database, ...config })` without opening a database or binding a port. Tests explicitly initialize and close handles from `server/db.js`; `server/index.js` owns process startup.
+- Server unit tests (`server/lib/*.test.js`):
+  - `server/lib/crypto.test.js`: password hashing and cookie helpers.
+  - `server/lib/oidc.test.js`: OIDC token verification.
+- Server integration tests (`server/*.test.js`, boot the Express app on an ephemeral port against a temp SQLite DB):
+  - `server/sync.test.js`: `/api/sync` authz/scoping, command validation, idempotency.
+  - `server/adminUsers.test.js`: `/api/admin/users` list/create/promote/demote/password-reset/delete authz and guards.
+  - `server/seed.test.js`: fixture authentication/restart behavior, fresh-schema invariants, and scoped reset/lease guards.
+  - `server/config.test.js`: environment validation, admin configuration authorization, env-only credentials, OIDC precedence and login wiring.
+  - `server/db.test.js`: database isolation, transaction serialization, rollback isolation, and closed-handle guards.
+- Client tests (`test/*.test.ts`, IndexedDB via `fake-indexeddb`):
   - `test/api.test.ts`: typed API error classification, malformed bootstrap responses, and failed logout.
-  - `test/*.test.ts`: client-side logic (account-cache isolation, hydration, transactional outbox, and dependent acknowledgements via `fake-indexeddb`).
+  - `test/hydrate.test.ts`: account-cache isolation, hydration, transactional outbox, dependent acknowledgements, and conflict resolution.
   - `test/exerciseCatalog.test.ts`: bundled exercise catalog grouping, cardio additions, filtering, and per-account usage ranking with history deletion.
   - `test/gymCatalog.test.ts`: personal gym visit ranking, account isolation, and history-driven updates.
   - `test/serverReset.test.ts`: end-to-end installation reset isolation between the real server sync contract and account-specific IndexedDB caches.
-- `server/app.js` exports `createApp({ database, ...config })` without opening a database or binding a port. Tests explicitly initialize and close handles from `server/db.js`; `server/index.js` owns process startup.
-  - `server/seed.test.js`: fixture authentication/restart behavior, fresh-schema invariants, and scoped reset/lease guards.
-  - `server/config.test.js`: environment validation, admin configuration authorization, env-only credentials, OIDC precedence and login wiring.
-- `test/browser/workflows.spec.ts`: Playwright mobile-width account, timed-workout, history-deletion failure/retry, bootstrap-retry, and two-tab lifecycle tests; `test/browser/server.mjs` owns its temporary database. Run `npm run build`, `npm run test:browser:install` once, then `npm run test:browser`.
-- `server/db.test.js`: database isolation, transaction serialization, rollback isolation, and closed-handle guards.
-
-## Cursor/Copilot Rules
-- No `.cursor/rules/`, `.cursorrules`, or `.github/copilot-instructions.md` found.
-- If any are added later, mirror them here.
+- Browser tests (Playwright, not part of `npm test`):
+  - `test/browser/workflows.spec.ts`: mobile-width account, timed-workout, history-deletion failure/retry, bootstrap-retry, and two-tab lifecycle tests; `test/browser/server.mjs` owns its temporary database. Run `npm run build`, `npm run test:browser:install` once, then `npm run test:browser`.
 
 ## Code Style (Observed)
 - TypeScript + React function components.
@@ -50,7 +50,7 @@ Keep changes consistent with existing patterns and scripts.
 - Hooks: `useX` naming in `src/hooks`.
 - Prefer named exports for pages/components.
 - Semicolons are used in most TSX files.
-- Indentation is typically 4 spaces in TS/TSX files.
+- Indentation is 4 spaces in most TS/TSX files; `src/App.tsx` and the root config files use 2. Match the file you edit.
 - Strings mostly use single quotes; match existing file style.
 
 ## Formatting Expectations
@@ -112,7 +112,7 @@ Keep changes consistent with existing patterns and scripts.
 - All user-facing text must be wired through the existing i18n keys (no hardcoded strings).
 
 ## Database Schema Notes
-- Entities: account profile, shared Gym, private timed Workout and UserMeasurement, mutation outbox, and sync metadata. Account, domain, mutation, and installation IDs are canonical lowercase UUID v7 strings generated with `v7` from `uuid`; account IDs are generated by the server. Runtime validators and initial SQLite constraints require v7. Authentication secrets use cryptographic randomness, not time-ordered IDs.
+- Entities: account profile, shared Gym, private timed Workout with its WorkoutExercise sets, private custom Exercise, UserMeasurement, mutation outbox, and sync metadata. The bundled exercise catalog (`shared/exercises.js`) is static and not stored per account. Account, domain, mutation, and installation IDs are canonical lowercase UUID v7 strings generated with `v7` from `uuid`; account IDs are generated by the server. Runtime validators and initial SQLite constraints require v7. Authentication secrets use cryptographic randomness, not time-ordered IDs.
 - Until the project leaves alpha, all schema changes are intentionally breaking
   and assume a freshly created database. Edit the initial SQLite `CREATE TABLE`
   statements in `server/schema.js` and the single Dexie `version(1)` schema in
