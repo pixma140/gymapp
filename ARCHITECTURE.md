@@ -15,7 +15,14 @@ built frontend and APIs; Vite proxies API requests during development.
 | Module | Responsibility |
 | --- | --- |
 | `server/index.js` | Configuration, database lease, initialization, listening, graceful close |
-| `server/app.js` | App factory, auth/admin/OIDC routes, sync wiring, static serving |
+| `server/app.js` | App factory: builds services, mounts routers, serves the built frontend, exposes `bootstrapAdmin` |
+| `server/routes/auth.js` | Bootstrap, first-admin setup, registration, password login, session read/logout, OIDC availability |
+| `server/routes/admin.js` | Admin-only server/OIDC configuration and user management HTTP handlers |
+| `server/routes/oidc.js` | OIDC authorization-code flow with PKCE, state/nonce storage, callback verification |
+| `server/routes/sync.js` | `/api/sync` and `/api/sync/snapshot` handlers over the sync service |
+| `server/services/sessions.js` | Session cookie/table lifecycle, user resolution, `requireUser`/`requireAdmin` guards |
+| `server/services/oidcSettings.js` | Stored OIDC settings merged with environment precedence, discovery cache, redirect URI |
+| `server/lib/http.js` | Exact-key payload validation, error responses, in-memory rate limiter |
 | `server/db.js` | SQLite handle and serialized statements/transactions |
 | `server/schema.js` | Fresh initial DDL, installation identity, revision/generation triggers |
 | `server/config.js` | Validated environment configuration and explicit non-secret API projection |
@@ -157,11 +164,11 @@ row as a regression, not a preference.
 
 ## Remaining limits
 
-OIDC protocol orchestration remains in app.js; identity creation and password
-reset use the account service. No offline cold start, continuous pull, or
-automatic merging is promised. Gym catalog operations share the sync service's
-authorization, revisions, and receipt transaction rather than a separate gym
-service. These are the final module placements.
+OIDC protocol orchestration lives in `server/routes/oidc.js`; identity creation
+and password reset use the account service. No offline cold start, continuous
+pull, or automatic merging is promised. Gym catalog operations share the sync
+service's authorization, revisions, and receipt transaction rather than a
+separate gym service. These are the final module placements.
 
 Exercise catalog updates are explicit build-time imports through `npm run exercises:import`.
 There is no runtime provider request or credential.

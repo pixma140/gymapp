@@ -35,7 +35,7 @@ Three documents lead; keep each within its role and update the one that owns a f
 - Run a single test file: `npx vitest run server/lib/crypto.test.js`.
 - Run tests matching a name: `npx vitest run -t "rejects an expired token"`.
 - Config: `vitest.config.ts` (node environment, `@`/`@shared` aliases, `NODE_ENV=test`).
-- `server/app.js` exports `createApp({ database, ...config })` without opening a database or binding a port. Tests explicitly initialize and close handles from `server/db.js`; `server/index.js` owns process startup.
+- `server/app.js` exports `createApp({ database, ...config })` without opening a database or binding a port; it wires `server/services/*` into the routers in `server/routes/*`. Tests explicitly initialize and close handles from `server/db.js`; `server/index.js` owns process startup.
 - Server unit tests (`server/lib/*.test.js`):
   - `server/lib/crypto.test.js`: password hashing and cookie helpers.
   - `server/lib/oidc.test.js`: OIDC token verification.
@@ -190,8 +190,7 @@ Use this procedure only after the user explicitly requests a tag or release.
 - Prefer lightweight hooks for stateful flows.
 - Reuse existing forms/components before creating new ones.
 - Add tests for new features alongside the code:
-  - New/changed server routes: add or extend an HTTP integration test (mirror
-    `server/sync.test.js` / `server/adminUsers.test.js`).
+  - New/changed server routes: put handlers in the matching `server/routes/*.js` router (or a new one mounted in `server/app.js`), keep SQL and business rules in `server/services/*`, and add or extend an HTTP integration test (mirror `server/sync.test.js` / `server/adminUsers.test.js`).
   - New server helpers: add a focused unit test under `server/lib/*.test.js`.
   - New client logic (Dexie/state/hydration): add a `test/*.test.ts` test.
   - Cover authz/guards, validation/error codes, and the happy path.
