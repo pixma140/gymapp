@@ -295,7 +295,7 @@ Its three jobs run in order:
 | `publish-image` | tags, after `verify` | Builds the amd64 and arm64 images and pushes `:latest`, `:<tag>`, and `:<sha>` to GHCR, so a failing tag publishes nothing. |
 | `create-release` | `v*` tags, after `publish-image` | Creates or updates the GitHub release from the `## <tag>` section of [RELEASE_NOTES.md](RELEASE_NOTES.md), falling back to a commit summary. Tags with a suffix such as `-alpha` are marked as pre-releases. Finally moves the Git `latest` tag to the published release commit. |
 
-Verification and both Docker stages use Node **26.8.1** (Current). Use the same
+Verification and all Docker stages use Node **26.8.1** (Current). Use the same
 version for local development. Keep the version
 in `actions/setup-node` and the Dockerfile's `NODE_VERSION` default aligned when
 updating Node. The frontend Docker builder runs on `$BUILDPLATFORM`, producing
@@ -304,10 +304,16 @@ one set of architecture-independent assets for both images; runtime dependencies
 
 Docker imports and exports a BuildKit registry cache at
 `ghcr.io/<owner>/gymapp:buildcache`. Its `mode=max` export includes intermediate
-builder layers and can be reused across release tags. The first run populates
-the cache; changing either package file (including a release version bump)
-invalidates dependency-install layers. This cache tag is separate from runnable
-release images.
+builder layers and can be reused across release tags. A native manifest stage
+normalizes only the application's version fields in temporary package/lockfile
+copies. Independent installation stages consume those copies, so version-only
+release bumps reuse dependency layers. Dependency versions, integrity hashes,
+scripts, and other package metadata still invalidate installation when changed;
+changing the Node base image also invalidates these layers. The frontend build
+and final image use the original manifests and correct release metadata. Root
+install lifecycle scripts must not depend on the normalized application version.
+The first run populates the cache; this cache tag is separate from runnable release
+images. Frontend compilation still reruns for changed source or release metadata.
 
 Jobs run on a pinned `ubuntu-24.04` runner image, and every action is pinned to
 a Node 24 major version, so runner-image or action migrations are deliberate
