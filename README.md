@@ -230,6 +230,24 @@ account switching, private history, and deletion against a throwaway server.
 See [ARCHITECTURE.md](ARCHITECTURE.md) for module boundaries, persistence
 details, and the behavior contract the test suites enforce.
 
+## Roadmap
+
+Ideas from the original concept that are not implemented yet. None of these are
+scheduled; they are recorded here so they are not lost.
+
+- **Per-exercise progress charts**: select an exercise and plot working-set
+  weight and reps over time, filterable by gym. Analysis currently charts body
+  measurements only.
+- **Post-workout summary**: after finishing, compare each exercise's working sets
+  with the previous session (progress / maintained / regressed indicators) and
+  show totals for sets, volume, and duration.
+- **Gym-specific equipment**: record the machine used for an exercise at a given
+  gym and suggest previously used equipment names.
+- **Cross-gym weight conversion**: derive a per-equipment conversion factor from
+  logged performance and suggest an adjusted starting weight when training on
+  unfamiliar equipment. Depends on gym-specific equipment.
+- **Optional RPE per set** for effort-aware comparisons.
+
 The `Release` workflow (`.github/workflows/release.yml`) runs only for release
 tags (`latest` or `v*`) and manual `workflow_dispatch` runs; ordinary commits and
 pull requests start no pipeline, so run the local checks above before tagging.
