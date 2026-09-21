@@ -260,6 +260,10 @@ Its three jobs run in order:
 | `publish-image` | tags, after `verify` | Builds the amd64 and arm64 images and pushes `:latest`, `:<tag>`, and `:<sha>` to GHCR, so a failing tag publishes nothing. |
 | `create-release` | `v*` tags, after `publish-image` | Creates or updates the GitHub release from the `## <tag>` section of [RELEASE_NOTES.md](RELEASE_NOTES.md), falling back to a commit summary. Tags with a suffix such as `-alpha` are marked as pre-releases. Finally moves the Git `latest` tag to the published release commit. |
 
+Jobs run on a pinned `ubuntu-24.04` runner image, and every action is pinned to
+a Node 24 major version, so runner-image or action migrations are deliberate
+edits to the workflow rather than surprises on the next release tag.
+
 The Git `latest` tag tracks the most recently published release, including alpha
 releases, alongside the Docker `:latest` image. Automation updates it using
 `GITHUB_TOKEN`, so that tag update does not trigger another workflow run.
