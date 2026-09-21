@@ -8,6 +8,12 @@ const canonical = value => JSON.stringify(value, (_key, entry) => entry && typeo
 
 export function createSyncService(database) {
     return {
+        generations: accountId => database.transaction(async tx => {
+            const row = await tx.getSql(`SELECT users.id AS accountId, installation.id AS installationId,
+                users.dataGeneration AS accountGeneration, installation.catalogGeneration
+                FROM users CROSS JOIN installation WHERE users.id = ? AND installation.singleton = 1`, [accountId]);
+            return row ?? failure(401, 'unauthorized');
+        }),
         snapshot: accountId => database.transaction(tx => readSnapshot(tx, accountId)),
         apply: (accountId, command) => database.transaction(async tx => {
             const invalid = validateCommand(command);

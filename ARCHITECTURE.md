@@ -19,7 +19,7 @@ built frontend and APIs; Vite proxies API requests during development.
 | `server/routes/auth.js` | Bootstrap, first-admin setup, registration, password login, session read/logout, OIDC availability |
 | `server/routes/admin.js` | Admin-only server/OIDC configuration and user management HTTP handlers |
 | `server/routes/oidc.js` | OIDC authorization-code flow with PKCE, state/nonce storage, callback verification |
-| `server/routes/sync.js` | `/api/sync` and `/api/sync/snapshot` handlers over the sync service |
+| `server/routes/sync.js` | Command, snapshot, and lightweight generation handlers over the sync service |
 | `server/services/sessions.js` | Session cookie/table lifecycle, user resolution, `requireUser`/`requireAdmin` guards |
 | `server/services/oidcSettings.js` | Stored OIDC settings merged with environment precedence, discovery cache, redirect URI |
 | `server/lib/http.js` | Exact-key payload validation, error responses, in-memory rate limiter |
@@ -138,7 +138,8 @@ Browsers without Web Locks retain queues without sending.
 Server-side envelope identity checks additionally protect against externally
 changed cookies. Binding mismatch pauses the old queue and revalidates the
 session. Before first delivery, a dirty queue compares its recorded private or
-catalog generation with a consistent server snapshot; mismatches become explicit
+catalog generation with `/api/sync/generations`, a consistent identity/counter-only
+server read; mismatches become explicit
 conflicts. Snapshot replacement detaches domain UI and swaps all domain tables
 and generation metadata in one Dexie transaction. Conflict actions either drop
 the rejected dependency chain or atomically load current server data and reapply

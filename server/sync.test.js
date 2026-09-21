@@ -66,6 +66,7 @@ describe('replacement sync contract', () => {
         expect((await request('GET', '/api/bootstrap', { cookie: 'gymapp_session=expired' })).body.status).toBe('signedOut');
     });
     it('authenticates before dispatch and rejects malformed or unknown commands', async () => {
+        expect((await request('GET', '/api/sync/generations')).status).toBe(401);
         expect((await request('POST', '/api/sync', { body: {} })).status).toBe(401);
         for (const body of [{ table: 'users', operation: 'delete', id: userId }, { operation: { toString: 'invalid' } }, { operation: 'constructor' }, { operation: '__proto__' }, { operation: 'exercise.create' }]) {
             expect((await send(body)).status).toBe(400);
@@ -150,6 +151,15 @@ describe('replacement sync contract', () => {
         expect((await send(profile)).body.revision).toBe(2);
         expect((await send({ ...profile, mutationId: uuidv7() })).body.error).toBe('revision_conflict');
         expect((await snapshot(userCookie)).body.accountGeneration).toBe(3);
+    });
+    it('returns only authenticated identity and consistent generation counters', async () => {
+        for (const [cookie, accountId] of [[adminCookie, adminId], [userCookie, userId]]) {
+            const current = (await snapshot(cookie)).body;
+            const result = await request('GET', '/api/sync/generations', { cookie });
+            expect(result.status).toBe(200);
+            expect(result.body).toEqual({ ok: true, accountId, installationId,
+                accountGeneration: current.accountGeneration, catalogGeneration: current.catalogGeneration });
+        }
     });
     it('records catalog exercise uses for only the active workout owner', async () => {
         const use = command('workoutExercise.create', { workoutId, exerciseId: EXERCISES[0].id });

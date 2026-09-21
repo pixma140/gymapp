@@ -1,9 +1,9 @@
 import { readSession } from '@/auth/tabs';
 import { ApiError, AUTHORIZATION_FAILURE, isObject, jsonBody, requestJson } from '@/lib/api';
-import { validateCommand } from '@shared/commands';
-import type { Command, Receipt } from '@shared/commands';
+import { isUuid, validateCommand } from '@shared/commands';
+import type { Command, Generations, Receipt } from '@shared/commands';
 import type { AccountDatabase, PendingMutation } from './db';
-import { generationConflictSequences, isSnapshot } from './hydrate';
+import { generationConflictSequences } from './hydrate';
 
 const RETRY_BASE_MS = 1000;
 const RETRY_MAX_MS = 60_000;
@@ -20,7 +20,10 @@ const prepareCommand = (db: AccountDatabase, entry: PendingMutation, revision?: 
 async function detectGenerationConflict(db: AccountDatabase): Promise<boolean> {
     const [entries, metadata] = await Promise.all([db.outbox.orderBy('sequence').toArray(), db.syncMetadata.get('state')]);
     if (!entries.length || entries[0].attempts > 0) return false;
-    const snapshot = await requestJson('/api/sync/snapshot', isSnapshot, undefined, false);
+    const snapshot = await requestJson('/api/sync/generations', (value): value is Generations =>
+        isObject(value) && isUuid(value.accountId) && isUuid(value.installationId)
+        && Number.isSafeInteger(value.accountGeneration) && Number(value.accountGeneration) >= 0
+        && Number.isSafeInteger(value.catalogGeneration) && Number(value.catalogGeneration) >= 0, undefined, false);
     if (snapshot.accountId !== db.binding.accountId || snapshot.installationId !== db.binding.installationId) {
         throw new ApiError('conflict', 'account_binding_mismatch', 409);
     }

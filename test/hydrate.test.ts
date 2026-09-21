@@ -194,7 +194,7 @@ describe('account caches and transactional intent', () => {
             return new Response(JSON.stringify({ ok: true, ...db.binding, mutationId: sent.mutationId,
                 revision: 2, accountGeneration: 1, catalogGeneration: 1 }));
         });
-        vi.stubGlobal('fetch', vi.fn((url: unknown, options?: RequestInit) => String(url).endsWith('/snapshot')
+        vi.stubGlobal('fetch', vi.fn((url: unknown, options?: RequestInit) => String(url).endsWith('/generations')
             ? Promise.resolve(new Response(JSON.stringify({ ok: true, ...snapshot })))
             : delivery(url, options)));
         vi.spyOn(Date, 'now').mockReturnValue(previousSuccessfulSync + 1);
@@ -313,7 +313,7 @@ describe('account caches and transactional intent', () => {
         const before = await db.outbox.orderBy('sequence').first();
         vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
         vi.stubGlobal('fetch', vi.fn(async url => {
-            if (String(url).endsWith('/snapshot')) return new Response(JSON.stringify({ ok: true, ...snapshot }));
+            if (String(url).endsWith('/generations')) return new Response(JSON.stringify({ ok: true, ...snapshot }));
             throw new Error('network');
         }));
         await flushPendingMutations(db);
@@ -321,7 +321,7 @@ describe('account caches and transactional intent', () => {
         await db.outbox.update(before!.sequence, { nextAttemptAt: Date.now() - 1 });
         const delivered: Array<{ expectedRevision: number | null }> = [];
         vi.stubGlobal('fetch', vi.fn(async (url, options) => {
-            if (String(url).endsWith('/snapshot')) return new Response(JSON.stringify({ ok: true, ...snapshot,
+            if (String(url).endsWith('/generations')) return new Response(JSON.stringify({ ok: true, ...snapshot,
                 accountGeneration: delivered.length }));
             const command = JSON.parse(options.body); delivered.push(command);
             return { ok: true, json: async () => ({ ok: true, ...db.binding, mutationId: command.mutationId,
@@ -348,7 +348,7 @@ describe('account caches and transactional intent', () => {
         await hydrateFromServer(db, snapshot);
         await applyOperation(db, 'profile.update', null, { name: 'Retry later' });
         vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
-        const fetch = vi.fn(async (url: string) => String(url).endsWith('/snapshot')
+        const fetch = vi.fn(async (url: string) => String(url).endsWith('/generations')
             ? new Response(JSON.stringify({ ok: true, ...snapshot }))
             : new Response(JSON.stringify({ ok: false, error: 'too_many_requests' }), { status: 429, headers: { 'Retry-After': '7' } }));
         vi.stubGlobal('fetch', fetch);
@@ -382,7 +382,7 @@ describe('account caches and transactional intent', () => {
         vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
         const changed = { ...snapshot, accountGeneration: 1,
             profile: { ...snapshot.profile, revision: 2, name: 'Other device' } };
-        const fetch = vi.fn(async (url: string) => String(url).endsWith('/snapshot')
+        const fetch = vi.fn(async (url: string) => String(url).endsWith('/generations')
             ? new Response(JSON.stringify({ ok: true, ...changed }))
             : new Response(JSON.stringify({ ok: true })));
         vi.stubGlobal('fetch', fetch);
@@ -431,7 +431,7 @@ describe('account caches and transactional intent', () => {
         await applyOperation(db, 'profile.update', null, { name: 'Private edit' });
         vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
         vi.stubGlobal('fetch', vi.fn(async (url, options) => {
-            if (String(url).endsWith('/snapshot')) return new Response(JSON.stringify({ ok: true, ...snapshot }));
+            if (String(url).endsWith('/generations')) return new Response(JSON.stringify({ ok: true, ...snapshot }));
             const command = JSON.parse(String(options?.body));
             return new Response(JSON.stringify({ ok: true, ...db.binding, mutationId: command.mutationId,
                 revision: 2, accountGeneration: 1, catalogGeneration: 5 }));
@@ -444,7 +444,7 @@ describe('account caches and transactional intent', () => {
         await hydrateFromServer(db, snapshot);
         await applyOperation(db, 'profile.update', null, { name: 'Ambiguous edit' });
         vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
-        vi.stubGlobal('fetch', vi.fn(async (url: string) => String(url).endsWith('/snapshot')
+        vi.stubGlobal('fetch', vi.fn(async (url: string) => String(url).endsWith('/generations')
             ? new Response(JSON.stringify({ ok: true, ...snapshot })) : new Response('{"ok":true}')));
         await flushPendingMutations(db);
         const entry = (await db.outbox.toArray())[0];
@@ -525,7 +525,7 @@ describe('account caches and transactional intent', () => {
         vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) =>
             (args.at(-1) as () => Promise<void>)() } });
         vi.stubGlobal('fetch', vi.fn(async (url, options) => {
-            if (String(url).endsWith('/snapshot')) return new Response(JSON.stringify({ ok: true, ...snapshot }));
+            if (String(url).endsWith('/generations')) return new Response(JSON.stringify({ ok: true, ...snapshot }));
             const sent = JSON.parse(String(options?.body));
             active = false;
             await responseGate;
@@ -553,7 +553,7 @@ describe('account caches and transactional intent', () => {
         const before = (await db.outbox.toArray())[0].command;
         vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) =>
             (args.at(-1) as () => Promise<void>)() } });
-        const fetch = vi.fn(async (url: string) => String(url).endsWith('/snapshot')
+        const fetch = vi.fn(async (url: string) => String(url).endsWith('/generations')
             ? new Response(JSON.stringify({ ok: true, ...snapshot }))
             : new Response(JSON.stringify({ ok: false, error }), { status: Number(status) }));
         vi.stubGlobal('fetch', fetch);

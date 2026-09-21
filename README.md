@@ -197,7 +197,8 @@ sender per account across tabs; browsers without Web Locks retain their queue.
 Use HTTPS or localhost for the browser capabilities needed by synchronization.
 Network and server failures use persisted exponential backoff; rate limits honor
 `Retry-After`. Account/catalog generation changes pause a dirty cache for review
-before its first delivery. Refresh never replaces pending work silently.
+before its first delivery using a lightweight identity/generation check rather
+than downloading workout history. Refresh never replaces pending work silently.
 Conflicts can discard the rejected dependency chain or reapply reviewed intent
 against current server revisions with new mutation IDs. Settings can export all
 pending intent before either discard path. There is no automatic merge or

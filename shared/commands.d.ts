@@ -112,6 +112,7 @@ export interface Snapshot extends AccountBinding {
     customExercises: CustomExercise[];
     measurements: Measurement[];
 }
+export type Generations = Pick<Snapshot, 'accountId' | 'installationId' | 'accountGeneration' | 'catalogGeneration'>;
 
 export const PROFILE_COLUMNS: readonly (keyof ProfileFields)[];
 export const COMMAND_FIELDS: Readonly<Record<Operation, readonly string[]>>;
