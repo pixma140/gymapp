@@ -11,6 +11,7 @@ const valid = (value: unknown): value is { ok: true } => isObject(value) && valu
 describe('typed API and bootstrap failures', () => {
     it('supports session operations without Web Locks or BroadcastChannel', async () => {
         vi.stubGlobal('navigator', {});
+        vi.stubGlobal('localStorage', undefined);
         vi.stubGlobal('BroadcastChannel', undefined);
         const listener = vi.fn();
         const unsubscribe = subscribeSession(listener);

@@ -22,7 +22,7 @@ Three documents lead; keep each within its role and update the one that owns a f
 
 ## Commands (npm)
 - Install: `npm install`
-- Dev frontend: `npm run dev`; API: `npm run dev:server` (loads local `.env`; see `env.example`).
+- Dev frontend: `npm run dev`; API: `npm run dev:server` (Node watch mode, loads local `.env`; see `env.example`).
 - Explicit app database reset: stop the API, then `npm run db:reset:seed` (or `db:reset` without fixtures).
 - Build: `npm run build` (runs `tsc -b` then `vite build`)
 - Lint: `npm run lint` (eslint)

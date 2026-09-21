@@ -33,6 +33,7 @@ npm run dev:server
 npm run dev
 ```
 
+The development API restarts on imported source changes using Node's watch mode.
 The API and reset commands load `.env` using Node's built-in environment loader.
 Exported variables take precedence. `env.example` uses `PORT=3000`,
 `DATA_DIR=./db`, and `VITE_API_TARGET=http://localhost:3000` for local development.
@@ -232,6 +233,11 @@ retaining saved data and pending changes. Complete unsaved form edits first.
 Sync runs while the app is open; closed-app background delivery is not promised.
 Browser storage clearing/eviction removes offline resources and local data.
 Breaking alpha schema releases still require the documented database reset.
+
+Express serves a same-origin Content Security Policy for scripts, connections,
+workers, and app resources; inline styles remain allowed for theme variables and
+charts. API responses use `Cache-Control: no-store`. JSON bodies are limited to
+1 MB, with JSON error responses for malformed or oversized requests.
 
 ## Verification
 

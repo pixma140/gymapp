@@ -35,6 +35,17 @@ afterAll(async () => {
 
 describe('replacement sync contract', () => {
     let gymId, workoutId;
+    it('serves a restrictive CSP and JSON errors for malformed and oversized API bodies', async () => {
+        const response = await fetch(`${baseUrl}/api/bootstrap`);
+        expect(response.headers.get('content-security-policy')).toContain("script-src 'self'");
+        expect(response.headers.get('content-security-policy')).toContain("frame-ancestors 'none'");
+        expect(response.headers.get('cache-control')).toBe('no-store');
+        for (const [body, status, error] of [['{', 400, 'invalid_json'], [JSON.stringify({ value: 'x'.repeat(1024 * 1024) }), 413, 'payload_too_large']]) {
+            const result = await fetch(`${baseUrl}/api/sync`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+            expect(result.status).toBe(status);
+            expect(await result.json()).toEqual({ ok: false, error });
+        }
+    });
     it('bootstraps an empty installation without fabricating a session', async () => {
         const result = await request('GET', '/api/bootstrap');
         expect(result.status).toBe(200);

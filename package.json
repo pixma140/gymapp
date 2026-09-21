@@ -29,7 +29,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "dev:server": "node server/index.js",
+    "dev:server": "node --watch server/index.js",
     "db:reset": "node server/reset.js",
     "db:reset:seed": "node server/reset.js --seed",
     "test:browser": "playwright test",
