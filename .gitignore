@@ -30,9 +30,8 @@ dist-ssr
 
 # my files
 tbd.md
-.gitconfig
 
-# exclude all demo files needed for giving AI files
+# local reference material (screenshots, CSV exports) handed to agents; never committed
 /demo
 
 # Browser test output

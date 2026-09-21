@@ -11,6 +11,7 @@ Three documents lead; keep each within its role and update the one that owns a f
 - `RELEASE_NOTES.md` is append-only per release; `THIRD_PARTY_NOTICES.md` records attribution.
 - Do not add other long-lived Markdown files or a `docs/` folder. Historical plans, checkpoints, and assessments are not kept in-tree; Git history and release notes preserve them.
 - Open ideas that are not yet implemented belong in the README roadmap section, not in separate idea files.
+- `demo/` (Git- and Docker-ignored, may be absent) holds local reference material the user hands to agents, such as UI mockup screenshots or CSV exports from other trackers. Read it when a task refers to it; never commit it or depend on it from code or tests.
 
 ## Repo Overview
 - Vite + React + TypeScript (ESM) app.
