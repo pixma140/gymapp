@@ -1,5 +1,5 @@
 # Keep this version aligned with actions/setup-node in the release workflow.
-ARG NODE_VERSION=24.20.0
+ARG NODE_VERSION=26.8.1
 
 # Stage 1: Build architecture-independent assets once on the native platform.
 FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS builder

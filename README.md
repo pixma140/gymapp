@@ -295,7 +295,8 @@ Its three jobs run in order:
 | `publish-image` | tags, after `verify` | Builds the amd64 and arm64 images and pushes `:latest`, `:<tag>`, and `:<sha>` to GHCR, so a failing tag publishes nothing. |
 | `create-release` | `v*` tags, after `publish-image` | Creates or updates the GitHub release from the `## <tag>` section of [RELEASE_NOTES.md](RELEASE_NOTES.md), falling back to a commit summary. Tags with a suffix such as `-alpha` are marked as pre-releases. Finally moves the Git `latest` tag to the published release commit. |
 
-Verification and both Docker stages use Node **24.20.0 LTS**. Keep the version
+Verification and both Docker stages use Node **26.8.1** (Current). Use the same
+version for local development. Keep the version
 in `actions/setup-node` and the Dockerfile's `NODE_VERSION` default aligned when
 updating Node. The frontend Docker builder runs on `$BUILDPLATFORM`, producing
 one set of architecture-independent assets for both images; runtime dependencies
