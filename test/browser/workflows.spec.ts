@@ -264,6 +264,11 @@ test('muscle and equipment pickers combine filters and preserve search when sele
     await page.getByRole('button', { name: 'Add Exercise', exact: true }).click();
     const exercises = page.getByRole('dialog', { name: 'Select Exercise', exact: true });
     const muscles = page.getByRole('dialog', { name: 'Muscles', exact: true });
+    const muscleTrigger = exercises.getByRole('button', { name: 'All muscle groups', exact: true });
+    const equipmentTrigger = exercises.getByRole('button', { name: 'All equipment', exact: true });
+    const [muscleBox, equipmentBox] = await Promise.all([muscleTrigger.boundingBox(), equipmentTrigger.boundingBox()]);
+    expect(muscleBox?.y).toBe(equipmentBox?.y);
+    expect(muscleBox?.height).toBe(equipmentBox?.height);
     await exercises.getByRole('textbox', { name: 'Search exercises…' }).fill('press');
     const allPresses = await exercises.getByRole('listitem').count();
     await exercises.getByRole('button', { name: 'All muscle groups', exact: true }).click();
@@ -316,6 +321,10 @@ test('muscle and equipment pickers combine filters and preserve search when sele
     expect(await exercises.getByRole('listitem').count()).toBeLessThan(allCableCount);
     await expect(exercises.getByRole('listitem').first()).toContainText('Chest');
     await expect(exercises.getByRole('listitem').first()).toContainText('Cable');
+    await exercises.getByRole('button', { name: 'Clear equipment filter', exact: true }).click();
+    await expect(exercises.getByRole('button', { name: 'All equipment', exact: true })).toBeVisible();
+    await exercises.getByRole('button', { name: 'Clear muscle group filter', exact: true }).click();
+    await expect(exercises.getByRole('button', { name: 'All muscle groups', exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 

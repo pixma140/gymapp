@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, X } from 'lucide-react';
 import type { MuscleGroup } from '@shared/exercises';
 import { Modal } from '@/components/Modal';
 import { MuscleGroupIllustration } from '@/components/MuscleGroupIllustration';
@@ -24,11 +24,17 @@ export function MuscleGroupPicker({ value, onChange }: {
         setOpen(false);
     };
     return <>
-        <button ref={trigger} type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}
-            className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 text-sm font-medium">
-            {t(value ? `exercise.muscle.${value}` : 'exercise.allGroups')}
-            <ChevronDown aria-hidden="true" className="size-4 text-[var(--muted-foreground)]" />
-        </button>
+        <span className="inline-flex min-h-12 min-w-0 items-stretch overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
+            <button ref={trigger} type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}
+                className="flex min-w-0 flex-1 items-center justify-between gap-2 px-3 py-3 text-sm font-medium">
+                <span className="truncate">{t(value ? `exercise.muscle.${value}` : 'exercise.allGroups')}</span>
+                <ChevronDown aria-hidden="true" className="size-4 shrink-0 text-[var(--muted-foreground)]" />
+            </button>
+            {value && <button type="button" aria-label={t('exercise.clearMuscleFilter')} onClick={() => onChange('')}
+                className="grid place-items-center border-l border-[var(--border)] px-3 text-[var(--muted-foreground)] hover:bg-[var(--accent)] hover:text-[var(--foreground)]">
+                <X aria-hidden="true" className="size-4" />
+            </button>}
+        </span>
         {open && <Modal title={t('exercise.muscles')} onClose={() => setOpen(false)} placement="bottom">
             <button type="button" aria-pressed={!value} onClick={() => choose('')}
                 className="flex w-full items-center justify-between rounded-xl border border-[var(--border)] px-4 py-3 font-medium">

@@ -61,7 +61,7 @@ export function ExerciseSelector({ workoutId, onClose }: { workoutId: string; on
                 <input autoFocus aria-label={t('exercise.search')} placeholder={t('exercise.search')} value={search}
                     onChange={event => setSearch(event.target.value)} className="min-w-0 flex-1 bg-transparent py-3 outline-none" />
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-2 gap-2">
                 <MuscleGroupPicker value={muscleGroup} onChange={setMuscleGroup} />
                 <EquipmentPicker value={equipment} onChange={setEquipment} />
             </div>
