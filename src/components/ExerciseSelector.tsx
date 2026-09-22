@@ -8,9 +8,10 @@ import { rankExercises } from '@/lib/exerciseCatalog';
 import { Modal } from '@/components/Modal';
 import { MuscleGroupSelect } from '@/components/MuscleGroupSelect';
 import { MuscleGroupPicker } from '@/components/MuscleGroupPicker';
-import type { MuscleGroup } from '@shared/exercises';
+import type { Equipment, MuscleGroup } from '@shared/exercises';
 import type { DisplayExercise } from '@/lib/exerciseCatalog';
 import { ExerciseDetails } from '@/components/ExerciseDetails';
+import { EquipmentPicker } from '@/components/EquipmentPicker';
 
 export function ExerciseSelector({ workoutId, onClose }: { workoutId: string; onClose: () => void }) {
     const db = useDatabase();
@@ -18,6 +19,7 @@ export function ExerciseSelector({ workoutId, onClose }: { workoutId: string; on
     const uses = useLiveQuery(() => db.workoutExercises.toArray(), [db]);
     const custom = useLiveQuery(() => db.customExercises.toArray(), [db]);
     const [muscleGroup, setMuscleGroup] = useState<MuscleGroup | ''>('');
+    const [equipment, setEquipment] = useState<Equipment | ''>('');
     const [search, setSearch] = useState('');
     const [creating, setCreating] = useState(false);
     const [name, setName] = useState('');
@@ -25,7 +27,7 @@ export function ExerciseSelector({ workoutId, onClose }: { workoutId: string; on
     const [failed, setFailed] = useState(false);
     const [details, setDetails] = useState<DisplayExercise | null>(null);
     const selected = new Set(uses?.filter(use => use.workoutId === workoutId).map(use => use.exerciseId));
-    const exercises = rankExercises(uses ?? [], language, muscleGroup || undefined, custom ?? [], search);
+    const exercises = rankExercises(uses ?? [], language, muscleGroup || undefined, custom ?? [], search, equipment || undefined);
     const save = async (action: () => Promise<unknown>) => {
         setBusy(true); setFailed(false);
         try { await action(); onClose(); } catch { setFailed(true); } finally { setBusy(false); }
@@ -59,7 +61,10 @@ export function ExerciseSelector({ workoutId, onClose }: { workoutId: string; on
                 <input autoFocus aria-label={t('exercise.search')} placeholder={t('exercise.search')} value={search}
                     onChange={event => setSearch(event.target.value)} className="min-w-0 flex-1 bg-transparent py-3 outline-none" />
             </label>
-            <MuscleGroupPicker value={muscleGroup} onChange={setMuscleGroup} />
+            <div className="flex flex-wrap gap-2">
+                <MuscleGroupPicker value={muscleGroup} onChange={setMuscleGroup} />
+                <EquipmentPicker value={equipment} onChange={setEquipment} />
+            </div>
             <p className="text-xs text-[var(--muted-foreground)]">{t('exercise.sortedByUsage')}</p>
             <ul className="max-h-[40dvh] space-y-2 overflow-y-auto">
                 {exercises.map(exercise => <li key={exercise.id} className="flex items-stretch gap-2">
@@ -73,7 +78,10 @@ export function ExerciseSelector({ workoutId, onClose }: { workoutId: string; on
                         onClick={() => void save(() => applyOperation(db, 'workoutExercise.create', null, { workoutId, exerciseId: exercise.id }))}
                         className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl border border-[var(--border)] p-4 text-left hover:border-[var(--primary)] disabled:opacity-40">
                         <span><span className="block font-semibold">{exercise.name}</span>
-                            <span className="mt-1 inline-block rounded-full border border-[var(--border)] px-2 text-xs text-[var(--muted-foreground)]">{t(`exercise.muscle.${exercise.muscleGroup}`)}</span>
+                            <span className="mt-1 flex flex-wrap gap-1">
+                                <span className="rounded-full border border-[var(--border)] px-2 text-xs text-[var(--muted-foreground)]">{t(`exercise.muscle.${exercise.muscleGroup}`)}</span>
+                                {exercise.equipment && <span className="rounded-full border border-[var(--border)] px-2 text-xs text-[var(--muted-foreground)]">{exercise.equipment}</span>}
+                            </span>
                         </span>
                         {selected.has(exercise.id) ? <span className="text-xs">{t('exercise.added')}</span> : <ChevronRight className="size-4 shrink-0" />}
                     </button>

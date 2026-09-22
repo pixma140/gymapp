@@ -254,7 +254,7 @@ test('demo workout flow logs sets, creates exercises, and edits completed histor
     expect(errors).toEqual([]);
 });
 
-test('visual muscle picker filters exercises and preserves search when selecting or dismissing', async ({ page }, testInfo) => {
+test('muscle and equipment pickers combine filters and preserve search when selecting or dismissing', async ({ page }, testInfo) => {
     expect((await page.request.post('/api/auth/register', {
         data: { username: `muscles-${uuidv7()}`, password: testPassword },
     })).ok()).toBe(true);
@@ -300,6 +300,22 @@ test('visual muscle picker filters exercises and preserves search when selecting
     await muscles.getByRole('button', { name: 'Close', exact: true }).click();
     await expect(muscles).toHaveCount(0);
     await expect(exercises.getByRole('button', { name: 'Cardio', exact: true })).toBeFocused();
+    await exercises.getByRole('button', { name: 'Cardio', exact: true }).click();
+    await muscles.getByRole('button', { name: 'All muscle groups', exact: true }).click();
+    await exercises.getByRole('button', { name: 'All equipment', exact: true }).click();
+    const equipment = page.getByRole('dialog', { name: 'Equipment', exact: true });
+    await expect(equipment.locator('button[aria-pressed]')).toHaveCount(11);
+    await equipment.getByRole('button', { name: 'Cable', exact: true }).click();
+    const cableExercises = exercises.getByRole('listitem');
+    const allCableCount = await cableExercises.count();
+    expect(allCableCount).toBeGreaterThan(0);
+    for (const item of (await cableExercises.all()).slice(0, 5)) await expect(item).toContainText('Cable');
+    await expect(exercises.getByRole('button', { name: 'Cable', exact: true })).toBeFocused();
+    await exercises.getByRole('button', { name: 'All muscle groups', exact: true }).click();
+    await muscles.getByRole('button', { name: 'Chest', exact: true }).click();
+    expect(await exercises.getByRole('listitem').count()).toBeLessThan(allCableCount);
+    await expect(exercises.getByRole('listitem').first()).toContainText('Chest');
+    await expect(exercises.getByRole('listitem').first()).toContainText('Cable');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 

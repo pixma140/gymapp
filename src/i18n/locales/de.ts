@@ -39,6 +39,7 @@ export const de: Record<TranslationKey, string> = {
     'exercise.detailsUnavailable': 'Für persönliche Übungen sind keine Details verfügbar.',
     'exercise.mediaUnavailable': 'Keine Medien verfügbar',
     'exercise.equipment': 'Gerät',
+    'exercise.allEquipment': 'Alle Geräte',
     'exercise.bodyPart': 'Körperbereich',
     'exercise.target': 'Zielmuskel',
     'exercise.secondaryMuscles': 'Sekundäre Muskeln',

@@ -2,6 +2,8 @@ export type ExerciseLocale = 'en' | 'de';
 export type MuscleGroup = 'chest' | 'shoulders' | 'traps' | 'lats' | 'middleBack' | 'lowerBack'
     | 'biceps' | 'triceps' | 'forearms' | 'abs' | 'quadriceps' | 'hamstrings' | 'glutes'
     | 'abductors' | 'adductors' | 'calves' | 'cardio';
+export type Equipment = 'barbell' | 'body-weight' | 'cable' | 'cardio-machine' | 'dumbbell'
+    | 'ez-barbell' | 'leverage-machine' | 'none' | 'sled-machine' | 'smith-machine';
 export type ExerciseSource = Readonly<{ type: 'github'; id: string }>
     | Readonly<{ type: 'cardio'; id: string }>
     | Readonly<{ type: 'user' }>;
@@ -13,7 +15,7 @@ export interface CatalogExercise {
     readonly aliases: Readonly<Record<ExerciseLocale, readonly string[]>>;
     readonly category: string;
     readonly bodyPart: string;
-    readonly equipment: string;
+    readonly equipment: Equipment;
     readonly target: string;
     readonly muscleGroup: MuscleGroup;
     readonly synergistMuscle: string;

@@ -48,7 +48,7 @@ Three documents lead; keep each within its role and update the one that owns a f
 - Client tests (`test/*.test.ts`, IndexedDB via `fake-indexeddb`):
   - `test/api.test.ts`: typed API errors, malformed bootstrap responses, durable local logout, deferred invalidation, explicit-login unlock, storage failures, and stale logout notifications.
   - `test/hydrate.test.ts`: account-cache isolation, hydration, transactional outbox, dependent acknowledgements, and conflict resolution.
-  - `test/exerciseCatalog.test.ts`: curated UUID/source identity, bilingual fuzzy/token search, grouped filtering, cardio additions, and per-account usage ranking with history deletion.
+  - `test/exerciseCatalog.test.ts`: curated UUID/source identity, bilingual fuzzy/token search, combined muscle/equipment filtering, cardio additions, and per-account usage ranking with history deletion.
   - `test/exerciseMediaCache.test.ts`: revisioned exercise-media download, cache reuse, failure/retry, and clearing.
   - `test/gymCatalog.test.ts`: personal gym visit ranking, account isolation, and history-driven updates.
   - `test/serverReset.test.ts`: end-to-end installation reset isolation between the real server sync contract and account-specific IndexedDB caches.

@@ -43,6 +43,7 @@ export const en = {
     'exercise.detailsUnavailable': 'Details are not available for personal exercises.',
     'exercise.mediaUnavailable': 'No media available',
     'exercise.equipment': 'Equipment',
+    'exercise.allEquipment': 'All equipment',
     'exercise.bodyPart': 'Body part',
     'exercise.target': 'Target muscle',
     'exercise.secondaryMuscles': 'Secondary muscles',

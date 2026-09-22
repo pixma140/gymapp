@@ -67,6 +67,15 @@ describe('exercise catalog', () => {
         expect(rankExercises([], 'en', undefined, [], 'cable bicycle seated')).toEqual([]);
     });
 
+    it('combines equipment, muscle group, and fuzzy search filters', () => {
+        const dumbbellChest = rankExercises([], 'en', 'chest', [], '', 'dumbbell');
+        expect(dumbbellChest.length).toBeGreaterThan(0);
+        expect(dumbbellChest.every(exercise => exercise.muscleGroup === 'chest'
+            && exercise.catalog?.equipment === 'dumbbell')).toBe(true);
+        expect(rankExercises([], 'de', undefined, [], 'kabel row seated', 'cable')[0].names.en).toBe('Seated Cable Rows');
+        expect(rankExercises([], 'en', 'calves', [], '', 'cable')).toEqual([]);
+    });
+
     it('uses personal history across all groups, within chest, and while searching, updating after deletion', async () => {
         const installationId = uuidv7();
         const first = new AccountDatabase({ installationId, accountId: uuidv7() });

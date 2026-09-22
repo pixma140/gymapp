@@ -7,7 +7,7 @@ atomically in IndexedDB and survive connectivity interruptions.
 
 Select a gym to start a workout immediately, then add exercises through a searchable modal.
 Exercises are ordered by your usage frequency and filterable by grouped muscle
-categories. Search covers English and German metadata, ignores word order, and
+categories and equipment. Search covers English and German metadata, ignores word order, and
 tolerates small spelling mistakes. Log weight/reps as warmup or working sets, create private custom
 exercises, and finish the session. Analysis shows completed workouts with exercise
 and set summaries; open a workout to view or edit its sets. Exercise History shows

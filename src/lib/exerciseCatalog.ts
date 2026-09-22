@@ -1,5 +1,5 @@
 import { EXERCISES, EXERCISE_TAXONOMY } from '@shared/exercises';
-import type { CatalogExercise, ExerciseLocale, ExerciseSource, MuscleGroup } from '@shared/exercises';
+import type { CatalogExercise, Equipment, ExerciseLocale, ExerciseSource, MuscleGroup } from '@shared/exercises';
 import type { CustomExercise, WorkoutExercise } from '@shared/commands';
 
 export interface DisplayExercise {
@@ -19,6 +19,11 @@ export const MUSCLE_GROUP_SECTIONS: readonly Readonly<{
     { label: 'exercise.group.upperBody', groups: ['chest', 'shoulders', 'traps', 'lats', 'middleBack', 'lowerBack', 'biceps', 'triceps', 'forearms', 'abs'] },
     { label: 'exercise.group.lowerBody', groups: ['quadriceps', 'hamstrings', 'glutes', 'abductors', 'adductors', 'calves'] },
     { label: 'exercise.group.cardio', groups: ['cardio'] },
+];
+
+export const EQUIPMENT_KEYS: readonly Equipment[] = [
+    'barbell', 'dumbbell', 'ez-barbell', 'cable', 'smith-machine', 'leverage-machine',
+    'sled-machine', 'body-weight', 'cardio-machine', 'none',
 ];
 
 export function localizeExercise(exercise: Readonly<CatalogExercise>, locale: ExerciseLocale): DisplayExercise {
@@ -111,13 +116,15 @@ function nameDistance(exercise: DisplayExercise, search: string): number {
 }
 
 export function rankExercises(uses: readonly WorkoutExercise[], locale: ExerciseLocale, muscleGroup?: MuscleGroup,
-    custom: readonly CustomExercise[] = [], search = ''): DisplayExercise[] {
+    custom: readonly CustomExercise[] = [], search = '', equipment?: Equipment): DisplayExercise[] {
     const counts = new Map<string, number>();
     for (const use of uses) counts.set(use.exerciseId, (counts.get(use.exerciseId) ?? 0) + 1);
     const scored = getExerciseCatalog(locale, custom).map(exercise => ({
         exercise, score: searchScore(exercise, search), distance: nameDistance(exercise, search),
     }));
-    return scored.filter(({ exercise, score }) => score > 0 && (!muscleGroup || exercise.muscleGroup === muscleGroup))
+    return scored.filter(({ exercise, score }) => score > 0
+        && (!muscleGroup || exercise.muscleGroup === muscleGroup)
+        && (!equipment || exercise.catalog?.equipment === equipment))
         .sort((left, right) => right.score - left.score
             || (counts.get(right.exercise.id) ?? 0) - (counts.get(left.exercise.id) ?? 0)
             || left.distance - right.distance
