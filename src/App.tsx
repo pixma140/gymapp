@@ -52,9 +52,9 @@ function App() {
               <Route path="/analysis" element={<AnalysisPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/settings/gyms" element={<ManageGymsPage />} />
 
               <Route element={<RequireAdmin />}>
-                <Route path="/settings/gyms" element={<ManageGymsPage />} />
                 <Route path="/admin" element={<AdminPage />} />
               </Route>
             </Route>

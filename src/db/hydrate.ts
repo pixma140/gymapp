@@ -15,7 +15,7 @@ const validPayload = (operation: string, payload: unknown) => validateCommand({
 }) === null;
 export function isSnapshot(value: unknown): value is Snapshot {
     if (!isObject(value) || !isUuid(value.installationId) || !isUuid(value.accountId)
-        || !generation(value.accountGeneration) || !generation(value.catalogGeneration)
+        || !generation(value.accountGeneration)
         || !isObject(value.profile) || value.profile.id !== value.accountId || !revision(value.profile.revision)
         || !Array.isArray(value.gyms) || !Array.isArray(value.workouts) || !Array.isArray(value.workoutExercises)
         || !Array.isArray(value.customExercises) || !Array.isArray(value.measurements)) return false;
@@ -49,13 +49,10 @@ export function isSnapshot(value: unknown): value is Snapshot {
 }
 
 export type HydrationResult = { status: 'success' | 'empty' } | { status: 'error'; error: Error };
-export function generationConflictSequences(entries: PendingMutation[], metadata: { accountGeneration: number; catalogGeneration: number } | undefined,
-    snapshot: Pick<Snapshot, 'accountGeneration' | 'catalogGeneration'>): number[] {
+export function generationConflictSequences(entries: PendingMutation[], metadata: Pick<Snapshot, 'accountGeneration'> | undefined,
+    snapshot: Pick<Snapshot, 'accountGeneration'>): number[] {
     if (!metadata) return entries.map(entry => entry.sequence);
-    const accountChanged = metadata.accountGeneration !== snapshot.accountGeneration;
-    const catalogChanged = metadata.catalogGeneration !== snapshot.catalogGeneration;
-    return entries.filter(entry => entry.intent.operation.startsWith('gym.') ? catalogChanged : accountChanged)
-        .map(entry => entry.sequence);
+    return metadata.accountGeneration !== snapshot.accountGeneration ? entries.map(entry => entry.sequence) : [];
 }
 export async function prepareAccountCache(db: AccountDatabase, snapshot: Snapshot): Promise<HydrationResult> {
     try {
@@ -98,7 +95,7 @@ async function replaceAccountData(db: AccountDatabase, snapshot: Snapshot): Prom
     await db.userMeasurements.bulkPut(snapshot.measurements);
     const refreshedAt = Date.now();
     await db.syncMetadata.put({ key: 'state', ...db.binding, accountGeneration: snapshot.accountGeneration,
-        catalogGeneration: snapshot.catalogGeneration, lastRefreshed: refreshedAt, lastSuccessfulSync: refreshedAt });
+        lastRefreshed: refreshedAt, lastSuccessfulSync: refreshedAt });
 }
 
 function assertPendingUnchanged(entries: PendingMutation[], expectedMutationIds: string[]): void {

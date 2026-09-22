@@ -100,11 +100,9 @@ export interface Receipt extends AccountBinding {
     mutationId: UUID;
     revision: Revision;
     accountGeneration: number;
-    catalogGeneration: number;
 }
 export interface Snapshot extends AccountBinding {
     accountGeneration: number;
-    catalogGeneration: number;
     profile: Profile;
     gyms: Gym[];
     workouts: Workout[];
@@ -112,7 +110,7 @@ export interface Snapshot extends AccountBinding {
     customExercises: CustomExercise[];
     measurements: Measurement[];
 }
-export type Generations = Pick<Snapshot, 'accountId' | 'installationId' | 'accountGeneration' | 'catalogGeneration'>;
+export type Generations = Pick<Snapshot, 'accountId' | 'installationId' | 'accountGeneration'>;
 
 export const PROFILE_COLUMNS: readonly (keyof ProfileFields)[];
 export const COMMAND_FIELDS: Readonly<Record<Operation, readonly string[]>>;

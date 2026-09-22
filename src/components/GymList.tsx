@@ -29,6 +29,12 @@ export function GymList({ activeGymId }: { activeGymId?: string }) {
                     </div>
                     <h3 className="text-lg font-medium text-[var(--foreground)] mb-1">{t('gyms.empty.title')}</h3>
                     <p className="text-[var(--muted-foreground)] text-sm mb-6">{t('gyms.empty.subtitle')}</p>
+                    <Link
+                        to="/settings/gyms"
+                        className="inline-flex items-center justify-center rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-medium text-[var(--primary-foreground)] transition-colors hover:bg-[var(--primary)]/90"
+                    >
+                        {t('gyms.addNew')}
+                    </Link>
                 </div>
             ) : (
                 <div className="grid gap-3">

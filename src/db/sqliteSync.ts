@@ -22,8 +22,7 @@ async function detectGenerationConflict(db: AccountDatabase): Promise<boolean> {
     if (!entries.length || entries[0].attempts > 0) return false;
     const snapshot = await requestJson('/api/sync/generations', (value): value is Generations =>
         isObject(value) && isUuid(value.accountId) && isUuid(value.installationId)
-        && Number.isSafeInteger(value.accountGeneration) && Number(value.accountGeneration) >= 0
-        && Number.isSafeInteger(value.catalogGeneration) && Number(value.catalogGeneration) >= 0, undefined, false);
+        && Number.isSafeInteger(value.accountGeneration) && Number(value.accountGeneration) >= 0, undefined, false);
     if (snapshot.accountId !== db.binding.accountId || snapshot.installationId !== db.binding.installationId) {
         throw new ApiError('conflict', 'account_binding_mismatch', 409);
     }
@@ -75,8 +74,7 @@ export async function flushPendingMutations(db: AccountDatabase, active: () => b
                 receipt = await requestJson('/api/sync', (value): value is Receipt =>
                     isObject(value) && value.mutationId === command.mutationId && value.accountId === db.binding.accountId
                     && value.installationId === db.binding.installationId && Number.isSafeInteger(value.revision) && Number(value.revision) > 0
-                    && Number.isSafeInteger(value.accountGeneration) && Number(value.accountGeneration) >= 0
-                    && Number.isSafeInteger(value.catalogGeneration) && Number(value.catalogGeneration) >= 0,
+                    && Number.isSafeInteger(value.accountGeneration) && Number(value.accountGeneration) >= 0,
                 jsonBody(command));
             } catch (error) {
                 if (!(error instanceof ApiError)) throw error;
@@ -102,9 +100,7 @@ export async function flushPendingMutations(db: AccountDatabase, active: () => b
                     await db.outbox.update(next.sequence, { dependency: undefined, revisionDependency: undefined,
                         command: next.revisionDependency ? prepareCommand(db, next, receipt.revision) : next.command });
                 }
-                await db.syncMetadata.update('state', domain === 'gym'
-                    ? { catalogGeneration: receipt.catalogGeneration, lastSuccessfulSync: Date.now() }
-                    : { accountGeneration: receipt.accountGeneration, lastSuccessfulSync: Date.now() });
+                await db.syncMetadata.update('state', { accountGeneration: receipt.accountGeneration, lastSuccessfulSync: Date.now() });
                 await db.outbox.delete(entry.sequence);
             });
         }

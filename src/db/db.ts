@@ -28,7 +28,6 @@ export interface PendingMutation {
 export interface SyncMetadata extends AccountBinding {
     key: 'state';
     accountGeneration: number;
-    catalogGeneration: number;
     lastRefreshed: number;
     lastSuccessfulSync: number;
 }

@@ -84,7 +84,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
                     current.current = database;
                     setState({ status: 'ready', database, offlineAccess: true, error: null,
                         user: { ...profile, username: null, isAdmin: false },
-                        capabilities: { manageUsers: false, manageOidc: false, manageGyms: false },
+                        capabilities: { manageUsers: false, manageOidc: false },
                         defaultTimeFormat: saved.account.defaultTimeFormat });
                     return;
                 }

@@ -34,7 +34,10 @@ describe('fresh schema and development fixtures', () => {
             const timestamp = Number.parseInt(installation.id.slice(0, 13).replace('-', ''), 16);
             expect(timestamp).toBeGreaterThanOrEqual(start);
             expect(timestamp).toBeLessThanOrEqual(Date.now());
-            for (const gym of DEVELOPMENT_GYMS) expect(isUuid(gym.id)).toBe(true);
+            const gyms = await db.allSql('SELECT id, userId FROM gyms');
+            expect(gyms).toHaveLength(users.length * DEVELOPMENT_GYMS.length);
+            for (const gym of gyms) expect(isUuid(gym.id)).toBe(true);
+            const userGym = gyms.find(gym => gym.userId === userId);
             const invalidIds = [randomUUID(), '00000000-0000-7000-c000-000000000001',
                 '00000000-0000-7000-8000-00000000000G', '00000000000070008000000000000001'];
             await expect(db.runSql("INSERT INTO users (id, name) VALUES (1, 'Numeric')")).rejects.toThrow('CHECK constraint failed');
@@ -42,8 +45,8 @@ describe('fresh schema and development fixtures', () => {
                 for (const [sql, params] of [
                     ['UPDATE installation SET id = ?', [id]],
                     ["INSERT INTO users (id, name) VALUES (?, 'Invalid')", [id]],
-                    ["INSERT INTO gyms (id, name) VALUES (?, 'Invalid')", [id]],
-                    ['INSERT INTO workouts (id, userId, gymId, startTime) VALUES (?, ?, ?, 1)', [id, userId, DEVELOPMENT_GYMS[0].id]],
+                    ["INSERT INTO gyms (id, userId, name) VALUES (?, ?, 'Invalid')", [id, userId]],
+                    ['INSERT INTO workouts (id, userId, gymId, startTime) VALUES (?, ?, ?, 1)', [id, userId, userGym.id]],
                     ['INSERT INTO userMeasurements (id, userId, timestamp) VALUES (?, ?, 1)', [id, userId]],
                     ["INSERT INTO mutation_receipts (mutationId, userId, command, result, createdAt) VALUES (?, ?, '{}', '{}', 1)", [id, userId]],
                 ]) await expect(db.runSql(sql, params)).rejects.toThrow('CHECK constraint failed');
@@ -58,7 +61,7 @@ describe('fresh schema and development fixtures', () => {
             expect(await db.allSql("SELECT name FROM sqlite_master WHERE type = 'table'")).toEqual([]);
         } finally { await db.close(); }
     });
-    it('authenticates the exact fixture accounts and returns one shared catalog', async () => {
+    it('authenticates the exact fixture accounts and gives each its own private gyms', async () => {
         const db = openDatabase(':memory:');
         let server;
         try {
@@ -79,9 +82,12 @@ describe('fresh schema and development fixtures', () => {
                 expect(data.workouts).toEqual([]); expect(data.workoutExercises).toEqual([]); expect(data.measurements).toEqual([]);
                 catalogs.push(data.gyms.map(({ id, name, location }) => ({ id, name, location })));
             }
-            expect(catalogs[0]).toEqual(DEVELOPMENT_GYMS);
-            expect(catalogs[1]).toEqual(catalogs[0]);
+            expect(catalogs[0].map(({ name, location }) => ({ name, location }))).toEqual([...DEVELOPMENT_GYMS].sort((left, right) => left.name.localeCompare(right.name)));
+            expect(catalogs[1].map(({ name, location }) => ({ name, location }))).toEqual(catalogs[0].map(({ name, location }) => ({ name, location })));
+            const catalogIds = new Set([...catalogs[0].map(gym => gym.id), ...catalogs[1].map(gym => gym.id)]);
+            expect(catalogIds.size).toBe(catalogs[0].length + catalogs[1].length);
             expect(await db.getSql('SELECT COUNT(*) AS count FROM users')).toEqual({ count: 2 });
+            expect(await db.getSql('SELECT COUNT(*) AS count FROM gyms')).toEqual({ count: 4 });
             const tables = (await db.allSql("SELECT name FROM sqlite_master WHERE type = 'table'")).map(row => row.name);
             for (const name of ['exercises', 'gymEquipments', 'workoutSets']) expect(tables).not.toContain(name);
             expect(tables).toContain('workoutExercises');
@@ -98,9 +104,11 @@ describe('fresh schema and development fixtures', () => {
             await db.initDatabase(fixtureOptions);
             const before = await db.getSql('SELECT id FROM installation');
             const changedPassword = randomUUID();
+            const { id: adminId } = await db.getSql('SELECT id FROM users WHERE username = ?', [fixtureCredentials.admin.username]);
+            const adminGym = await db.getSql('SELECT id FROM gyms WHERE userId = ? AND name = ?', [adminId, DEVELOPMENT_GYMS[0].name]);
             await db.runSql('UPDATE users SET passwordHash = ?, isAdmin = 0 WHERE username = ?', [hashPassword(changedPassword), fixtureCredentials.admin.username]);
             await db.runSql('DELETE FROM users WHERE username = ?', [fixtureCredentials.user.username]);
-            await db.runSql('UPDATE gyms SET name = ? WHERE id = ?', ['Renamed', DEVELOPMENT_GYMS[0].id]);
+            await db.runSql('UPDATE gyms SET name = ? WHERE id = ?', ['Renamed', adminGym.id]);
             await db.close(); db = openDatabase(path.join(dir, 'gymapp.db'));
             await db.initDatabase(fixtureOptions);
             await createApp({ database: db, config: readServerConfig({ ADMIN_USERNAME: fixtureCredentials.admin.username }) }).bootstrapAdmin();
@@ -108,7 +116,7 @@ describe('fresh schema and development fixtures', () => {
             const users = await db.allSql('SELECT * FROM users');
             expect(users).toHaveLength(1); expect(users[0].isAdmin).toBe(0);
             expect(verifyPassword(changedPassword, users[0].passwordHash)).toBe(true);
-            expect(await db.getSql('SELECT name FROM gyms WHERE id = ?', [DEVELOPMENT_GYMS[0].id])).toEqual({ name: 'Renamed' });
+            expect(await db.getSql('SELECT name FROM gyms WHERE id = ?', [adminGym.id])).toEqual({ name: 'Renamed' });
             expect(await db.getSql('SELECT COUNT(*) AS count FROM gyms')).toEqual({ count: 2 });
         } finally { await db.close(); await fs.rm(dir, { recursive: true }); }
     });
@@ -126,13 +134,14 @@ describe('fresh schema and development fixtures', () => {
             await db.initDatabase(fixtureOptions);
             expect(await db.getSql('PRAGMA foreign_keys')).toEqual({ foreign_keys: 1 });
             const { id: userId } = await db.getSql('SELECT id FROM users WHERE username = ?', [fixtureCredentials.user.username]);
+            const gym = await db.getSql('SELECT id FROM gyms WHERE userId = ? LIMIT 1', [userId]);
             const workoutId = uuidv7();
-            await db.runSql('INSERT INTO workouts (id, userId, gymId, startTime) VALUES (?, ?, ?, 1)', [workoutId, userId, DEVELOPMENT_GYMS[0].id]);
-            await expect(db.runSql('DELETE FROM gyms WHERE id = ?', [DEVELOPMENT_GYMS[0].id])).rejects.toThrow();
-            await expect(db.runSql('INSERT INTO workouts (id, userId, gymId, startTime) VALUES (?, ?, ?, 2)', [uuidv7(), userId, DEVELOPMENT_GYMS[0].id])).rejects.toThrow();
+            await db.runSql('INSERT INTO workouts (id, userId, gymId, startTime) VALUES (?, ?, ?, 1)', [workoutId, userId, gym.id]);
+            await expect(db.runSql('DELETE FROM gyms WHERE id = ?', [gym.id])).rejects.toThrow();
+            await expect(db.runSql('INSERT INTO workouts (id, userId, gymId, startTime) VALUES (?, ?, ?, 2)', [uuidv7(), userId, gym.id])).rejects.toThrow();
             await db.runSql('UPDATE workouts SET endTime = 2 WHERE id = ?', [workoutId]);
             expect(await db.getSql('SELECT revision FROM workouts WHERE id = ?', [workoutId])).toEqual({ revision: 2 });
-            expect(await db.getSql('SELECT dataGeneration FROM users WHERE id = ?', [userId])).toEqual({ dataGeneration: 2 });
+            expect(await db.getSql('SELECT dataGeneration FROM users WHERE id = ?', [userId])).toEqual({ dataGeneration: 4 });
             await db.runSql('DELETE FROM users WHERE id = ?', [userId]);
             expect(await db.allSql('SELECT * FROM workouts')).toEqual([]);
             const next = await createAccountService(db).create({ ...fixtureCredentials.user, name: 'Next' });
@@ -159,8 +168,14 @@ describe('fresh schema and development fixtures', () => {
                 { username: fixtureCredentials.admin.username, name: 'Administrator', isAdmin: 1 },
                 { username: fixtureCredentials.user.username, name: 'User', isAdmin: 0 },
             ]);
-            expect(await db.allSql('SELECT id, name, location FROM gyms ORDER BY id')).toEqual(
-                [...DEVELOPMENT_GYMS].sort((left, right) => left.id.localeCompare(right.id)));
+            const gyms = await db.allSql('SELECT userId, name, location FROM gyms ORDER BY userId, name');
+            expect(gyms).toHaveLength(4);
+            const { id: secondAdminId } = await db.getSql('SELECT id FROM users WHERE username = ?', [fixtureCredentials.admin.username]);
+            const { id: secondUserId } = await db.getSql('SELECT id FROM users WHERE username = ?', [fixtureCredentials.user.username]);
+            for (const owner of [secondAdminId, secondUserId]) {
+                expect(gyms.filter(gym => gym.userId === owner).map(({ name, location }) => ({ name, location })))
+                    .toEqual([...DEVELOPMENT_GYMS].sort((left, right) => left.name.localeCompare(right.name)));
+            }
             for (const table of ['workouts', 'userMeasurements', 'mutation_receipts']) {
                 expect(await db.getSql(`SELECT COUNT(*) AS count FROM ${table}`)).toEqual({ count: 0 });
             }

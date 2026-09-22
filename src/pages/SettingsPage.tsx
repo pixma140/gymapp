@@ -1,4 +1,4 @@
-import { Database, Moon, Earth, Bell, Palette, Github, LogOut, Shield, Clock } from 'lucide-react';
+import { Database, Moon, Earth, Bell, Palette, Github, LogOut, Shield, Clock, Dumbbell } from 'lucide-react';
 import { useDatabase } from '@/context/SessionContext';
 import { applyOperation } from '@/db/operations';
 import type { Theme } from '@/context/ThemeContext';
@@ -168,6 +168,18 @@ export function SettingsPage() {
                         </select>
                     </div>
 
+                </div>
+
+                <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
+                    <Link to="/settings/gyms" className="w-full flex items-center justify-between p-4 hover:bg-[var(--accent)] transition-colors">
+                        <div className="flex items-center gap-3">
+                            <Dumbbell className="size-5 text-[var(--muted-foreground)]" />
+                            <div className="text-left">
+                                <h3 className="text-sm font-medium text-[var(--foreground)]">{t('manageGyms.title')}</h3>
+                                <p className="text-xs text-[var(--muted-foreground)]">{t('settings.gyms.desc')}</p>
+                            </div>
+                        </div>
+                    </Link>
                 </div>
 
                 {isAdmin && (

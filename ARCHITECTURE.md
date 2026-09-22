@@ -26,7 +26,7 @@ built frontend and APIs; Vite proxies API requests during development.
 | `server/db.js` | SQLite handle and serialized statements/transactions |
 | `server/schema.js` | Fresh initial DDL, installation identity, revision/generation triggers |
 | `server/config.js` | Validated environment configuration and explicit non-secret API projection |
-| `server/seed.js` | Environment-supplied fixture accounts and stable shared gym UUIDs |
+| `server/seed.js` | Environment-supplied fixture accounts, each with its own private gyms |
 | `server/reset.js`, `databaseFiles.js` | Scoped reset and cooperating-process database lease |
 | `server/services/accounts.js` | Account creation/OIDC identity resolution, role/deletion guards, atomic password reset |
 | `server/services/sync.js` | Validated commands, revisions, receipts, consistent snapshots |
@@ -52,32 +52,32 @@ lazy-loaded; body charts reside in the analysis chunk.
 
 SQLite enables foreign keys. `users.id` is a server-generated UUID v7 primary key;
 all account foreign keys are text. Recreating an account generates a new identity.
-Shared `gyms`, private `workouts`, `workoutExercises`, and `userMeasurements` use UUID v7 primary keys.
+Private `gyms`, `workouts`, `workoutExercises`, and `userMeasurements` use UUID v7 primary keys.
 The `uuid` package generates RFC 9562 v7 identifiers on both client and server,
 including account, installation, and mutation IDs. Shared validators and initial SQLite
 constraints enforce the version, variant, and canonical lowercase format.
 Timestamp-prefixed IDs improve index locality; explicit timestamps and outbox
 sequences still determine domain and delivery order across device clocks.
-Account deletion cascades sessions, workouts, workout exercise uses, measurements, and mutation
-receipts; it does not delete shared gyms. Referenced gyms cannot be deleted.
+Account deletion cascades sessions, gyms, workouts, workout exercise uses, measurements, and mutation
+receipts. Referenced gyms cannot be deleted while a workout still references them.
 Archiving prevents new workouts but allows already-started sessions to finish.
 A partial unique index enforces one unfinished workout per account.
 
 Mutable synchronized records have revisions. Triggers advance account data
-generation for profile/workout/measurement writes and catalog generation for
-gym writes. Snapshot reads run within the same serialized transaction boundary
-as mutations. Calls inside a transaction must use and await its scoped SQL
-methods; calling the public queued methods from inside would deadlock.
+generation for profile/workout/measurement/gym writes. Snapshot reads run within
+the same serialized transaction boundary as mutations. Calls inside a transaction
+must use and await its scoped SQL methods; calling the public queued methods
+from inside would deadlock.
 
 Fresh-schema initialization and seeding are transactional. `installation`
-records the UUID, catalog generation, and initial fixture/empty mode. A seed
+records the UUID and initial fixture/empty mode. A seed
 completion marker is stored in `app_settings`. Ordinary startup cannot inject
 fixtures into an initialized non-fixture database or recreate deleted fixtures.
 During alpha, schema changes assume fresh databases and edit the initial
 definitions directly; see the [alpha database policy](README.md#alpha-database-policy-and-reset).
 
 IndexedDB names are `GymApp:<installation UUID>:<account ID>`. Initial version 1
-stores contain profile (`users`), shared gym cache (`gyms`), private workouts and exercise uses,
+stores contain profile (`users`), private gyms (`gyms`), private workouts and exercise uses,
 measurements, ordered outbox, and sync metadata. Entity IDs are UUID v7 strings;
 the outbox sequence is auto-incrementing. The outbox persists immutable intent,
 an immutable prepared envelope once its server revision is known, dependency,
@@ -155,8 +155,8 @@ Browsers without Web Locks retain queues without sending.
 
 Server-side envelope identity checks additionally protect against externally
 changed cookies. Binding mismatch pauses the old queue and revalidates the
-session. Before first delivery, a dirty queue compares its recorded private or
-catalog generation with `/api/sync/generations`, a consistent identity/counter-only
+session. Before first delivery, a dirty queue compares its recorded account
+generation with `/api/sync/generations`, a consistent identity/counter-only
 server read; mismatches become explicit
 conflicts. Snapshot replacement detaches domain UI and swaps all domain tables
 and generation metadata in one Dexie transaction. Conflict actions either drop
@@ -172,14 +172,14 @@ row as a regression, not a preference.
 
 | Scenario | Required result |
 | --- | --- |
-| Fresh reset with fixtures | Environment-supplied fixture accounts authenticate; administrator/regular roles are correct; exactly the two named gyms exist once. |
+| Fresh reset with fixtures | Environment-supplied fixture accounts authenticate; administrator/regular roles are correct; each fixture account gets its own two named gyms. |
 | Restart after fixture edits | No duplicate gyms, password resets, role repairs, or recreated deleted accounts. |
 | Fixture mode disabled | Empty installation offers setup; concurrent first-admin setup is safe. |
-| Admin versus user | Admin sees Users/OIDC/Gyms; user does not. Direct user calls to each admin endpoint fail without mutation. |
+| Admin versus user | Admin sees Users/OIDC; user does not. Direct user calls to each admin endpoint fail without mutation. Gym management is available to every account. |
 | Deployment configuration | Admin sees allowlisted non-secret settings; environment-set OIDC fields are read-only; credentials stay environment-only. |
-| Shared catalog | Both accounts receive the same gym IDs/names. Admin rename appears for user after refresh. User cannot create/edit/archive gyms. |
+| Private gyms | Each account only sees, creates, edits, and archives its own gyms; another account's gym IDs are absent from a snapshot and its write attempts against them fail as not found. |
 | Private activity | A workout/measurement by one user is absent from the other's views, snapshot, and writes; gym visits are per user. |
-| Account deletion | All private rows/sessions/receipts are removed atomically; shared gyms survive; self/last-admin alternate paths are blocked. |
+| Account deletion | All private rows/sessions/receipts/gyms are removed atomically; self/last-admin alternate paths are blocked. |
 | Offline edit and reload | Local state and queued command survive; eventual delivery occurs once. |
 | Offline cold start | A previously prepared account reopens from cached app resources and IndexedDB; admin capabilities remain disabled until online verification. |
 | Offline logout and reconnect | Local access stays locked across reload; server invalidation precedes a new explicit login. Stale logout notifications cannot invalidate a newer login. |
@@ -198,7 +198,7 @@ row as a regression, not a preference.
 
 OIDC protocol orchestration lives in `server/routes/oidc.js`; identity creation
 and password reset use the account service. No closed-app background sync,
-continuous pull, or automatic merging is promised. Gym catalog operations share the sync
+continuous pull, or automatic merging is promised. Gym operations share the sync
 service's authorization, revisions, and receipt transaction rather than a
 separate gym service. These are the final module placements.
 

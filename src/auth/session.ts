@@ -13,7 +13,7 @@ export interface SessionUser {
     theme: 'light' | 'dark' | 'oled' | 'system';
     isAdmin: boolean;
 }
-export interface Capabilities { manageUsers: boolean; manageOidc: boolean; manageGyms: boolean }
+export interface Capabilities { manageUsers: boolean; manageOidc: boolean }
 export type Bootstrap = { defaultTimeFormat: ProfileFields['timeFormat'] } & (
     | { status: 'setup' | 'signedOut'; installationId: string }
     | { status: 'authenticated'; installationId: string; user: SessionUser; capabilities: Capabilities; snapshot: Snapshot });
@@ -31,7 +31,7 @@ export function isBootstrap(value: unknown): value is Bootstrap {
     if (value.status !== 'authenticated' || !isSessionUser(value.user) || !isObject(value.capabilities)
         || !isSnapshot(value.snapshot)) return false;
     const { capabilities, user } = value;
-    return ['manageUsers', 'manageOidc', 'manageGyms'].every(key => capabilities[key] === user.isAdmin)
+    return ['manageUsers', 'manageOidc'].every(key => capabilities[key] === user.isAdmin)
         && value.snapshot.accountId === value.user.id && value.snapshot.installationId === value.installationId;
 }
 export async function getBootstrap(): Promise<Bootstrap> {

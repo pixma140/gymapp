@@ -34,7 +34,7 @@ afterAll(async () => {
 });
 
 describe('replacement sync contract', () => {
-    let gymId, workoutId;
+    let gymId, adminGymId, workoutId;
     it('serves a restrictive CSP and JSON errors for malformed and oversized API bodies', async () => {
         const response = await fetch(`${baseUrl}/api/bootstrap`);
         expect(response.headers.get('content-security-policy')).toContain("script-src 'self'");
@@ -71,7 +71,7 @@ describe('replacement sync contract', () => {
             expect(body.status).toBe('authenticated');
             expect(body.installationId).toBe(installationId);
             expect(body.user.id).toBe(id);
-            expect(body.capabilities).toEqual({ manageUsers: admin, manageOidc: admin, manageGyms: admin });
+            expect(body.capabilities).toEqual({ manageUsers: admin, manageOidc: admin });
             expect(body.snapshot.accountId).toBe(id);
             expect(body.snapshot.profile.id).toBe(id);
             expect(body.snapshot.installationId).toBe(installationId);
@@ -108,30 +108,37 @@ describe('replacement sync contract', () => {
         }
         expect((await snapshot(userCookie)).body.measurements).toEqual([]);
     });
-    it('restricts shared gym writes to current administrators', async () => {
-        const create = command('gym.create', { name: 'Shared Gym', location: 'City' });
-        expect((await send(create)).status).toBe(403);
-        const result = await send({ ...create, accountId: adminId }, adminCookie);
+    it('lets any account create, rename, and isolate its own private gyms', async () => {
+        const create = command('gym.create', { name: 'My Gym', location: 'City' });
+        const result = await send(create);
         expect(result.status).toBe(200); gymId = create.targetId;
+        const adminCreate = command('gym.create', { name: 'Admin Gym', location: 'Capital' }, { accountId: adminId });
+        expect((await send(adminCreate, adminCookie)).status).toBe(200);
+        adminGymId = adminCreate.targetId;
         const [admin, user] = await Promise.all([snapshot(adminCookie), snapshot(userCookie)]);
-        expect(user.body.gyms).toEqual(admin.body.gyms);
-        expect(user.body.gyms[0].id).toBe(gymId);
+        expect(user.body.gyms.map(gym => gym.id)).toEqual([gymId]);
+        expect(admin.body.gyms.map(gym => gym.id)).toEqual([adminGymId]);
         expect(user.body.workoutExercises).toEqual([]);
-        for (const [operation, payload] of [['gym.update', { name: 'Hacked' }], ['gym.archive', { archived: true }]]) {
-            expect((await send(command(operation, payload, { targetId: gymId, expectedRevision: 1 }))).status).toBe(403);
-        }
-    });
-    it('exposes administrator catalog renames on the next user snapshot', async () => {
-        const before = (await snapshot(userCookie)).body;
-        const rename = command('gym.update', { name: 'Renamed Shared Gym' }, {
-            targetId: gymId, expectedRevision: 1, accountId: adminId,
-        });
-        expect((await send(rename, adminCookie)).status).toBe(200);
+        const before = (await snapshot(userCookie)).body.accountGeneration;
+        const rename = command('gym.update', { name: 'Renamed Gym' }, { targetId: gymId, expectedRevision: 1 });
+        expect((await send(rename)).status).toBe(200);
         const after = (await snapshot(userCookie)).body;
-        expect(after.gyms).toEqual((await snapshot(adminCookie)).body.gyms);
-        expect(after.gyms[0]).toMatchObject({ id: gymId, name: 'Renamed Shared Gym', revision: 2 });
-        expect(after.catalogGeneration).toBe(before.catalogGeneration + 1);
-        expect(after.accountGeneration).toBe(before.accountGeneration);
+        expect(after.gyms[0]).toMatchObject({ id: gymId, name: 'Renamed Gym', revision: 2 });
+        expect(after.accountGeneration).toBe(before + 1);
+        expect((await snapshot(adminCookie)).body.gyms).toEqual([expect.objectContaining({ id: adminGymId, name: 'Admin Gym' })]);
+    });
+    it('rejects starting a workout at another account\'s gym and creates nothing', async () => {
+        const start = command('workout.start', { gymId, startTime: 5 }, { accountId: adminId });
+        expect((await send(start, adminCookie)).body.error).toBe('gym_unavailable');
+        expect(await database.getSql('SELECT COUNT(*) AS count FROM workouts WHERE id = ?', [start.targetId])).toEqual({ count: 0 });
+    });
+    it('rejects updating or archiving another account\'s gym as not found', async () => {
+        const before = (await snapshot(userCookie)).body.gyms[0];
+        for (const [operation, payload] of [['gym.update', { name: 'Hacked' }], ['gym.archive', { archived: true }]]) {
+            const attempt = command(operation, payload, { targetId: gymId, expectedRevision: before.revision, accountId: adminId });
+            expect((await send(attempt, adminCookie)).status).toBe(404);
+        }
+        expect((await snapshot(userCookie)).body.gyms[0]).toEqual(before);
     });
     it('applies private commands once, detects revision conflicts, and isolates snapshots', async () => {
         const starts = [10, 11].map(startTime => command('workout.start', { gymId, startTime }));
@@ -163,7 +170,7 @@ describe('replacement sync contract', () => {
         const profile = command('profile.update', { name: 'New name' }, { expectedRevision: 1 });
         expect((await send(profile)).body.revision).toBe(2);
         expect((await send({ ...profile, mutationId: uuidv7() })).body.error).toBe('revision_conflict');
-        expect((await snapshot(userCookie)).body.accountGeneration).toBe(3);
+        expect((await snapshot(userCookie)).body.accountGeneration).toBe(5);
     });
     it('returns only authenticated identity and consistent generation counters', async () => {
         for (const [cookie, accountId] of [[adminCookie, adminId], [userCookie, userId]]) {
@@ -171,7 +178,7 @@ describe('replacement sync contract', () => {
             const result = await request('GET', '/api/sync/generations', { cookie });
             expect(result.status).toBe(200);
             expect(result.body).toEqual({ ok: true, accountId, installationId,
-                accountGeneration: current.accountGeneration, catalogGeneration: current.catalogGeneration });
+                accountGeneration: current.accountGeneration });
         }
     });
     it('records catalog exercise uses for only the active workout owner', async () => {
@@ -185,8 +192,8 @@ describe('replacement sync contract', () => {
     });
     it('rejects another active session and allows finishing at an archived gym', async () => {
         expect((await send(command('workout.start', { gymId, startTime: 11 }))).body.error).toBe('active_workout_exists');
-        const archive = command('gym.archive', { archived: true }, { targetId: gymId, expectedRevision: 2, accountId: adminId });
-        expect((await send(archive, adminCookie)).status).toBe(200);
+        const archive = command('gym.archive', { archived: true }, { targetId: gymId, expectedRevision: 2 });
+        expect((await send(archive)).status).toBe(200);
         expect((await send(command('workout.finish', { endTime: 9 }, { targetId: workoutId, expectedRevision: 1 }))).status).toBe(409);
         expect((await send(command('workout.finish', { endTime: 20 }, { targetId: workoutId, expectedRevision: 1 }))).body.revision).toBe(2);
         expect((await send(command('workout.start', { gymId, startTime: 30 }))).body.error).toBe('gym_unavailable');
@@ -204,8 +211,8 @@ describe('replacement sync contract', () => {
         expect((await send(command('customExercise.create', { name: 'Bad', muscleGroup: 'unknown' }))).body.error).toBe('invalid_payload');
         expect((await send(custom)).status).toBe(200);
         expect((await snapshot(adminCookie)).body.customExercises).toEqual([]);
-        const gym = command('gym.create', { name: 'Set test gym', location: '' }, { accountId: adminId });
-        await send(gym, adminCookie);
+        const gym = command('gym.create', { name: 'Set test gym', location: '' });
+        await send(gym);
         const start = command('workout.start', { gymId: gym.targetId, startTime: 100 });
         expect((await send(start)).status).toBe(200);
         await send(command('workout.finish', { endTime: 200 }, { targetId: start.targetId, expectedRevision: 1 }));
@@ -223,7 +230,9 @@ describe('replacement sync contract', () => {
         expect((await send(update)).body).toEqual(result.body);
         expect((await send({ ...update, mutationId: uuidv7() })).body.error).toBe('revision_conflict');
         expect((await snapshot(userCookie)).body.workoutExercises).toEqual([expect.objectContaining({ sets })]);
-        const adminStart = command('workout.start', { gymId: gym.targetId, startTime: 100 }, { accountId: adminId });
+        const adminGym = command('gym.create', { name: 'Admin set test gym', location: '' }, { accountId: adminId });
+        await send(adminGym, adminCookie);
+        const adminStart = command('workout.start', { gymId: adminGym.targetId, startTime: 100 }, { accountId: adminId });
         await send(adminStart, adminCookie);
         expect((await send(command('workoutExercise.create', { workoutId: adminStart.targetId, exerciseId: custom.targetId }, { accountId: adminId }), adminCookie)).body.error).toBe('exercise_unavailable');
         expect((await send(command('workoutExercise.delete', {}, { targetId: use.targetId, expectedRevision: 2 }))).status).toBe(200);
@@ -237,8 +246,8 @@ describe('replacement sync contract', () => {
         expect((await snapshot(userCookie)).body.accountGeneration).toBe(before);
     });
     it('edits workout timestamps with ownership, revision, and chronology guards', async () => {
-        const gym = command('gym.create', { name: 'Times gym', location: '' }, { accountId: adminId });
-        await send(gym, adminCookie);
+        const gym = command('gym.create', { name: 'Times gym', location: '' });
+        await send(gym);
         const start = command('workout.start', { gymId: gym.targetId, startTime: 1000 });
         await send(start);
         const update = command('workout.update', { startTime: 900 }, { targetId: start.targetId, expectedRevision: 1 });

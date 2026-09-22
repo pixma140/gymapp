@@ -24,16 +24,17 @@ afterEach(async () => {
 });
 
 describe('personal gym ranking', () => {
-    it('ranks the shared catalog independently for each account, with unvisited gyms last', async () => {
+    it('ranks each account\'s own private gyms independently, with unvisited gyms last', async () => {
         const first = account();
         const second = account(first.binding.installationId);
-        const gyms = [gym('Zulu'), gym('Beta'), gym('Alpha'), gym('Delta'), gym('Archived', true)];
-        await first.gyms.bulkAdd(gyms);
-        await second.gyms.bulkAdd(gyms);
-        await visit(first, gyms[0].id);
-        await visit(first, gyms[0].id);
-        await visit(first, gyms[1].id);
-        await visit(second, gyms[3].id);
+        const firstGyms = [gym('Zulu'), gym('Beta'), gym('Alpha'), gym('Delta'), gym('Archived', true)];
+        const secondGyms = [gym('Zulu'), gym('Beta'), gym('Alpha'), gym('Delta'), gym('Archived', true)];
+        await first.gyms.bulkAdd(firstGyms);
+        await second.gyms.bulkAdd(secondGyms);
+        await visit(first, firstGyms[0].id);
+        await visit(first, firstGyms[0].id);
+        await visit(first, firstGyms[1].id);
+        await visit(second, secondGyms[3].id);
         const results = await getRankedGyms(first);
         expect(results.map(({ name, visitCount }) => [name, visitCount])).toEqual([
             ['Zulu', 2], ['Beta', 1], ['Alpha', 0], ['Delta', 0],
@@ -41,6 +42,8 @@ describe('personal gym ranking', () => {
         expect((await getRankedGyms(second)).map(({ name, visitCount }) => [name, visitCount])).toEqual([
             ['Delta', 1], ['Alpha', 0], ['Beta', 0], ['Zulu', 0],
         ]);
+        // Visiting one account's gym never appears in, or affects, the other account's ranking.
+        expect((await getRankedGyms(first)).map(gym => gym.id)).not.toEqual(expect.arrayContaining((await getRankedGyms(second)).map(gym => gym.id)));
     });
 
     it('updates weights after finishing or deleting workouts and hides archived gyms', async () => {

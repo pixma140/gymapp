@@ -378,7 +378,7 @@ test('history deletion preserves the workout on local failure and supports retry
     expect(errors).toEqual([]);
 });
 
-test('fixture users share gyms and retain private timed workouts through logout and reload', async ({ page }) => {
+test('fixture users have isolated private gyms and retain their own timed workouts through logout and reload', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
     const login = async (role: keyof typeof fixtureCredentials) => {
@@ -431,7 +431,8 @@ test('fixture users share gyms and retain private timed workouts through logout 
     await expect(page.getByRole('heading', { name: 'Iron Odyssey', exact: true })).toBeVisible();
     await page.getByRole('link', { name: 'Settings', exact: true }).click();
     await expect(page.locator('a[href="/admin"]')).toHaveCount(0);
-    await expect(page.locator('a[href="/settings/gyms"]')).toHaveCount(0);
+    // Gym management is a normal per-user feature now, available to every account.
+    await expect(page.locator('a[href="/settings/gyms"]')).toBeVisible();
     await page.getByLabel('Theme').selectOption('oled');
     await expect(page.locator('html')).toHaveClass(/oled/);
     await page.getByLabel('Theme').selectOption('dark');
@@ -443,9 +444,17 @@ test('fixture users share gyms and retain private timed workouts through logout 
     await expect(page.getByRole('button', { name: 'Log in', exact: true })).toBeVisible();
     await login('admin');
     await page.getByRole('link', { name: 'Analysis', exact: true }).click();
+    // Admin never visited its own copy of Iron Odyssey, so it has no history yet -
+    // the user's finished workout above never touched the admin account's data.
     await expect(page.getByRole('heading', { name: 'Iron Odyssey', exact: true })).toHaveCount(0);
+    await page.getByRole('link', { name: 'Training', exact: true }).click();
+    // Admin has its own private copies of the same gym names from the fixture seed,
+    // distinct rows from the user's gyms above, not a shared catalog.
+    await expect(page.getByRole('link', { name: /Iron Odyssey/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Moonshot Barbell Club/ })).toBeVisible();
     await page.getByRole('link', { name: 'Settings', exact: true }).click();
     await expect(page.locator('a[href="/admin"]')).toBeVisible();
+    await expect(page.locator('a[href="/settings/gyms"]')).toBeVisible();
     await page.locator('a[href="/admin"]').click();
     await expect(page.getByRole('button', { name: 'Users', exact: true })).toBeVisible();
     await page.getByRole('link', { name: 'Settings', exact: true }).click();

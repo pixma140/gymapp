@@ -225,7 +225,7 @@ export const de: Record<TranslationKey, string> = {
     // Gyms
     'gyms.loading': 'Studios werden geladen...',
     'gyms.empty.title': 'Keine Studios hinzugefügt',
-    'gyms.empty.subtitle': 'Ein Administrator kann ein Studio zum gemeinsamen Katalog hinzufügen.',
+    'gyms.empty.subtitle': 'Füge dein eigenes Studio hinzu, um ein Training zu starten.',
     'gyms.addNew': 'Neues Studio hinzufügen',
     'gyms.visits': 'Besuche',
     'gyms.sortedByUsage': 'Deine am häufigsten besuchten Studios erscheinen zuerst.',
@@ -241,6 +241,7 @@ export const de: Record<TranslationKey, string> = {
     'manageGyms.title': 'Studios verwalten',
     'manageGyms.empty': 'Noch keine Studios hinzugefügt.',
     'manageGyms.noLocation': 'Kein Standort',
+    'settings.gyms.desc': 'Deine Studios hinzufügen, bearbeiten oder archivieren',
 
     // Add gym
     'addGym.namePlaceholder': 'z.B. Gold\'s Gym',

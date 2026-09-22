@@ -223,7 +223,7 @@ export const en = {
     // Gyms
     'gyms.loading': 'Loading gyms...',
     'gyms.empty.title': 'No gyms added',
-    'gyms.empty.subtitle': 'An administrator can add a gym to the shared catalog.',
+    'gyms.empty.subtitle': 'Add your own gym to start a workout.',
     'gyms.addNew': 'Add New Gym',
     'gyms.visits': 'Visits',
     'gyms.sortedByUsage': 'Your most frequently visited gyms appear first.',
@@ -239,6 +239,7 @@ export const en = {
     'manageGyms.title': 'Manage Gyms',
     'manageGyms.empty': 'No gyms added yet.',
     'manageGyms.noLocation': 'No location',
+    'settings.gyms.desc': 'Add, edit, or archive your gyms',
 
     // Add gym
     'addGym.namePlaceholder': 'e.g. Gold\'s Gym',

@@ -58,6 +58,10 @@ export function createAccountService(database) {
         delete: (actorId, targetId) => database.transaction(async tx => {
             const guard = await checkAdminChange(tx, actorId, targetId, 'cannot_delete_self');
             if (guard) return guard;
+            // workouts.gymId is ON DELETE RESTRICT against gyms, and gyms cascade from
+            // users. Deleting workouts first (which cascades their workoutExercises)
+            // avoids a RESTRICT violation racing the gyms cascade from the user delete.
+            await tx.runSql('DELETE FROM workouts WHERE userId = ?', [targetId]);
             await tx.runSql('DELETE FROM users WHERE id = ?', [targetId]);
             return { ok: true };
         }),

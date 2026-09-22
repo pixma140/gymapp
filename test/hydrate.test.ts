@@ -13,7 +13,7 @@ const ACCOUNT_A = uuidv7();
 const ACCOUNT_B = uuidv7();
 function fixture(accountId = ACCOUNT_A, installationId = uuidv7()): { db: AccountDatabase; snapshot: Snapshot } {
     const db = new AccountDatabase({ accountId, installationId }); opened.push(db);
-    return { db, snapshot: { accountId, installationId, accountGeneration: 0, catalogGeneration: 1,
+    return { db, snapshot: { accountId, installationId, accountGeneration: 0,
         profile: { id: accountId, revision: 1, name: 'Test', email: null, weight: null, height: null, bodyFat: null, age: null, gender: null,
             reminderFrequency: 'never', language: 'en', timeFormat: 'system', theme: 'dark', mainColor: null },
         gyms: [{ id: uuidv7(), revision: 1, name: 'Shared', location: 'City', archived: false }], workouts: [], workoutExercises: [], customExercises: [], measurements: [] } };
@@ -193,7 +193,7 @@ describe('account caches and transactional intent', () => {
             const sent = JSON.parse(String(options?.body));
             expect(sent).toMatchObject({ ...queued, ...db.binding, expectedRevision: 1 });
             return new Response(JSON.stringify({ ok: true, ...db.binding, mutationId: sent.mutationId,
-                revision: 2, accountGeneration: 1, catalogGeneration: 1 }));
+                revision: 2, accountGeneration: 1 }));
         });
         vi.stubGlobal('fetch', vi.fn((url: unknown, options?: RequestInit) => String(url).endsWith('/generations')
             ? Promise.resolve(new Response(JSON.stringify({ ok: true, ...snapshot })))
@@ -222,7 +222,7 @@ describe('account caches and transactional intent', () => {
         expect(await first.db.outbox.count()).toBe(0);
         expect((await first.db.users.get(ACCOUNT_A))?.name).toBe('Server name');
         expect(await first.db.workouts.toArray()).toEqual(authoritative.workouts);
-        expect(await first.db.syncMetadata.get('state')).toMatchObject({ accountGeneration: 3, catalogGeneration: 1 });
+        expect(await first.db.syncMetadata.get('state')).toMatchObject({ accountGeneration: 3 });
         expect((await second.db.users.get(ACCOUNT_B))?.name).toBe('Keep me');
         expect(await second.db.outbox.count()).toBe(1);
     });
@@ -326,7 +326,7 @@ describe('account caches and transactional intent', () => {
                 accountGeneration: delivered.length }));
             const command = JSON.parse(options.body); delivered.push(command);
             return { ok: true, json: async () => ({ ok: true, ...db.binding, mutationId: command.mutationId,
-                revision: delivered.length, accountGeneration: delivered.length, catalogGeneration: 1 }) };
+                revision: delivered.length, accountGeneration: delivered.length }) };
         }));
         await flushPendingMutations(db);
         expect(delivered.map(command => command.expectedRevision)).toEqual([null, 1]);
@@ -392,53 +392,52 @@ describe('account caches and transactional intent', () => {
         expect((await db.outbox.toArray())[0]).toMatchObject({ state: 'conflict', attempts: 0, error: 'generation_conflict' });
         expect((await db.users.get(ACCOUNT_A))?.name).toBe('Stale local edit');
     });
-    it('marks the affected domain intent when a mixed queue has one stale generation', async () => {
+    it('marks every pending intent conflicted together when the account generation changes', async () => {
         const { db, snapshot } = fixture();
         await hydrateFromServer(db, snapshot);
         await applyOperation(db, 'profile.update', null, { name: 'Private edit' });
-        await applyOperation(db, 'gym.update', snapshot.gyms[0].id, { name: 'Catalog edit' });
+        await applyOperation(db, 'gym.update', snapshot.gyms[0].id, { name: 'Gym edit' });
         vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
-        vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ ok: true, ...snapshot, catalogGeneration: 2,
-            gyms: [{ ...snapshot.gyms[0], revision: 2, name: 'Remote catalog' }] }))));
+        vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ ok: true, ...snapshot, accountGeneration: 2,
+            gyms: [{ ...snapshot.gyms[0], revision: 2, name: 'Remote gym' }] }))));
         await flushPendingMutations(db);
         const entries = await db.outbox.orderBy('sequence').toArray();
-        expect(entries[0].state).toBe('pending');
-        expect(entries[1]).toMatchObject({ state: 'conflict', error: 'generation_conflict' });
+        expect(entries.map(entry => entry.state)).toEqual(['conflict', 'conflict']);
+        expect(entries.every(entry => entry.error === 'generation_conflict')).toBe(true);
     });
-    it('marks every stale domain intent and discards them without rebasing unrelated work', async () => {
+    it('marks every stale intent conflicted together and discards them all', async () => {
         const { db, snapshot } = fixture();
         await hydrateFromServer(db, snapshot);
         await applyOperation(db, 'profile.update', null, { name: 'Private edit' });
         const measurementId = await applyOperation(db, 'measurement.create', null, { weight: 80, bodyFat: null, timestamp: 10 });
-        await applyOperation(db, 'gym.update', snapshot.gyms[0].id, { name: 'Catalog edit' });
+        await applyOperation(db, 'gym.update', snapshot.gyms[0].id, { name: 'Local gym edit' });
         vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
         const changed = { ...snapshot, accountGeneration: 2,
-            profile: { ...snapshot.profile, revision: 2, name: 'Remote profile' } };
+            profile: { ...snapshot.profile, revision: 2, name: 'Remote profile' },
+            gyms: [{ ...snapshot.gyms[0], revision: 2, name: 'Remote gym' }] };
         vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ ok: true, ...changed }))));
         await flushPendingMutations(db);
         const conflicted = await db.outbox.orderBy('sequence').toArray();
-        expect(conflicted.map(entry => entry.state)).toEqual(['conflict', 'conflict', 'pending']);
+        expect(conflicted.map(entry => entry.state)).toEqual(['conflict', 'conflict', 'conflict']);
         await resolvePendingConflict(db, changed, conflicted.map(entry => entry.intent.mutationId), 'discard');
-        const remaining = await db.outbox.toArray();
-        expect(remaining).toHaveLength(1);
-        expect(remaining[0].intent.operation).toBe('gym.update');
+        expect(await db.outbox.toArray()).toEqual([]);
         expect(await db.userMeasurements.get(measurementId!)).toBeUndefined();
         expect((await db.users.get(ACCOUNT_A))?.name).toBe('Remote profile');
-        expect((await db.gyms.get(snapshot.gyms[0].id))?.name).toBe('Catalog edit');
+        expect((await db.gyms.get(snapshot.gyms[0].id))?.name).toBe('Remote gym');
     });
-    it('does not advance the unrelated generation after an acknowledgement', async () => {
+    it('advances the account generation from every domain\'s acknowledgement, private or gym', async () => {
         const { db, snapshot } = fixture();
         await hydrateFromServer(db, snapshot);
-        await applyOperation(db, 'profile.update', null, { name: 'Private edit' });
+        await applyOperation(db, 'gym.update', snapshot.gyms[0].id, { name: 'Renamed' });
         vi.stubGlobal('navigator', { locks: { request: async (_name: string, ...args: unknown[]) => (args.at(-1) as () => Promise<void>)() } });
         vi.stubGlobal('fetch', vi.fn(async (url, options) => {
             if (String(url).endsWith('/generations')) return new Response(JSON.stringify({ ok: true, ...snapshot }));
             const command = JSON.parse(String(options?.body));
             return new Response(JSON.stringify({ ok: true, ...db.binding, mutationId: command.mutationId,
-                revision: 2, accountGeneration: 1, catalogGeneration: 5 }));
+                revision: 2, accountGeneration: 5 }));
         }));
         await flushPendingMutations(db);
-        expect(await db.syncMetadata.get('state')).toMatchObject({ accountGeneration: 1, catalogGeneration: 1 });
+        expect(await db.syncMetadata.get('state')).toMatchObject({ accountGeneration: 5 });
     });
     it('retains an unchanged envelope after a malformed acknowledgement', async () => {
         const { db, snapshot } = fixture();
@@ -531,7 +530,7 @@ describe('account caches and transactional intent', () => {
             active = false;
             await responseGate;
             return new Response(JSON.stringify({ ok: true, ...db.binding, mutationId: sent.mutationId,
-                revision: 2, accountGeneration: 1, catalogGeneration: 1 }));
+                revision: 2, accountGeneration: 1 }));
         }));
         const sending = flushPendingMutations(db, () => active);
         await vi.waitFor(() => expect(active).toBe(false));

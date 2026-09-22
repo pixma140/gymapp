@@ -428,7 +428,11 @@ describe('admin user management', () => {
 
     it('deletes a user, private data, and sessions without touching another account', async () => {
         await database.runSql("INSERT INTO userMeasurements (userId, id, weight, timestamp) VALUES (?, '00000000-0000-7000-8000-000000000001', 80, 1), (?, '00000000-0000-7000-8000-000000000002', 90, 1)", [bobId, adminId]);
-        await database.runSql("INSERT INTO gyms (id, name) VALUES ('00000000-0000-7000-8000-000000000003', 'Shared')");
+        await database.runSql("INSERT INTO gyms (id, userId, name) VALUES ('00000000-0000-7000-8000-000000000003', ?, 'Bob''s Gym')", [bobId]);
+        await database.runSql("INSERT INTO gyms (id, userId, name) VALUES ('00000000-0000-7000-8000-000000000006', ?, 'Admin''s Gym')", [adminId]);
+        // An active (endTime IS NULL) workout at Bob's own gym: workouts.gymId is ON DELETE
+        // RESTRICT against gyms, and gyms cascade from users. Deleting Bob must not violate
+        // that RESTRICT, proving the account service deletes workouts before the user row.
         await database.runSql("INSERT INTO workouts (userId, id, gymId, startTime) VALUES (?, '00000000-0000-7000-8000-000000000004', '00000000-0000-7000-8000-000000000003', 1)", [bobId]);
         await database.runSql("INSERT INTO mutation_receipts (userId, mutationId, command, result, createdAt) VALUES (?, '00000000-0000-7000-8000-000000000005', '{}', '{}', 1)", [bobId]);
         const res = await request('DELETE', `/api/admin/users/${bobId}`, { cookie: adminCookie });
@@ -441,7 +445,9 @@ describe('admin user management', () => {
         expect(await database.allSql('SELECT * FROM workouts WHERE userId = ?', [bobId])).toEqual([]);
         expect(await database.getSql('SELECT weight FROM userMeasurements WHERE userId = ?', [adminId])).toEqual({ weight: 90 });
 
-        expect(await database.getSql('SELECT COUNT(*) AS count FROM gyms')).toEqual({ count: 1 });
+        // Bob's own gym is deleted along with his account; the admin's gym is untouched.
+        expect(await database.getSql("SELECT COUNT(*) AS count FROM gyms WHERE id = '00000000-0000-7000-8000-000000000003'")).toEqual({ count: 0 });
+        expect(await database.getSql('SELECT COUNT(*) AS count FROM gyms WHERE userId = ?', [adminId])).toEqual({ count: 1 });
         expect(await database.allSql('SELECT * FROM mutation_receipts WHERE userId = ?', [bobId])).toEqual([]);
 
         // Bob's active session is gone.

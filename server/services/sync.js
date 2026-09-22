@@ -10,7 +10,7 @@ export function createSyncService(database) {
     return {
         generations: accountId => database.transaction(async tx => {
             const row = await tx.getSql(`SELECT users.id AS accountId, installation.id AS installationId,
-                users.dataGeneration AS accountGeneration, installation.catalogGeneration
+                users.dataGeneration AS accountGeneration
                 FROM users CROSS JOIN installation WHERE users.id = ? AND installation.singleton = 1`, [accountId]);
             return row ?? failure(401, 'unauthorized');
         }),
@@ -18,18 +18,17 @@ export function createSyncService(database) {
         apply: (accountId, command) => database.transaction(async tx => {
             const invalid = validateCommand(command);
             if (invalid) return failure(400, invalid);
-            const actor = await tx.getSql('SELECT id, isAdmin FROM users WHERE id = ?', [accountId]);
+            const actor = await tx.getSql('SELECT id FROM users WHERE id = ?', [accountId]);
             if (!actor) return failure(401, 'unauthorized');
             const installation = await tx.getSql('SELECT id FROM installation WHERE singleton = 1');
             if (command.accountId !== accountId || command.installationId !== installation.id) return failure(409, 'account_binding_mismatch');
             const [domain, operation] = command.operation.split('.');
-            if (domain === 'gym' && !actor.isAdmin) return failure(403, 'forbidden');
             const serialized = canonical(command);
             const previous = await tx.getSql('SELECT command, result FROM mutation_receipts WHERE userId = ? AND mutationId = ?', [accountId, command.mutationId]);
             if (previous) return previous.command === serialized ? JSON.parse(previous.result) : failure(409, 'mutation_id_reused');
             const table = tables[domain];
             const id = domain === 'profile' ? accountId : command.targetId;
-            const privateRecord = ['measurement', 'workout', 'workoutExercise', 'customExercise'].includes(domain);
+            const privateRecord = ['measurement', 'workout', 'workoutExercise', 'customExercise', 'gym'].includes(domain);
             const current = await tx.getSql(`SELECT * FROM ${table} WHERE id = ?${privateRecord ? ' AND userId = ?' : ''}`, privateRecord ? [id, accountId] : [id]);
             const create = ['create', 'start'].includes(operation);
             if (create && current) return failure(409, 'record_exists');
@@ -41,7 +40,7 @@ export function createSyncService(database) {
                 return failure(409, 'invalid_workout_times');
             }
             if (domain === 'workout' && operation === 'start') {
-                const gym = await tx.getSql('SELECT archived FROM gyms WHERE id = ?', [payload.gymId]);
+                const gym = await tx.getSql('SELECT archived FROM gyms WHERE id = ? AND userId = ?', [payload.gymId, accountId]);
                 if (!gym || gym.archived) return failure(409, 'gym_unavailable');
                 if (await tx.getSql('SELECT id FROM workouts WHERE userId = ? AND endTime IS NULL', [accountId])) return failure(409, 'active_workout_exists');
             }
@@ -70,11 +69,10 @@ export function createSyncService(database) {
             }
             const row = operation === 'delete' ? null : await tx.getSql(`SELECT revision FROM ${table} WHERE id = ?`, [id]);
             const account = await tx.getSql('SELECT dataGeneration FROM users WHERE id = ?', [accountId]);
-            const catalog = await tx.getSql('SELECT catalogGeneration FROM installation WHERE singleton = 1');
             const result = {
                 accountId, installationId: installation.id, mutationId: command.mutationId,
                 revision: row?.revision ?? current.revision + 1,
-                accountGeneration: account.dataGeneration, catalogGeneration: catalog.catalogGeneration,
+                accountGeneration: account.dataGeneration,
             };
             await tx.runSql('INSERT INTO mutation_receipts (userId, mutationId, command, result, createdAt) VALUES (?, ?, ?, ?, ?)',
                 [accountId, command.mutationId, serialized, JSON.stringify(result), Date.now()]);
@@ -84,14 +82,14 @@ export function createSyncService(database) {
 }
 
 export async function readSnapshot(tx, accountId) {
-    const installation = await tx.getSql('SELECT id, catalogGeneration FROM installation WHERE singleton = 1');
+    const installation = await tx.getSql('SELECT id FROM installation WHERE singleton = 1');
     const user = await tx.getSql(`SELECT id, revision, dataGeneration, ${PROFILE_COLUMNS.join(', ')} FROM users WHERE id = ?`, [accountId]);
     if (!user) return failure(401, 'unauthorized');
     const { dataGeneration, ...profile } = user;
     return {
         accountId, installationId: installation.id, accountGeneration: dataGeneration,
-        catalogGeneration: installation.catalogGeneration, profile,
-        gyms: (await tx.allSql('SELECT * FROM gyms ORDER BY name, id')).map(gym => ({ ...gym, archived: Boolean(gym.archived) })),
+        profile,
+        gyms: (await tx.allSql('SELECT id, name, location, archived, revision FROM gyms WHERE userId = ? ORDER BY name, id', [accountId])).map(gym => ({ ...gym, archived: Boolean(gym.archived) })),
         workouts: await tx.allSql('SELECT id, gymId, startTime, endTime, revision FROM workouts WHERE userId = ?', [accountId]),
         workoutExercises: (await tx.allSql('SELECT id, workoutId, exerciseId, sets, revision FROM workoutExercises WHERE userId = ?', [accountId]))
             .map(row => ({ ...row, sets: JSON.parse(row.sets) })),

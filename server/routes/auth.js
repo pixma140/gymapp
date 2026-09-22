@@ -17,7 +17,7 @@ export function createAuthRoutes({ database, serverConfig, accounts, sessions, o
                 if (!user) return { status: 'signedOut', installationId };
                 return {
                     status: 'authenticated', installationId, user,
-                    capabilities: { manageUsers: user.isAdmin, manageOidc: user.isAdmin, manageGyms: user.isAdmin },
+                    capabilities: { manageUsers: user.isAdmin, manageOidc: user.isAdmin },
                     snapshot: await readSnapshot(tx, user.id)
                 };
             });

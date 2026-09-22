@@ -9,7 +9,6 @@ export async function initializeSchema(tx, { seedDevData = false, fixtureCredent
     await tx.runSql(`CREATE TABLE IF NOT EXISTS installation (
         singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
         id TEXT NOT NULL UNIQUE CHECK (${uuidCheck('id')}),
-        catalogGeneration INTEGER NOT NULL DEFAULT 0 CHECK (catalogGeneration >= 0),
         initializationMode TEXT NOT NULL CHECK (initializationMode IN ('empty', 'fixtures'))
     )`);
     await tx.runSql(`CREATE TABLE IF NOT EXISTS users (
@@ -34,7 +33,8 @@ export async function initializeSchema(tx, { seedDevData = false, fixtureCredent
     await tx.runSql('CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, expiresAt INTEGER NOT NULL)');
     await tx.runSql('CREATE INDEX IF NOT EXISTS idx_sessions_userId ON sessions(userId)');
     await tx.runSql(`CREATE TABLE IF NOT EXISTS gyms (
-        id TEXT PRIMARY KEY NOT NULL CHECK (${uuidCheck('id')}), name TEXT NOT NULL CHECK (length(trim(name)) > 0),
+        id TEXT PRIMARY KEY NOT NULL CHECK (${uuidCheck('id')}), userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name TEXT NOT NULL CHECK (length(trim(name)) > 0),
         location TEXT NOT NULL DEFAULT '', archived INTEGER NOT NULL DEFAULT 0 CHECK (archived IN (0, 1)),
         revision INTEGER NOT NULL DEFAULT 1 CHECK (revision > 0)
     )`);
@@ -89,11 +89,11 @@ export async function initializeSchema(tx, { seedDevData = false, fixtureCredent
     }
     await tx.runSql(`CREATE TRIGGER IF NOT EXISTS gyms_revision AFTER UPDATE OF name, location, archived ON gyms BEGIN
         UPDATE gyms SET revision = OLD.revision + 1 WHERE id = NEW.id;
-        UPDATE installation SET catalogGeneration = catalogGeneration + 1 WHERE singleton = 1;
+        UPDATE users SET dataGeneration = dataGeneration + 1 WHERE id = NEW.userId;
     END`);
-    for (const operation of ['INSERT', 'DELETE']) {
+    for (const [operation, row] of [['INSERT', 'NEW'], ['DELETE', 'OLD']]) {
         await tx.runSql(`CREATE TRIGGER IF NOT EXISTS gyms_${operation.toLowerCase()} AFTER ${operation} ON gyms BEGIN
-            UPDATE installation SET catalogGeneration = catalogGeneration + 1 WHERE singleton = 1;
+            UPDATE users SET dataGeneration = dataGeneration + 1 WHERE id = ${row}.userId;
         END`);
     }
     const installation = await tx.getSql('SELECT * FROM installation WHERE singleton = 1');

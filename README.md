@@ -25,7 +25,7 @@ Settings shows progress, storage use, retry, and clear controls. Five local card
 entries intentionally have no media. See `THIRD_PARTY_NOTICES.md` for attribution
 and the upstream media terms. The workout flow uses compact headers,
 bordered exercise cards, warmup badges, and modal selection inspired by the demo
-screenshots. Gym management remains restricted to administrators.
+screenshots. Every account manages its own private gyms.
 
 ## Development
 
@@ -52,11 +52,12 @@ and at least three characters; passwords must be at least eight characters.
 There are no built-in credentials. The accounts have administrator and regular
 user roles respectively. Tests generate disposable credentials for each run.
 
-Both accounts see the same UUIDs for **Iron Odyssey** (Foundry District) and
-**Moonshot Barbell Club** (Riverside Hangar). Only administrators can create,
-rename, or archive gyms. Archiving retains workout history; completed-workout
-visits are calculated from the signed-in account's private workouts. An admin
-cannot read another account's workout history through sync.
+Each fixture account gets its own private **Iron Odyssey** (Foundry District) and
+**Moonshot Barbell Club** (Riverside Hangar) gyms with distinct IDs. Every
+account can create, rename, or archive its own gyms. Archiving retains workout
+history; completed-workout visits are calculated from the signed-in account's
+private workouts. An admin cannot read another account's workout history
+through sync.
 
 Restarting fixture mode preserves changed passwords, roles, gym names, and
 intentionally deleted accounts. `ADMIN_USERNAME` never repairs fixture roles.
@@ -278,7 +279,7 @@ npm run test:browser           # uses the built dist/; temporary fixture databas
 Vitest covers password/cookie/OIDC helpers, server transactions, setup/admin
 HTTP authorization, command validation/idempotency/scoping, fixture/reset
 behavior, and account-local IndexedDB hydration and durable operations.
-Playwright exercises mobile-width login, shared gyms, timed workouts,
+Playwright exercises mobile-width login, private gyms, timed workouts,
 account switching, private history, and deletion against a throwaway server.
 Chromium PWA tests use real service workers for offline cold starts, reconnect,
 logout, and confirmed updates. Android home-screen installation still requires
