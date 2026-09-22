@@ -61,13 +61,66 @@ function searchText(exercise: DisplayExercise): string {
         ...taxonomy.flatMap(labels => [labels.en, labels.de])].join(' ');
 }
 
+function normalizeSearch(value: string): string {
+    return value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/ß/g, 'ss')
+        .toLocaleLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().replace(/\s+/g, ' ');
+}
+
+function canonicalToken(token: string): string {
+    return token.length > 3 && token.endsWith('s') && !token.endsWith('ss') ? token.slice(0, -1) : token;
+}
+
+function editDistance(left: string, right: string): number {
+    let previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+    for (let leftIndex = 1; leftIndex <= left.length; leftIndex++) {
+        const current = [leftIndex];
+        for (let rightIndex = 1; rightIndex <= right.length; rightIndex++) {
+            current[rightIndex] = Math.min(current[rightIndex - 1] + 1, previous[rightIndex] + 1,
+                previous[rightIndex - 1] + (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1));
+        }
+        previous = current;
+    }
+    return previous[right.length];
+}
+
+function searchScore(exercise: DisplayExercise, search: string): number {
+    const query = normalizeSearch(search);
+    if (!query) return 1;
+    const text = normalizeSearch(searchText(exercise));
+    if (text.includes(query)) return 4;
+    const queryTokens = query.split(' ').map(canonicalToken);
+    const textTokens = [...new Set(text.split(' ').map(canonicalToken))];
+    if (queryTokens.every(queryToken => textTokens.includes(queryToken))) return 3;
+    if (queryTokens.every(queryToken => queryToken.length >= 3
+        && textTokens.some(token => token.startsWith(queryToken)))) return 2;
+    const fuzzy = queryTokens.every(queryToken => {
+        if (queryToken.length < 4) return textTokens.includes(queryToken);
+        const maximumDistance = queryToken.length >= 7 ? 2 : 1;
+        return textTokens.some(token => Math.abs(token.length - queryToken.length) <= maximumDistance
+            && editDistance(queryToken, token) <= maximumDistance);
+    });
+    return fuzzy ? 1 : 0;
+}
+
+function nameDistance(exercise: DisplayExercise, search: string): number {
+    const queryLength = normalizeSearch(search).split(' ').filter(Boolean).length;
+    if (!queryLength) return 0;
+    const names = [exercise.names.en, exercise.names.de,
+        ...(exercise.catalog?.aliases.en ?? []), ...(exercise.catalog?.aliases.de ?? [])];
+    return Math.min(...names.map(name => Math.abs(normalizeSearch(name).split(' ').filter(Boolean).length - queryLength)));
+}
+
 export function rankExercises(uses: readonly WorkoutExercise[], locale: ExerciseLocale, muscleGroup?: MuscleGroup,
     custom: readonly CustomExercise[] = [], search = ''): DisplayExercise[] {
     const counts = new Map<string, number>();
     for (const use of uses) counts.set(use.exerciseId, (counts.get(use.exerciseId) ?? 0) + 1);
-    const query = search.trim().toLocaleLowerCase(locale);
-    return getExerciseCatalog(locale, custom).filter(exercise => (!muscleGroup || exercise.muscleGroup === muscleGroup)
-        && (!query || searchText(exercise).toLocaleLowerCase(locale).includes(query)))
-        .sort((left, right) => (counts.get(right.id) ?? 0) - (counts.get(left.id) ?? 0)
-            || left.name.localeCompare(right.name, locale));
+    const scored = getExerciseCatalog(locale, custom).map(exercise => ({
+        exercise, score: searchScore(exercise, search), distance: nameDistance(exercise, search),
+    }));
+    return scored.filter(({ exercise, score }) => score > 0 && (!muscleGroup || exercise.muscleGroup === muscleGroup))
+        .sort((left, right) => right.score - left.score
+            || (counts.get(right.exercise.id) ?? 0) - (counts.get(left.exercise.id) ?? 0)
+            || left.distance - right.distance
+            || left.exercise.name.localeCompare(right.exercise.name, locale))
+        .map(({ exercise }) => exercise);
 }

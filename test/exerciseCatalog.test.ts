@@ -56,6 +56,13 @@ describe('exercise catalog', () => {
             .find(exercise => exercise.names.en === 'Barbell Bench Press')?.name).toBe('Barbell Bench Press');
     });
 
+    it('matches reordered words and conservative spelling mistakes', () => {
+        expect(rankExercises([], 'en', undefined, [], 'cable row seated')[0].name).toBe('Seated Cable Rows');
+        expect(rankExercises([], 'en', undefined, [], 'seeted cable row')[0].name).toBe('Seated Cable Rows');
+        expect(rankExercises([], 'de', undefined, [], 'kabelzug rudern sitzend')[0].names.en).toBe('Seated Cable Rows');
+        expect(rankExercises([], 'en', undefined, [], 'cable bicycle seated')).toEqual([]);
+    });
+
     it('uses personal history across all groups, within chest, and while searching, updating after deletion', async () => {
         const installationId = uuidv7();
         const first = new AccountDatabase({ installationId, accountId: uuidv7() });
