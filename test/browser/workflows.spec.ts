@@ -310,6 +310,8 @@ test('muscle and equipment pickers combine filters and preserve search when sele
     await exercises.getByRole('button', { name: 'All equipment', exact: true }).click();
     const equipment = page.getByRole('dialog', { name: 'Equipment', exact: true });
     await expect(equipment.locator('button[aria-pressed]')).toHaveCount(11);
+    const equipmentDialogBox = await equipment.boundingBox();
+    expect(Math.abs((equipmentDialogBox?.y ?? 0) + (equipmentDialogBox?.height ?? 0) / 2 - page.viewportSize()!.height / 2)).toBeLessThan(2);
     await equipment.getByRole('button', { name: 'Cable', exact: true }).click();
     const cableExercises = exercises.getByRole('listitem');
     const allCableCount = await cableExercises.count();

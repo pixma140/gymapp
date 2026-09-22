@@ -35,7 +35,7 @@ export function EquipmentPicker({ value, onChange }: {
                 <X aria-hidden="true" className="size-4" />
             </button>}
         </span>
-        {open && <Modal title={t('exercise.equipment')} onClose={() => setOpen(false)} placement="bottom">
+        {open && <Modal title={t('exercise.equipment')} onClose={() => setOpen(false)}>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <button type="button" aria-pressed={!value} onClick={() => choose('')}
                     className="flex items-center justify-between rounded-xl border border-[var(--border)] px-4 py-3 text-left font-medium">
