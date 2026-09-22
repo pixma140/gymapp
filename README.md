@@ -97,8 +97,8 @@ To stop a running Compose container, reset the configured database, rebuild the
 image, and start the stack in one step, run:
 
 ```bash
-./scripts/reset-compose.sh          # fresh empty installation; asks for confirmation
-./scripts/reset-compose.sh --seed   # recreate development fixtures
+./scripts/reset-compose.sh          # follows SEED_DEV_DATA from .env; asks for confirmation
+./scripts/reset-compose.sh --seed   # force recreation of development fixtures
 ./scripts/reset-compose.sh --yes    # skip the prompt for automation
 ```
 

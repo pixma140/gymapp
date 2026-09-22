@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-seed=false
+seed=auto
 confirmed=false
 for argument in "$@"; do
     case "$argument" in
@@ -13,6 +13,7 @@ for argument in "$@"; do
         --help|-h)
             echo "Usage: $0 [--seed] [--yes]"
             echo "Stops GymApp, resets its configured SQLite database, then rebuilds and starts Compose."
+            echo "By default, fixture seeding follows SEED_DEV_DATA from .env; --seed forces it on."
             exit 0
             ;;
         *)
@@ -22,6 +23,10 @@ for argument in "$@"; do
             ;;
     esac
 done
+
+if [[ "$seed" == auto ]]; then
+    seed="$(node --input-type=module -e "try { process.loadEnvFile?.(); } catch (error) { if (error.code !== 'ENOENT') throw error; } const { readServerConfig } = await import('./server/config.js'); process.stdout.write(String(readServerConfig(process.env).seedDevData));")"
+fi
 
 if [[ "$confirmed" != true ]]; then
     read -r -p "This permanently wipes the configured GymApp database. Continue? [y/N] " answer
@@ -36,8 +41,10 @@ else
 fi
 
 if [[ "$seed" == true ]]; then
+    echo "Resetting with development fixtures..."
     npm run db:reset:seed
 else
+    echo "Resetting as an empty installation..."
     npm run db:reset
 fi
 
