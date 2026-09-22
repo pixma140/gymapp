@@ -1,27 +1,43 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { v7 as uuidv7 } from 'uuid';
 // Keep this suite's disposable registrations in a separate production rate-limit bucket.
 test.use({ extraHTTPHeaders: { 'X-Forwarded-For': '192.0.2.2' } });
 
+async function addOwnGym(page: Page) {
+    const bootstrap = await (await page.request.get('/api/bootstrap')).json();
+    const response = await page.request.post('/api/sync', { data: {
+        accountId: bootstrap.user.id,
+        installationId: bootstrap.installationId,
+        mutationId: uuidv7(),
+        operation: 'gym.create',
+        targetId: uuidv7(),
+        expectedRevision: null,
+        payload: { name: 'Iron Odyssey', location: 'Foundry District' },
+    } });
+    expect(response.ok()).toBe(true);
+}
+
 test('an update waits for confirmation and preserves an active workout through reload', async ({ page }) => {
     await page.request.post('/api/auth/register', { data: { username: `pwa-update-${uuidv7()}`, password: uuidv7() } });
+    await addOwnGym(page);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     await page.evaluate(() => navigator.serviceWorker.ready);
     await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+    const updateButton = page.getByRole('button', { name: 'Update app', exact: true });
     await page.getByRole('link', { name: /Foundry District/ }).click();
     await expect(page.getByRole('button', { name: 'Finish workout', exact: true })).toBeVisible();
     const url = page.url();
     await page.request.post('/__test/pwa-update');
     await page.evaluate(async () => (await navigator.serviceWorker.ready).update());
-    await expect(page.getByRole('button', { name: 'Update app', exact: true })).toBeVisible();
+    await expect(updateButton).toBeVisible();
     await expect(page.getByRole('button', { name: 'Finish workout', exact: true })).toBeVisible();
     page.once('dialog', dialog => dialog.dismiss());
-    await page.getByRole('button', { name: 'Update app', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Update app', exact: true })).toBeVisible();
+    await updateButton.click();
+    await expect(updateButton).toBeVisible();
     page.once('dialog', dialog => dialog.accept());
-    await page.getByRole('button', { name: 'Update app', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Update app', exact: true })).toHaveCount(0);
+    await updateButton.click();
+    await expect(updateButton).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Finish workout', exact: true })).toBeVisible();
     expect(page.url()).toBe(url);
 });
@@ -55,6 +71,7 @@ test('offline admin caches have no admin capabilities and account switches do no
 test('cold starts offline, retains workout edits, and verifies identity before delivery', async ({ page, context }) => {
     const username = `pwa-${uuidv7()}`, password = uuidv7();
     await page.request.post('/api/auth/register', { data: { username, password } });
+    await addOwnGym(page);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     await page.evaluate(() => navigator.serviceWorker.ready);
@@ -97,6 +114,7 @@ test('cold starts offline, retains workout edits, and verifies identity before d
 test('offline logout stays locked through a cold start and reconnect until explicit login', async ({ page, context }) => {
     const username = `pwa-logout-${uuidv7()}`, password = uuidv7();
     await page.request.post('/api/auth/register', { data: { username, password } });
+    await addOwnGym(page);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     await page.evaluate(() => navigator.serviceWorker.ready);

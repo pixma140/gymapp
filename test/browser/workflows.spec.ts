@@ -13,6 +13,16 @@ test.beforeEach(async ({ context }, testInfo) => {
     await context.setExtraHTTPHeaders({ 'X-Forwarded-For': `192.0.2.${testInfo.line % 250 + 3}` });
 });
 
+async function addOwnGym(page: Page) {
+    await page.goto('/settings/gyms');
+    await page.getByRole('button', { name: 'Add New Gym', exact: true }).click();
+    await page.getByPlaceholder("e.g. Gold's Gym").fill('Iron Odyssey');
+    await page.getByPlaceholder('e.g. Venice Beach').fill('Foundry District');
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Iron Odyssey', exact: true })).toBeVisible();
+    await expect.poll(async () => (await (await page.request.get('/api/sync/snapshot')).json()).gyms.length).toBe(1);
+}
+
 test('a locally logged-out browser can discover setup after an installation reset', async ({ page }) => {
     await page.request.post('/api/auth/register', { data: { username: `reset-lock-${uuidv7()}`, password: testPassword } });
     await page.goto('/settings');
@@ -53,6 +63,7 @@ test('reopens a prepared account when bootstrap is unreachable and locks it on o
     expect((await page.request.post('/api/auth/register', {
         data: { username: `offline-resume-${uuidv7()}`, password: testPassword },
     })).ok()).toBe(true);
+    await addOwnGym(page);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     await context.route('**/api/bootstrap', route => route.abort());
@@ -82,6 +93,7 @@ test.describe('clock preference', () => {
         expect((await page.request.post('/api/auth/register', {
             data: { username: `clock-${uuidv7()}`, password: testPassword },
         })).ok()).toBe(true);
+        await addOwnGym(page);
         await page.goto('/');
         await page.getByRole('link', { name: /Foundry District/ }).click();
         await page.getByRole('button', { name: 'Finish workout', exact: true }).click();
@@ -149,6 +161,7 @@ test('demo workout flow logs sets, creates exercises, and edits completed histor
     expect((await page.request.post('/api/auth/register', {
         data: { username: `sets-${uuidv7()}`, password: testPassword },
     })).ok()).toBe(true);
+    await addOwnGym(page);
     await page.goto('/');
     await page.getByRole('link', { name: /Foundry District/ }).click();
     await expectPendingChanges(page, 0);
@@ -245,6 +258,7 @@ test('visual muscle picker filters exercises and preserves search when selecting
     expect((await page.request.post('/api/auth/register', {
         data: { username: `muscles-${uuidv7()}`, password: testPassword },
     })).ok()).toBe(true);
+    await addOwnGym(page);
     await page.goto('/');
     await page.getByRole('link', { name: /Foundry District/ }).click();
     await page.getByRole('button', { name: 'Add Exercise', exact: true }).click();
@@ -338,6 +352,7 @@ test('history deletion preserves the workout on local failure and supports retry
     expect((await page.request.post('/api/auth/register', {
         data: { username: 'history-delete-retry', password: testPassword },
     })).ok()).toBe(true);
+    await addOwnGym(page);
     await page.goto('/');
     await page.getByRole('link', { name: /Foundry District/ }).click();
     await page.getByRole('button', { name: 'Finish workout', exact: true }).click();
@@ -558,6 +573,7 @@ test('failed bootstrap preserves pending intent and retries without onboarding',
     expect((await page.request.post('/api/auth/register', {
         data: { username: 'browser-retry', password: testPassword },
     })).ok()).toBe(true);
+    await addOwnGym(page);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     await context.route('**/api/sync', route => route.abort());
@@ -590,19 +606,23 @@ test('advanced recovery is failed-only, confirmed, failure-atomic, exportable, a
         await expect(page).toHaveURL(/\/onboarding$/);
         await page.goto('/');
         await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
+        await addOwnGym(page);
+        await page.goto('/');
     };
     const queueWorkout = async () => {
         await page.getByRole('link', { name: /Foundry District/ }).click();
         await expectPendingChanges(page, 1);
     };
 
-    await context.route('**/api/sync', route => route.fulfill({ status: 422, json: { error: 'rejected' } }));
     await register('discard-account-a');
+    await context.route('**/api/sync', route => route.fulfill({ status: 422, json: { error: 'rejected' } }));
     await queueWorkout();
     await page.getByRole('link', { name: 'Settings', exact: true }).click();
     await page.getByRole('button', { name: /Log out|Logout/i }).click();
 
+    await context.unroute('**/api/sync');
     await register('discard-account-b');
+    await context.route('**/api/sync', route => route.fulfill({ status: 422, json: { error: 'rejected' } }));
     await queueWorkout();
     await page.getByRole('link', { name: 'Settings', exact: true }).click();
     await page.getByText('Advanced recovery', { exact: true }).click();
@@ -689,6 +709,7 @@ test('an external cookie switch pauses stale intent and rebinds the visible tab'
     expect((await page.request.post('/api/auth/register', {
         data: { username: 'external-cookie-a', password: testPassword },
     })).ok()).toBe(true);
+    await addOwnGym(page);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     let sending = false;
@@ -733,6 +754,7 @@ test('two tabs serialize senders and propagate logout and account switches', asy
     expect((await page.request.post('/api/auth/register', {
         data: { username: 'browser-tabs', password: testPassword },
     })).ok()).toBe(true);
+    await addOwnGym(page);
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Training', exact: true })).toBeVisible();
     const second = await context.newPage();
