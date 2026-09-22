@@ -58,8 +58,11 @@ including account, installation, and mutation IDs. Shared validators and initial
 constraints enforce the version, variant, and canonical lowercase format.
 Timestamp-prefixed IDs improve index locality; explicit timestamps and outbox
 sequences still determine domain and delivery order across device clocks.
-Account deletion cascades sessions, gyms, workouts, workout exercise uses, measurements, and mutation
-receipts. Referenced gyms cannot be deleted while a workout still references them.
+Account deletion removes sessions, gyms, workouts, workout exercise uses, measurements, and mutation
+receipts. Because `workouts.gymId` is `ON DELETE RESTRICT` and gyms cascade from the account,
+the account service deletes the account's workouts before the account row; relying on cascades
+alone would let the restriction abort the delete. Referenced gyms cannot be deleted while a
+workout still references them.
 Archiving prevents new workouts but allows already-started sessions to finish.
 A partial unique index enforces one unfinished workout per account.
 
@@ -108,7 +111,9 @@ exercise and set operations as active workouts.
 Commands are profile update, measurement create/update/delete, timed workout
 start/finish/update/delete, workout exercise create/update/delete, custom exercise create,
 and gym create/update/archive. Input allowlists exclude
-account roles and credentials. Server revisions detect stale writes. Receipts
+account roles and credentials. Referential guards resolve within the acting account:
+starting a workout requires a gym owned by that account, so another account's gym
+is rejected as unavailable rather than distinguished from a missing one. Server revisions detect stale writes. Receipts
 are stored atomically with successful mutations; a reused mutation UUID with
 different content is rejected. Updates never resurrect deleted records.
 
@@ -177,7 +182,7 @@ row as a regression, not a preference.
 | Fixture mode disabled | Empty installation offers setup; concurrent first-admin setup is safe. |
 | Admin versus user | Admin sees Users/OIDC; user does not. Direct user calls to each admin endpoint fail without mutation. Gym management is available to every account. |
 | Deployment configuration | Admin sees allowlisted non-secret settings; environment-set OIDC fields are read-only; credentials stay environment-only. |
-| Private gyms | Each account only sees, creates, edits, and archives its own gyms; another account's gym IDs are absent from a snapshot and its write attempts against them fail as not found. |
+| Private gyms | Each account only sees, creates, edits, and archives its own gyms; another account's gym IDs are absent from a snapshot, its write attempts against them fail as not found, and starting a workout at them fails as unavailable without creating a workout. |
 | Private activity | A workout/measurement by one user is absent from the other's views, snapshot, and writes; gym visits are per user. |
 | Account deletion | All private rows/sessions/receipts/gyms are removed atomically; self/last-admin alternate paths are blocked. |
 | Offline edit and reload | Local state and queued command survive; eventual delivery occurs once. |
