@@ -51,9 +51,6 @@ export function SettingsPage() {
                 <p className="text-[var(--muted-foreground)] mt-1">{t('settings.subtitle')}</p>
             </header>
 
-            <SyncStatus />
-            <ExerciseMediaSettings />
-
             <div className="space-y-4">
                 <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
 
@@ -247,6 +244,9 @@ export function SettingsPage() {
                         </div>
                     </button>
                 </div>
+
+                <SyncStatus />
+                <ExerciseMediaSettings />
 
                 <div className="text-center text-xs text-[var(--muted-foreground)] pt-8">
                     <p className="font-mono">{t('settings.appVersion')} <Github className="size-3 inline-block mb-1" /> <a href={APP_RELEASE_URL} target="_blank" rel="noopener noreferrer">{APP_RELEASE_TAG}</a> - <a href={APP_COMMIT_URL} target="_blank" rel="noopener noreferrer">{APP_COMMIT}</a></p>

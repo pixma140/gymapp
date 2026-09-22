@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trash } from 'lucide-react';
+import { RefreshCw, Trash } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useDatabase, useSession } from '@/context/SessionContext';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -17,9 +17,12 @@ export function SyncStatus() {
     const failed = pending?.some(row => row.state === 'failed');
     const paused = pending?.some(row => row.state === 'paused');
     return <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 text-sm shadow-sm space-y-3" aria-live="polite">
-        <div>
-            <h2 className="font-semibold text-[var(--foreground)]">{t('sync.title')}</h2>
-            <p className="text-xs text-[var(--muted-foreground)]">{t('sync.description')}</p>
+        <div className="flex items-start gap-3">
+            <RefreshCw className="mt-0.5 size-5 shrink-0 text-[var(--muted-foreground)]" />
+            <div>
+                <h2 className="font-semibold text-[var(--foreground)]">{t('sync.title')}</h2>
+                <p className="text-xs text-[var(--muted-foreground)]">{t('sync.description')}</p>
+            </div>
         </div>
         <div className="flex items-center justify-between gap-3">
             <span>{t('sync.pending')}: {pending?.length ?? 0}</span>
