@@ -273,6 +273,9 @@ test('muscle and equipment pickers combine filters and preserve search when sele
     const allPresses = await exercises.getByRole('listitem').count();
     await exercises.getByRole('button', { name: 'All muscle groups', exact: true }).click();
     await expect(muscles.getByRole('heading', { name: 'Upper body', exact: true })).toBeVisible();
+    const muscleDialogBox = await muscles.boundingBox();
+    expect(Math.abs((muscleDialogBox?.y ?? 0) + (muscleDialogBox?.height ?? 0) / 2 - page.viewportSize()!.height / 2)).toBeLessThan(2);
+    expect(muscleDialogBox?.height).toBeLessThanOrEqual(page.viewportSize()!.height * 0.85 + 1);
     await expect(muscles.getByRole('region', { name: 'Upper body' }).getByRole('button')).toHaveCount(10);
     await expect(muscles.getByRole('region', { name: 'Lower body' }).getByRole('button')).toHaveCount(6);
     await expect(muscles.getByRole('region', { name: 'Cardio' }).getByRole('button')).toHaveCount(1);

@@ -35,20 +35,20 @@ export function MuscleGroupPicker({ value, onChange }: {
                 <X aria-hidden="true" className="size-4" />
             </button>}
         </span>
-        {open && <Modal title={t('exercise.muscles')} onClose={() => setOpen(false)} placement="bottom">
+        {open && <Modal title={t('exercise.muscles')} onClose={() => setOpen(false)}>
             <button type="button" aria-pressed={!value} onClick={() => choose('')}
                 className="flex w-full items-center justify-between rounded-xl border border-[var(--border)] px-4 py-3 font-medium">
                 {t('exercise.allGroups')}
                 {!value && <Check aria-hidden="true" className="size-5 text-[var(--primary)]" />}
             </button>
             {MUSCLE_GROUP_SECTIONS.map(section => <section key={section.label} aria-labelledby={`${id}-${section.label}`}>
-                <h3 id={`${id}-${section.label}`} className="border-b border-[var(--border)] py-3 text-sm font-semibold text-[var(--muted-foreground)]">{t(section.label)}</h3>
-                <div className="grid grid-cols-3 gap-x-2 gap-y-4 py-4">
+                <h3 id={`${id}-${section.label}`} className="border-b border-[var(--border)] py-2 text-sm font-semibold text-[var(--muted-foreground)]">{t(section.label)}</h3>
+                <div className="grid grid-cols-3 gap-2 py-2 sm:grid-cols-4">
                     {section.groups.map(group => <button key={group} type="button" aria-pressed={value === group} onClick={() => choose(group)}
-                        className={cn('flex min-w-0 flex-col items-center gap-2 rounded-xl p-1 text-center text-sm font-medium hover:bg-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--primary)]',
+                        className={cn('flex min-w-0 flex-col items-center gap-1 rounded-xl p-1 text-center text-xs font-medium hover:bg-[var(--accent)] focus-visible:outline-2 focus-visible:outline-[var(--primary)]',
                             value === group && 'bg-[var(--accent)] text-[var(--primary)]')}>
-                        <span className="flex min-h-10 items-center justify-center">{t(`exercise.muscle.${group}`)}</span>
-                        <span className={cn('flex aspect-square w-full max-w-24 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--border)] bg-[var(--card)]',
+                        <span className="flex min-h-8 items-center justify-center">{t(`exercise.muscle.${group}`)}</span>
+                        <span className={cn('flex aspect-square w-full max-w-16 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--border)] bg-[var(--card)]',
                             value === group && 'border-[var(--primary)]')}>
                             <MuscleGroupIllustration group={group} />
                         </span>
