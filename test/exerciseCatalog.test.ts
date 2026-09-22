@@ -27,6 +27,10 @@ describe('exercise catalog', () => {
         expect(EXERCISES.filter(exercise => exercise.source.type === 'cardio')).toHaveLength(5);
         expect(catalog.filter(exercise => exercise.muscleGroup === 'cardio').map(exercise => exercise.name))
             .toEqual(expect.arrayContaining(['Walking pad', 'StairMaster', 'Jogging', 'Inline skating', 'Swimming']));
+        expect(catalog.filter(exercise => exercise.muscleGroup === 'glutes').map(exercise => exercise.name))
+            .toEqual(['barbell lying lifting (on hip)']);
+        expect(catalog.filter(exercise => exercise.muscleGroup === 'quadriceps').map(exercise => exercise.name))
+            .toEqual(expect.arrayContaining(['Barbell Squat', 'Hack Squat Machine', 'Leg Press', 'Smith Machine Squats']));
         expect(EXERCISES.every(exercise => exercise.names.en && exercise.names.de
             && exercise.instructions.en.length && exercise.instructions.de.length)).toBe(true);
     });

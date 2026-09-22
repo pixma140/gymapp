@@ -438,7 +438,7 @@
       "bodyPart": "upper-legs",
       "equipment": "barbell",
       "target": "glutes",
-      "muscleGroup": "glutes",
+      "muscleGroup": "quadriceps",
       "synergistMuscle": "hamstrings",
       "secondaryMuscles": [
         "hamstrings",
@@ -626,7 +626,7 @@
       "bodyPart": "upper-legs",
       "equipment": "barbell",
       "target": "glutes",
-      "muscleGroup": "glutes",
+      "muscleGroup": "quadriceps",
       "synergistMuscle": "hamstrings",
       "secondaryMuscles": [
         "hamstrings",
@@ -679,7 +679,7 @@
       "bodyPart": "upper-legs",
       "equipment": "barbell",
       "target": "glutes",
-      "muscleGroup": "glutes",
+      "muscleGroup": "quadriceps",
       "synergistMuscle": "quadriceps",
       "secondaryMuscles": [
         "quadriceps",
@@ -2224,7 +2224,7 @@
       "bodyPart": "upper-legs",
       "equipment": "sled-machine",
       "target": "glutes",
-      "muscleGroup": "glutes",
+      "muscleGroup": "quadriceps",
       "synergistMuscle": "quadriceps",
       "secondaryMuscles": [
         "quadriceps",
@@ -2787,7 +2787,7 @@
       "bodyPart": "upper-legs",
       "equipment": "sled-machine",
       "target": "glutes",
-      "muscleGroup": "glutes",
+      "muscleGroup": "quadriceps",
       "synergistMuscle": "quadriceps",
       "secondaryMuscles": [
         "quadriceps",
@@ -2839,7 +2839,7 @@
       "bodyPart": "upper-legs",
       "equipment": "sled-machine",
       "target": "glutes",
-      "muscleGroup": "glutes",
+      "muscleGroup": "quadriceps",
       "synergistMuscle": "quadriceps",
       "secondaryMuscles": [
         "quadriceps",
@@ -3676,7 +3676,7 @@
       "bodyPart": "upper-legs",
       "equipment": "smith-machine",
       "target": "glutes",
-      "muscleGroup": "glutes",
+      "muscleGroup": "quadriceps",
       "synergistMuscle": "quadriceps",
       "secondaryMuscles": [
         "quadriceps",
