@@ -5,6 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { execSync } from 'child_process'
+import catalog from './shared/exercises.json' with { type: 'json' }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -34,6 +35,14 @@ export default defineConfig(({ mode }) => ({
       navigateFallbackDenylist: [/^\/api(?:\/|$)/],
       skipWaiting: false,
       clientsClaim: true,
+      runtimeCaching: [{
+        urlPattern: /^https:\/\/raw\.githubusercontent\.com\/hasaneyldrm\/exercises-dataset\//,
+        handler: 'CacheFirst',
+        options: {
+          cacheName: `gymapp-exercise-media-${catalog.source.metadataRevision}`,
+          cacheableResponse: { statuses: [0, 200] },
+        },
+      }],
     },
   })],
   define: {

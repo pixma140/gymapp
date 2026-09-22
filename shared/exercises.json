@@ -1,0 +1,4176 @@
+{
+  "schemaVersion": 1,
+  "locales": [
+    "en",
+    "de"
+  ],
+  "source": {
+    "repository": "https://github.com/hasaneyldrm/exercises-dataset",
+    "metadataRevision": "7455efae41b330c265e7cd4b78dfa848e7ce5ebd",
+    "germanTranslation": {
+      "pullRequest": "https://github.com/hasaneyldrm/exercises-dataset/pull/73",
+      "revision": "e49ac639cf21dc46e19d233126b435cfc11f74de"
+    },
+    "mediaAttribution": {
+      "label": "© Gym visual",
+      "url": "https://gymvisual.com/"
+    }
+  },
+  "taxonomy": {
+    "categories": {
+      "back": {
+        "en": "Back",
+        "de": "Rücken"
+      },
+      "chest": {
+        "en": "Chest",
+        "de": "Brust"
+      },
+      "cardio": {
+        "en": "Cardio",
+        "de": "Cardio"
+      },
+      "lower-legs": {
+        "en": "Lower legs",
+        "de": "Unterschenkel"
+      },
+      "shoulders": {
+        "en": "Shoulders",
+        "de": "Schultern"
+      },
+      "upper-arms": {
+        "en": "Upper arms",
+        "de": "Oberarme"
+      },
+      "upper-legs": {
+        "en": "Upper legs",
+        "de": "Oberschenkel"
+      },
+      "waist": {
+        "en": "Waist",
+        "de": "Rumpf"
+      }
+    },
+    "bodyParts": {
+      "back": {
+        "en": "Back",
+        "de": "Rücken"
+      },
+      "chest": {
+        "en": "Chest",
+        "de": "Brust"
+      },
+      "full-body": {
+        "en": "Full body",
+        "de": "Ganzkörper"
+      },
+      "lower-legs": {
+        "en": "Lower legs",
+        "de": "Unterschenkel"
+      },
+      "shoulders": {
+        "en": "Shoulders",
+        "de": "Schultern"
+      },
+      "upper-arms": {
+        "en": "Upper arms",
+        "de": "Oberarme"
+      },
+      "upper-legs": {
+        "en": "Upper legs",
+        "de": "Oberschenkel"
+      },
+      "waist": {
+        "en": "Waist",
+        "de": "Rumpf"
+      }
+    },
+    "equipment": {
+      "barbell": {
+        "en": "Barbell",
+        "de": "Langhantel"
+      },
+      "body-weight": {
+        "en": "Body weight",
+        "de": "Körpergewicht"
+      },
+      "cable": {
+        "en": "Cable",
+        "de": "Kabelzug"
+      },
+      "dumbbell": {
+        "en": "Dumbbell",
+        "de": "Kurzhantel"
+      },
+      "ez-barbell": {
+        "en": "EZ barbell",
+        "de": "SZ-Hantel"
+      },
+      "leverage-machine": {
+        "en": "Leverage machine",
+        "de": "Hebelmaschine"
+      },
+      "none": {
+        "en": "None",
+        "de": "Keine"
+      },
+      "sled-machine": {
+        "en": "Sled machine",
+        "de": "Schlittenmaschine"
+      },
+      "smith-machine": {
+        "en": "Smith machine",
+        "de": "Multipresse"
+      },
+      "cardio-machine": {
+        "en": "Cardio machine",
+        "de": "Cardiogerät"
+      }
+    },
+    "muscles": {
+      "abductors": {
+        "en": "Abductors",
+        "de": "Abduktoren"
+      },
+      "abs": {
+        "en": "Abs",
+        "de": "Bauchmuskeln"
+      },
+      "adductors": {
+        "en": "Adductors",
+        "de": "Adduktoren"
+      },
+      "ankle-stabilizers": {
+        "en": "Ankle stabilizers",
+        "de": "Sprunggelenkstabilisatoren"
+      },
+      "biceps": {
+        "en": "Biceps",
+        "de": "Bizeps"
+      },
+      "calves": {
+        "en": "Calves",
+        "de": "Waden"
+      },
+      "chest": {
+        "en": "Chest",
+        "de": "Brust"
+      },
+      "core": {
+        "en": "Core",
+        "de": "Rumpf"
+      },
+      "deltoids": {
+        "en": "Deltoids",
+        "de": "Deltamuskeln"
+      },
+      "delts": {
+        "en": "Delts",
+        "de": "Deltamuskeln"
+      },
+      "forearms": {
+        "en": "Forearms",
+        "de": "Unterarme"
+      },
+      "glutes": {
+        "en": "Glutes",
+        "de": "Gesäßmuskeln"
+      },
+      "hamstrings": {
+        "en": "Hamstrings",
+        "de": "Beinbeuger"
+      },
+      "hip-flexors": {
+        "en": "Hip flexors",
+        "de": "Hüftbeuger"
+      },
+      "lats": {
+        "en": "Lats",
+        "de": "Latissimus"
+      },
+      "lower-back": {
+        "en": "Lower back",
+        "de": "Unterer Rücken"
+      },
+      "obliques": {
+        "en": "Obliques",
+        "de": "Seitliche Bauchmuskeln"
+      },
+      "pectorals": {
+        "en": "Pectorals",
+        "de": "Brustmuskeln"
+      },
+      "quadriceps": {
+        "en": "Quadriceps",
+        "de": "Quadrizeps"
+      },
+      "quads": {
+        "en": "Quads",
+        "de": "Quadrizeps"
+      },
+      "rear-deltoids": {
+        "en": "Rear deltoids",
+        "de": "Hintere Deltamuskeln"
+      },
+      "rhomboids": {
+        "en": "Rhomboids",
+        "de": "Rautenmuskeln"
+      },
+      "shoulders": {
+        "en": "Shoulders",
+        "de": "Schultern"
+      },
+      "soleus": {
+        "en": "Soleus",
+        "de": "Schollenmuskel"
+      },
+      "spine": {
+        "en": "Spine",
+        "de": "Rückenstrecker"
+      },
+      "trapezius": {
+        "en": "Trapezius",
+        "de": "Trapezmuskel"
+      },
+      "traps": {
+        "en": "Traps",
+        "de": "Trapezmuskel"
+      },
+      "triceps": {
+        "en": "Triceps",
+        "de": "Trizeps"
+      },
+      "upper-back": {
+        "en": "Upper back",
+        "de": "Oberer Rücken"
+      },
+      "cardio": {
+        "en": "Cardiovascular system",
+        "de": "Herz-Kreislauf-System"
+      }
+    },
+    "muscleGroups": {
+      "chest": {
+        "en": "Chest",
+        "de": "Brust"
+      },
+      "shoulders": {
+        "en": "Shoulders",
+        "de": "Schultern"
+      },
+      "traps": {
+        "en": "Traps",
+        "de": "Trapezmuskel"
+      },
+      "lats": {
+        "en": "Lats",
+        "de": "Latissimus"
+      },
+      "middleBack": {
+        "en": "Middle back",
+        "de": "Mittlerer Rücken"
+      },
+      "lowerBack": {
+        "en": "Lower back",
+        "de": "Unterer Rücken"
+      },
+      "biceps": {
+        "en": "Biceps",
+        "de": "Bizeps"
+      },
+      "triceps": {
+        "en": "Triceps",
+        "de": "Trizeps"
+      },
+      "forearms": {
+        "en": "Forearms",
+        "de": "Unterarme"
+      },
+      "abs": {
+        "en": "Abs",
+        "de": "Bauchmuskeln"
+      },
+      "quadriceps": {
+        "en": "Quadriceps",
+        "de": "Quadrizeps"
+      },
+      "hamstrings": {
+        "en": "Hamstrings",
+        "de": "Beinbeuger"
+      },
+      "glutes": {
+        "en": "Glutes",
+        "de": "Gesäßmuskeln"
+      },
+      "abductors": {
+        "en": "Abductors",
+        "de": "Abduktoren"
+      },
+      "adductors": {
+        "en": "Adductors",
+        "de": "Adduktoren"
+      },
+      "calves": {
+        "en": "Calves",
+        "de": "Waden"
+      },
+      "cardio": {
+        "en": "Cardio",
+        "de": "Cardio"
+      }
+    }
+  },
+  "exercises": [
+    {
+      "id": "01a0c944-7182-7278-a9e1-fdce904ac4b6",
+      "source": {
+        "type": "github",
+        "id": "0285"
+      },
+      "names": {
+        "en": "Alternating Dumbbell Hammer Curls",
+        "de": "Abwechselnde Kurzhantel-Hammercurls"
+      },
+      "aliases": {
+        "en": [
+          "dumbbell alternate biceps curl"
+        ],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "dumbbell",
+      "target": "biceps",
+      "muscleGroup": "biceps",
+      "synergistMuscle": "forearms",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Stand up straight with a dumbbell in each hand, palms facing forward and arms fully extended.",
+          "Keeping your upper arms stationary, exhale and curl the weights while contracting your biceps.",
+          "Continue to raise the dumbbells until your biceps are fully contracted and the dumbbells are at shoulder level.",
+          "Hold the contracted position for a brief pause as you squeeze your biceps.",
+          "Inhale and slowly begin to lower the dumbbells back to the starting position.",
+          "Repeat for the desired number of repetitions, alternating arms."
+        ],
+        "de": [
+          "Stehe aufrecht mit einer Kurzhantel in jeder Hand, die Handflächen zeigen nach vorne und die Arme sind vollständig ausgestreckt.",
+          "Halte deine Oberarme ruhig, atme aus und curle die Gewichte, während du deinen Bizeps anspannst.",
+          "Hebe die Kurzhanteln weiter an, bis dein Bizeps vollständig angespannt ist und die Kurzhanteln sich auf Schulterhöhe befinden.",
+          "Halte die angespannte Position für eine kurze Pause, während du deinen Bizeps anspannst.",
+          "Atme ein und beginne langsam, die Kurzhanteln zurück in die Ausgangsposition zu senken.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen, abwechselnd mit den Armen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0285-BU15nH4.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0285-BU15nH4.gif"
+      }
+    },
+    {
+      "id": "01a0c944-7192-770d-9e48-622cc6dadb5a",
+      "source": {
+        "type": "github",
+        "id": "0025"
+      },
+      "names": {
+        "en": "Barbell Bench Press",
+        "de": "Langhantel-Bankdrücken"
+      },
+      "aliases": {
+        "en": [
+          "barbell bench press"
+        ],
+        "de": []
+      },
+      "category": "chest",
+      "bodyPart": "chest",
+      "equipment": "barbell",
+      "target": "pectorals",
+      "muscleGroup": "chest",
+      "synergistMuscle": "triceps",
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": {
+        "en": [
+          "Lie flat on a bench with your feet flat on the ground and your back pressed against the bench.",
+          "Grasp the barbell with an overhand grip slightly wider than shoulder-width apart.",
+          "Lift the barbell off the rack and hold it directly above your chest with your arms fully extended.",
+          "Lower the barbell slowly towards your chest, keeping your elbows tucked in.",
+          "Pause for a moment when the barbell touches your chest.",
+          "Push the barbell back up to the starting position by extending your arms.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Lege dich flach auf eine Bank, die Füße flach auf dem Boden und der Rücken gegen die Bank gedrückt.",
+          "Fasse die Langhantel mit einem Obergriff an, der etwas weiter als schulterbreit auseinander liegt.",
+          "Hebe die Langhantel von der Ablage und halte sie mit vollständig ausgestreckten Armen direkt über deiner Brust.",
+          "Senke die Langhantel langsam in Richtung deiner Brust und halte dabei die Ellbogen angezogen.",
+          "Halte einen Moment inne, wenn die Langhantel deine Brust berührt.",
+          "Schiebe die Langhantel durch Ausstrecken der Arme wieder nach oben in die Ausgangsposition.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0025-EIeI8Vf.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0025-EIeI8Vf.gif"
+      }
+    },
+    {
+      "id": "01a0c944-7195-7122-bdd9-f8ffeee84379",
+      "source": {
+        "type": "github",
+        "id": "0032"
+      },
+      "names": {
+        "en": "barbell deadlift",
+        "de": "Langhantel-Kreuzheben"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "upper-legs",
+      "bodyPart": "upper-legs",
+      "equipment": "barbell",
+      "target": "glutes",
+      "muscleGroup": "glutes",
+      "synergistMuscle": "hamstrings",
+      "secondaryMuscles": [
+        "hamstrings",
+        "lower-back"
+      ],
+      "instructions": {
+        "en": [
+          "Stand with your feet shoulder-width apart and the barbell on the ground in front of you.",
+          "Bend your knees and hinge at the hips to lower your torso and grip the barbell with an overhand grip, hands slightly wider than shoulder-width apart.",
+          "Keep your back straight and chest lifted as you drive through your heels to lift the barbell off the ground, extending your hips and knees.",
+          "As you stand up straight, squeeze your glutes and keep your core engaged.",
+          "Lower the barbell back down to the ground by bending at the hips and knees, keeping your back straight.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stehe mit schulterbreit auseinander stehenden Füßen und der Langhantel vor Ihnen auf dem Boden.",
+          "Beuge deine Knie und schwenke die Hüften, um deinen Oberkörper zu senken und greife die Langhantel mit einem Obergriff, wobei die Hände etwas weiter als schulterbreit auseinander liegen.",
+          "Halte deinen Rücken gerade und die Brust angehoben, während du dich über die Fersen abdrückst, um die Langhantel vom Boden abzuheben, und dabei deine Hüften und Knie strecken.",
+          "Während du aufrecht stehst, spanne deine Gesäßmuskulatur an und halte deinen Rumpf in Bewegung.",
+          "Senke die Langhantel wieder auf den Boden, indem du Hüfte und Knie beugst und dabei den Rücken gerade hältst.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0032-ila4NZS.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0032-ila4NZS.gif"
+      }
+    },
+    {
+      "id": "01a0c944-7198-759f-add1-86d49a25e109",
+      "source": {
+        "type": "github",
+        "id": "0038"
+      },
+      "names": {
+        "en": "Barbell Drag Curl",
+        "de": "Langhantel-Drag-Curl"
+      },
+      "aliases": {
+        "en": [
+          "barbell drag curl"
+        ],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "barbell",
+      "target": "biceps",
+      "muscleGroup": "biceps",
+      "synergistMuscle": "forearms",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Stand with your feet shoulder-width apart and hold a barbell with an underhand grip, palms facing up.",
+          "Let the barbell hang at arm's length in front of your thighs.",
+          "Keeping your upper arms stationary, curl the barbell up towards your chest by contracting your biceps.",
+          "Pause for a moment at the top, then slowly lower the barbell back down to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stehe mit schulterbreit auseinander stehenden Füßen und halte eine Langhantel im Untergriff, die Handflächen zeigen nach oben.",
+          "Lass die Langhantel auf Armlänge vor deinen Oberschenkeln hängen.",
+          "Halte deine Oberarme ruhig und curle die Langhantel nach oben in Richtung deiner Brust, indem du deinen Bizeps anspannst.",
+          "Halte oben kurz inne und senke die Langhantel dann langsam wieder in die Ausgangsposition ab.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0038-IENzBdA.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0038-IENzBdA.gif"
+      }
+    },
+    {
+      "id": "01a0c944-719a-7281-9dbe-0ae23d3d19de",
+      "source": {
+        "type": "github",
+        "id": "0058"
+      },
+      "names": {
+        "en": "barbell lying lifting (on hip)",
+        "de": "Langhantel-Hüftheben im Liegen"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "upper-legs",
+      "bodyPart": "upper-legs",
+      "equipment": "barbell",
+      "target": "glutes",
+      "muscleGroup": "glutes",
+      "synergistMuscle": "hamstrings",
+      "secondaryMuscles": [
+        "hamstrings",
+        "quadriceps"
+      ],
+      "instructions": {
+        "en": [
+          "Lie flat on your back on a bench with your feet flat on the ground and your knees bent.",
+          "Hold the barbell with an overhand grip and position it on your hips.",
+          "Engaging your glutes, lift your hips off the bench until your body forms a straight line from your knees to your shoulders.",
+          "Pause for a moment at the top, then slowly lower your hips back down to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Lege dich flach auf den Rücken auf eine Bank, die Füße flach auf dem Boden und die Knie gebeugt.",
+          "Halte die Langhantel im Obergriff und positioniere sie auf deiner Hüfte.",
+          "Spanne deine Gesäßmuskulatur an und hebe deine Hüften von der Bank, bis dein Körper eine gerade Linie von deinen Knien bis zu deinen Schultern bildet.",
+          "Halte oben kurz inne und senke dann deine Hüften langsam wieder in die Ausgangsposition ab.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0058-SNFfUff.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0058-SNFfUff.gif"
+      }
+    },
+    {
+      "id": "01a0c944-719c-7762-949f-5d1ddac532b4",
+      "source": {
+        "type": "github",
+        "id": "0070"
+      },
+      "names": {
+        "en": "Barbell Preacher Curl",
+        "de": "Langhantel-Scottcurl"
+      },
+      "aliases": {
+        "en": [
+          "barbell preacher curl"
+        ],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "barbell",
+      "target": "biceps",
+      "muscleGroup": "biceps",
+      "synergistMuscle": "forearms",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Sit on a preacher bench with your upper arms resting on the pad and your chest against the support.",
+          "Grasp the barbell with an underhand grip, slightly wider than shoulder-width apart.",
+          "Keeping your upper arms stationary, exhale and curl the barbell up towards your shoulders.",
+          "Pause for a moment at the top, squeezing your biceps.",
+          "Inhale and slowly lower the barbell back down to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Setze dich auf eine Scottbank, wobei deine Oberarme auf dem Polster ruhen und deine Brust an der Stütze anliegt.",
+          "Fasse die Langhantel mit einem Untergriff, etwas weiter als schulterbreit auseinander.",
+          "Halte deine Oberarme ruhig, atme aus und curle die Langhantel nach oben in Richtung deiner Schultern.",
+          "Halte oben einen Moment inne und spanne deinen Bizeps an.",
+          "Atme ein und senke die Langhantel langsam wieder in die Ausgangsposition ab.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0070-qOgPVf6.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0070-qOgPVf6.gif"
+      }
+    },
+    {
+      "id": "01a0c944-719e-76bf-8ee4-e9de0c5873af",
+      "source": {
+        "type": "github",
+        "id": "0085"
+      },
+      "names": {
+        "en": "Barbell Romanian Deadlift",
+        "de": "Rumänisches Kreuzheben mit Langhantel"
+      },
+      "aliases": {
+        "en": [
+          "barbell romanian deadlift"
+        ],
+        "de": []
+      },
+      "category": "upper-legs",
+      "bodyPart": "upper-legs",
+      "equipment": "barbell",
+      "target": "glutes",
+      "muscleGroup": "glutes",
+      "synergistMuscle": "hamstrings",
+      "secondaryMuscles": [
+        "hamstrings",
+        "lower-back"
+      ],
+      "instructions": {
+        "en": [
+          "Stand with your feet shoulder-width apart and your toes pointing forward.",
+          "Hold the barbell with an overhand grip, hands slightly wider than shoulder-width apart.",
+          "Bend at the hips, keeping your back straight and your knees slightly bent.",
+          "Lower the barbell towards the ground, keeping it close to your body.",
+          "Feel the stretch in your hamstrings as you lower the barbell.",
+          "Once you feel a stretch in your hamstrings, push your hips forward and stand up straight.",
+          "Squeeze your glutes at the top of the movement.",
+          "Lower the barbell back down to the starting position and repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stehe mit schulterbreit auseinander stehenden Füßen und nach vorne zeigenden Zehen.",
+          "Halte die Langhantel im Obergriff, die Hände sind etwas weiter als schulterbreit auseinander.",
+          "Beuge die Hüften, halte den Rücken gerade und die Knie leicht gebeugt.",
+          "Senke die Langhantel in Richtung Boden und halte sie dabei nah an deinem Körper.",
+          "Spüre die Dehnung deiner Oberschenkelmuskulatur, während du die Langhantel absenkst.",
+          "Sobald du eine Dehnung in deinen Oberschenkelmuskeln spürst, schiebe deine Hüften nach vorne und stelle sich aufrecht hin.",
+          "Spanne deine Gesäßmuskulatur am oberen Ende der Bewegung an.",
+          "Senke die Langhantel wieder in die Ausgangsposition und wiederhole den Vorgang für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0085-wQ2c4XD.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0085-wQ2c4XD.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71a1-7606-b419-2579f2ea3c4e",
+      "source": {
+        "type": "github",
+        "id": "0043"
+      },
+      "names": {
+        "en": "Barbell Squat",
+        "de": "Langhantel-Kniebeuge"
+      },
+      "aliases": {
+        "en": [
+          "barbell full squat"
+        ],
+        "de": []
+      },
+      "category": "upper-legs",
+      "bodyPart": "upper-legs",
+      "equipment": "barbell",
+      "target": "glutes",
+      "muscleGroup": "glutes",
+      "synergistMuscle": "quadriceps",
+      "secondaryMuscles": [
+        "quadriceps",
+        "hamstrings",
+        "calves",
+        "core"
+      ],
+      "instructions": {
+        "en": [
+          "Stand with your feet shoulder-width apart, toes slightly turned out.",
+          "Hold the barbell across your upper back, resting it on your traps or rear delts.",
+          "Engage your core and keep your chest up as you begin to lower your body down.",
+          "Bend at the knees and hips, pushing your hips back and down as if sitting into a chair.",
+          "Lower yourself until your thighs are parallel to the ground or slightly below.",
+          "Keep your knees in line with your toes and your weight in your heels.",
+          "Drive through your heels to stand back up, extending your hips and knees.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stehe mit schulterbreit auseinander stehenden Füßen und leicht nach außen gerichteten Zehen.",
+          "Halte die Langhantel über deinen oberen Rücken und lege sie auf deine Trapez- oder hinteren Schultermuskeln.",
+          "Spanne deinen Rumpf an und halte deine Brust hoch, während du beginnst, deinen Körper nach unten zu senken.",
+          "Beuge Knie und Hüfte und drücke deine Hüften nach hinten und unten, als würdest du auf einem Stuhl sitzen.",
+          "Senke sich, bis deine Oberschenkel parallel zum Boden oder leicht darunter sind.",
+          "Halte deine Knie auf einer Linie mit deinen Zehen und verlagere dein Gewicht auf deine Fersen.",
+          "Drücke sich über die Fersen ab, um wieder aufzustehen, und strecke dabei deine Hüften und Knie.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0043-qXTaZnJ.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0043-qXTaZnJ.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71a4-7502-a921-7555fb09c53e",
+      "source": {
+        "type": "github",
+        "id": "0596"
+      },
+      "names": {
+        "en": "Butterfly Machine (Pec Deck)",
+        "de": "Butterfly-Maschine (Pec Deck)"
+      },
+      "aliases": {
+        "en": [
+          "lever seated fly"
+        ],
+        "de": []
+      },
+      "category": "chest",
+      "bodyPart": "chest",
+      "equipment": "leverage-machine",
+      "target": "pectorals",
+      "muscleGroup": "chest",
+      "synergistMuscle": "deltoids",
+      "secondaryMuscles": [
+        "deltoids",
+        "trapezius"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat height and position yourself on the machine with your back against the pad.",
+          "Grasp the handles with a pronated grip and keep your elbows slightly bent.",
+          "Exhale and push the handles forward, bringing them together in front of your chest.",
+          "Pause for a moment, squeezing your chest muscles.",
+          "Inhale and slowly return to the starting position, allowing your chest muscles to stretch.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Sitzhöhe ein und positioniere sich auf der Maschine mit dem Rücken gegen das Polster.",
+          "Fasse die Griffe mit ausgeprägtem Griff und halte die Ellbogen leicht gebeugt.",
+          "Atme aus und schiebe die Griffe nach vorne, sodass sie vor deiner Brust zusammenkommen.",
+          "Halte einen Moment inne und spanne deine Brustmuskeln an.",
+          "Atme ein und kehre langsam in die Ausgangsposition zurück, sodass sich deine Brustmuskulatur dehnen kann.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0596-v3xmPAR.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0596-v3xmPAR.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71a7-72da-9672-ebeb540c7b9a",
+      "source": {
+        "type": "github",
+        "id": "0150"
+      },
+      "names": {
+        "en": "cable bar lateral pulldown",
+        "de": "Seitlicher Latzug am Kabelzug mit Stange"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "back",
+      "bodyPart": "back",
+      "equipment": "cable",
+      "target": "lats",
+      "muscleGroup": "lats",
+      "synergistMuscle": "biceps",
+      "secondaryMuscles": [
+        "biceps",
+        "rhomboids",
+        "rear-deltoids"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the cable pulley to a high position and attach a straight bar.",
+          "Sit facing the cable machine with your feet flat on the ground and your knees slightly bent.",
+          "Grasp the bar with an overhand grip, slightly wider than shoulder-width apart.",
+          "Lean back slightly and keep your chest up, maintaining a slight arch in your lower back.",
+          "Pull the bar down towards your chest, leading with your elbows and squeezing your shoulder blades together.",
+          "Pause for a moment at the bottom of the movement, then slowly return the bar to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Seilrolle auf eine hohe Position ein und befestige eine gerade Stange.",
+          "Setze dich mit dem Gesicht zur Kabelmaschine, die Füße flach auf den Boden und die Knie leicht gebeugt.",
+          "Fasse die Stange mit einem Obergriff, etwas weiter als schulterbreit auseinander.",
+          "Lehne dich leicht zurück und halte die Brust hoch, wobei du eine leichte Wölbung im unteren Rücken beibehältst.",
+          "Ziehe die Stange nach unten in Richtung Brust, führe sie mit deinen Ellbogen und drücke deine Schulterblätter zusammen.",
+          "Halte am Ende der Bewegung einen Moment inne und bringe die Stange dann langsam in die Ausgangsposition zurück.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0150-eYnzaCm.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0150-eYnzaCm.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71a9-733a-98c1-297b38fe4b5f",
+      "source": {
+        "type": "github",
+        "id": "0868"
+      },
+      "names": {
+        "en": "Cable Bicep Curl",
+        "de": "Bizepscurl am Kabelzug"
+      },
+      "aliases": {
+        "en": [
+          "cable curl"
+        ],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "cable",
+      "target": "biceps",
+      "muscleGroup": "biceps",
+      "synergistMuscle": "forearms",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Stand facing the cable machine with your feet shoulder-width apart.",
+          "Grasp the cable attachment with an underhand grip, palms facing up.",
+          "Keep your elbows close to your sides and your upper arms stationary.",
+          "Exhale and curl the cable attachment towards your shoulders, contracting your biceps.",
+          "Pause for a moment at the top of the movement, squeezing your biceps.",
+          "Inhale and slowly lower the cable attachment back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle dich mit schulterbreit auseinander stehenden Füßen vor die Kabelmaschine.",
+          "Fasse die Kabelzugaufsatz mit einem Untergriff an, die Handflächen zeigen nach oben.",
+          "Halte deine Ellbogen nah an deinen Seiten und deine Oberarme ruhig.",
+          "Atme aus und curle den Kabelzugaufsatz in Richtung deiner Schultern, wobei du deinen Bizeps anspannst.",
+          "Halte am Höhepunkt der Bewegung einen Moment inne und spanne deinen Bizeps an.",
+          "Atme ein und senke den Kabelzugaufsatz langsam zurück in die Ausgangsposition.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0868-G08RZcQ.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0868-G08RZcQ.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71ac-72e0-a4de-cb115177f8df",
+      "source": {
+        "type": "github",
+        "id": "1630"
+      },
+      "names": {
+        "en": "cable close grip curl",
+        "de": "Enger Bizepscurl am Kabelzug"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "cable",
+      "target": "biceps",
+      "muscleGroup": "biceps",
+      "synergistMuscle": "forearms",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Attach a straight bar to a low pulley cable machine.",
+          "Stand facing the machine with your feet shoulder-width apart and your knees slightly bent.",
+          "Grasp the bar with an underhand grip, hands shoulder-width apart.",
+          "Keep your elbows close to your sides and your upper arms stationary throughout the exercise.",
+          "Exhale and curl the bar up towards your shoulders, contracting your biceps.",
+          "Pause for a moment at the top of the movement, squeezing your biceps.",
+          "Inhale and slowly lower the bar back to the starting position, fully extending your arms.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Befestige eine gerade Stange am unteren Kabelzug einer Kabelzugmaschine.",
+          "Stelle dich mit schulterbreit auseinander stehenden Füßen und leicht gebeugten Knien vor die Maschine.",
+          "Fasse die Stange mit einem Untergriff, die Hände schulterbreit auseinander.",
+          "Halte deine Ellbogen während der gesamten Übung nah an deinen Seiten und deine Oberarme ruhig.",
+          "Atme aus und curle die Stange in Richtung deiner Schultern, wobei du deinen Bizeps anspannst.",
+          "Halte am Höhepunkt der Bewegung einen Moment inne und spanne deinen Bizeps an.",
+          "Atme ein und senke die Stange langsam zurück in die Ausgangsposition, wobei du deine Arme vollständig ausstreckst.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/1630-BCGQ6J5.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/1630-BCGQ6J5.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71ae-73e7-bbe8-118d4587c3b0",
+      "source": {
+        "type": "github",
+        "id": "1270"
+      },
+      "names": {
+        "en": "Cable Crossover",
+        "de": "Cable Crossover"
+      },
+      "aliases": {
+        "en": [
+          "cable upper chest crossovers"
+        ],
+        "de": []
+      },
+      "category": "chest",
+      "bodyPart": "chest",
+      "equipment": "cable",
+      "target": "pectorals",
+      "muscleGroup": "chest",
+      "synergistMuscle": "deltoids",
+      "secondaryMuscles": [
+        "deltoids",
+        "triceps"
+      ],
+      "instructions": {
+        "en": [
+          "Attach the handles to the cables at chest height.",
+          "Stand in the center of the cable machine with one foot slightly in front of the other.",
+          "Grasp the handles with your palms facing down and your arms extended out to the sides.",
+          "Keep a slight bend in your elbows and engage your core.",
+          "Pull the cables together in front of your chest, crossing them over each other.",
+          "Squeeze your chest muscles at the peak of the movement.",
+          "Slowly release the cables back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Befestige die Griffe auf Brusthöhe an den Kabeln.",
+          "Stelle dich in die Mitte der Kabelmaschine, wobei ein Fuß leicht vor dem anderen steht.",
+          "Fasse die Griffe mit den Handflächen nach unten und ausgestreckten Armen zur Seite.",
+          "Halte deine Ellenbogen leicht gebeugt und spanne deinen Rumpf an.",
+          "Ziehe die Kabel vor deiner Brust zusammen und überkreuze sie.",
+          "Spanne deine Brustmuskeln am Höhepunkt der Bewegung an.",
+          "Lass die Kabel langsam zurück in die Ausgangsposition los.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/1270-j7XMAyn.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/1270-j7XMAyn.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71b1-761e-bcf8-99687997864e",
+      "source": {
+        "type": "github",
+        "id": "0185"
+      },
+      "names": {
+        "en": "Cable Flat Bench Fly",
+        "de": "Fliegende am Kabelzug auf der Flachbank"
+      },
+      "aliases": {
+        "en": [
+          "cable lying fly"
+        ],
+        "de": []
+      },
+      "category": "chest",
+      "bodyPart": "chest",
+      "equipment": "cable",
+      "target": "pectorals",
+      "muscleGroup": "chest",
+      "synergistMuscle": "deltoids",
+      "secondaryMuscles": [
+        "deltoids",
+        "triceps"
+      ],
+      "instructions": {
+        "en": [
+          "Attach the handles to the cables and lie flat on a bench with your feet flat on the ground.",
+          "Hold the handles with your palms facing each other and your arms extended straight above your chest.",
+          "Keeping a slight bend in your elbows, lower your arms out to the sides in a wide arc until you feel a stretch in your chest.",
+          "Pause for a moment, then squeeze your chest muscles to bring your arms back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Befestige die Griffe an den Kabeln und lege sich flach auf eine Bank, wobei deine Füße flach auf dem Boden stehen.",
+          "Halte die Griffe so, dass deine Handflächen einander zugewandt sind und deine Arme gerade über deiner Brust ausgestreckt sind.",
+          "Halte die Ellbogen leicht gebeugt und senke die Arme in einem weiten Bogen zur Seite, bis du eine Dehnung in der Brust spürst.",
+          "Halte einen Moment inne und spanne dann deine Brustmuskeln an, um deine Arme wieder in die Ausgangsposition zu bringen.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0185-lJJ7Yq8.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0185-lJJ7Yq8.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71b3-75d7-865a-c99665cbdde6",
+      "source": {
+        "type": "github",
+        "id": "0162"
+      },
+      "names": {
+        "en": "Cable Front Raises",
+        "de": "Frontheben am Kabelzug"
+      },
+      "aliases": {
+        "en": [
+          "cable front raise"
+        ],
+        "de": []
+      },
+      "category": "shoulders",
+      "bodyPart": "shoulders",
+      "equipment": "cable",
+      "target": "delts",
+      "muscleGroup": "shoulders",
+      "synergistMuscle": "triceps",
+      "secondaryMuscles": [
+        "triceps",
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Stand with your feet shoulder-width apart and grasp the cable handle with an overhand grip.",
+          "Keep your back straight and your core engaged.",
+          "Raise the cable handle in front of you, keeping your arms straight and your palms facing down.",
+          "Continue lifting until your arms are parallel to the floor.",
+          "Pause for a moment at the top, then slowly lower the cable handle back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle dich mit schulterbreit auseinander stehenden Füßen hin und fasse den Kabelzuggriff mit dem Obergriff.",
+          "Halte deinen Rücken gerade und deinen Rumpf angespannt.",
+          "Hebe den Kabelzuggriff vor sich an und halte dabei deine Arme gerade und die Handflächen nach unten.",
+          "Hebe weiter, bis deine Arme parallel zum Boden sind.",
+          "Halte oben einen Moment inne und senke dann den Kabelzuggriff langsam zurück in die Ausgangsposition.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0162-u2X71Np.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0162-u2X71Np.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71b5-708d-bd00-9f79bbc56dcb",
+      "source": {
+        "type": "github",
+        "id": "0165"
+      },
+      "names": {
+        "en": "Cable Hammer Curl",
+        "de": "Hammercurl am Kabelzug"
+      },
+      "aliases": {
+        "en": [
+          "cable hammer curl (with rope)"
+        ],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "cable",
+      "target": "biceps",
+      "muscleGroup": "biceps",
+      "synergistMuscle": "forearms",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Stand upright with your feet shoulder-width apart and a slight bend in your knees.",
+          "Hold the cable rope attachment with an underhand grip, palms facing each other, and your arms fully extended.",
+          "Keeping your upper arms stationary, exhale and curl the weights while contracting your biceps.",
+          "Continue to raise the cable rope attachment until your biceps are fully contracted and the rope is at shoulder level.",
+          "Hold the contracted position for a brief pause as you squeeze your biceps.",
+          "Inhale and slowly begin to lower the cable rope attachment back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stehe aufrecht mit schulterbreit auseinander stehenden Füßen und leicht gebeugten Knien.",
+          "Halte die Seilgriff mit einem Untergriff, die Handflächen einander zugewandt und deine Arme sind vollständig ausgestreckt.",
+          "Halte deine Oberarme ruhig, atme aus und curle die Gewichte, während du deinen Bizeps anspannst.",
+          "Hebe die Seilgriff weiter an, bis dein Bizeps vollständig angespannt ist und sich das Seil auf Schulterhöhe befindet.",
+          "Halte die angespannte Position für eine kurze Pause, während du deinen Bizeps anspannst.",
+          "Atme ein und beginne langsam, die Seilgriff wieder in die Ausgangsposition abzusenken.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0165-HPlPoQA.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0165-HPlPoQA.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71b7-7325-85df-25709a9efae9",
+      "source": {
+        "type": "github",
+        "id": "0175"
+      },
+      "names": {
+        "en": "cable kneeling crunch",
+        "de": "Kniender Crunch am Kabelzug"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "waist",
+      "bodyPart": "waist",
+      "equipment": "cable",
+      "target": "abs",
+      "muscleGroup": "abs",
+      "synergistMuscle": "obliques",
+      "secondaryMuscles": [
+        "obliques"
+      ],
+      "instructions": {
+        "en": [
+          "Attach a rope handle to a high pulley and kneel down facing away from the machine.",
+          "Hold the rope handle with both hands and place it behind your head, keeping your elbows out to the sides.",
+          "Keeping your hips stationary, flex your waist and crunch your torso down towards your thighs.",
+          "Pause for a moment at the bottom, then slowly return to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Befestige einen Seilgriff an einer hohen Seilrolle und knie sich mit dem Gesicht von der Maschine weg hin.",
+          "Halte den Seilgriff mit beiden Händen und lege ihn hinter deinen Kopf, wobei du deine Ellbogen seitlich ausstreckst.",
+          "Halte deine Hüften ruhig, beuge deine Taille und ziehe deinen Oberkörper nach unten in Richtung deiner Oberschenkel.",
+          "Halte unten einen Moment inne und kehre dann langsam in die Ausgangsposition zurück.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0175-WW95auq.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0175-WW95auq.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71b9-769c-b78a-ef5cc6d74c03",
+      "source": {
+        "type": "github",
+        "id": "0178"
+      },
+      "names": {
+        "en": "cable lateral raise",
+        "de": "Seitheben am Kabelzug"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "shoulders",
+      "bodyPart": "shoulders",
+      "equipment": "cable",
+      "target": "delts",
+      "muscleGroup": "shoulders",
+      "synergistMuscle": "traps",
+      "secondaryMuscles": [
+        "traps",
+        "triceps"
+      ],
+      "instructions": {
+        "en": [
+          "Stand with your feet shoulder-width apart and grasp the cable handles with an overhand grip.",
+          "Keep your arms straight and your core engaged.",
+          "Raise your arms out to the sides until they are parallel to the floor.",
+          "Pause for a moment at the top, then slowly lower your arms back down to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle dich mit schulterbreit auseinander stehenden Füßen hin und fasse die Kabelzuggriffe mit dem Obergriff.",
+          "Halte deine Arme gerade und deinen Rumpf angespannt.",
+          "Hebe deine Arme seitlich aus, bis sie parallel zum Boden sind.",
+          "Halte oben einen Moment inne und senke dann langsam deine Arme wieder in die Ausgangsposition ab.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0178-goJ6ezq.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0178-goJ6ezq.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71ba-71d2-9a1a-859fc2843ec5",
+      "source": {
+        "type": "github",
+        "id": "0188"
+      },
+      "names": {
+        "en": "cable middle fly",
+        "de": "Mittlere Fliegende am Kabelzug"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "chest",
+      "bodyPart": "chest",
+      "equipment": "cable",
+      "target": "pectorals",
+      "muscleGroup": "chest",
+      "synergistMuscle": "deltoids",
+      "secondaryMuscles": [
+        "deltoids",
+        "triceps"
+      ],
+      "instructions": {
+        "en": [
+          "Attach cables to both sides of a cable machine at chest height.",
+          "Stand in the center of the machine with one foot slightly in front of the other.",
+          "Grasp the handles with an overhand grip and extend your arms out to the sides.",
+          "Keep a slight bend in your elbows and maintain a slight forward lean.",
+          "Engage your chest muscles and bring your arms forward in a sweeping motion.",
+          "Pause for a moment at the center, then slowly return your arms back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Befestige Kabel auf Brusthöhe an beiden Seiten einer Kabelmaschine.",
+          "Stelle dich in die Mitte der Maschine, wobei ein Fuß leicht vor dem anderen steht.",
+          "Fasse die Griffe im Obergriff und strecke deine Arme seitlich aus.",
+          "Halte die Ellbogen leicht gebeugt und neige sich leicht nach vorne.",
+          "Spanne deine Brustmuskeln an und führe deine Arme in einer schwungvollen Bewegung nach vorne.",
+          "Halte einen Moment in der Mitte inne und bringe dann deine Arme langsam zurück in die Ausgangsposition.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0188-xLYSdtg.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0188-xLYSdtg.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71bc-7085-a0fb-5c55624a797f",
+      "source": {
+        "type": "github",
+        "id": "1723"
+      },
+      "names": {
+        "en": "cable one arm tricep pushdown",
+        "de": "Einarmiges Trizepsdrücken am Kabelzug"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "cable",
+      "target": "triceps",
+      "muscleGroup": "triceps",
+      "synergistMuscle": "forearms",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Stand facing a cable machine with a straight bar attachment at chest height.",
+          "Grasp the bar with an overhand grip and step back to create tension in the cable.",
+          "Position your feet shoulder-width apart and slightly bend your knees.",
+          "Keep your back straight and core engaged throughout the exercise.",
+          "Start with your arm fully extended and perpendicular to the floor.",
+          "Keeping your upper arm stationary, exhale and push the bar down until your arm is fully extended.",
+          "Pause for a moment, then inhale and slowly return to the starting position.",
+          "Repeat for the desired number of repetitions, then switch arms."
+        ],
+        "de": [
+          "Stelle dich vor eine Kabelmaschine mit gerader Stangenbefestigung auf Brusthöhe.",
+          "Fasse die Stange mit einem Obergriff und tritt zurück, um Spannung im Kabel zu erzeugen.",
+          "Stelle deine Füße schulterbreit auseinander und beuge die Knie leicht.",
+          "Halte deinen Rücken während der gesamten Übung gerade und die Rumpfmuskulatur angespannt.",
+          "Beginne mit vollständig ausgestrecktem Arm und senkrecht zum Boden.",
+          "Halte deinen Oberarm ruhig, atme aus und drücke die Stange nach unten, bis dein Arm vollständig ausgestreckt ist.",
+          "Halte einen Moment inne, atme dann ein und kehre langsam in die Ausgangsposition zurück.",
+          "Wiederhole die Übung für die gewünschte Anzahl an Wiederholungen und wechsle dann die Arme."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/1723-qRZ5S1N.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/1723-qRZ5S1N.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71bf-73b8-ba20-8279e12bcec8",
+      "source": {
+        "type": "github",
+        "id": "0195"
+      },
+      "names": {
+        "en": "Cable Preacher Curl",
+        "de": "Scottcurl am Kabelzug"
+      },
+      "aliases": {
+        "en": [
+          "cable preacher curl"
+        ],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "cable",
+      "target": "biceps",
+      "muscleGroup": "biceps",
+      "synergistMuscle": "forearms",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the cable machine so that the preacher curl pad is at chest height.",
+          "Sit on the preacher curl bench and place your upper arms on the pad, gripping the cable attachment with an underhand grip.",
+          "Keep your back straight and your elbows tucked in at your sides.",
+          "Slowly curl the cable attachment up towards your shoulders, squeezing your biceps at the top of the movement.",
+          "Pause for a moment, then slowly lower the cable attachment back down to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Kabelmaschine so ein, dass sich das Scottbank-Polster auf Brusthöhe befindet.",
+          "Setze dich auf die Scottbank, lege deine Oberarme auf das Polster und fasse die Kabelzugaufsatz mit einem Untergriff.",
+          "Halte deinen Rücken gerade und die Ellbogen an den Seiten angewinkelt.",
+          "Curle den Kabelzugaufsatz langsam nach oben in Richtung deiner Schultern und spanne dabei deinen Bizeps am oberen Ende der Bewegung an.",
+          "Halte einen Moment inne und senke dann die Kabelzugaufsatz langsam wieder in die Ausgangsposition ab.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0195-P2lNrGL.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0195-P2lNrGL.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71c1-700d-84fc-c276f70299cd",
+      "source": {
+        "type": "github",
+        "id": "0200"
+      },
+      "names": {
+        "en": "Cable Rope Triceps Pushdown",
+        "de": "Trizepsdrücken am Kabelzug mit Seil"
+      },
+      "aliases": {
+        "en": [
+          "cable pushdown (with rope attachment)"
+        ],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "cable",
+      "target": "triceps",
+      "muscleGroup": "triceps",
+      "synergistMuscle": "forearms",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Attach a rope attachment to a high pulley on a cable machine.",
+          "Stand facing the machine with your feet shoulder-width apart and a slight bend in your knees.",
+          "Grasp the rope with an overhand grip, palms facing each other.",
+          "Keep your elbows close to your sides and your upper arms stationary throughout the exercise.",
+          "Exhale and push the rope downward by extending your elbows until your arms are fully extended.",
+          "Pause for a moment, then inhale and slowly return to the starting position by allowing your elbows to flex.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Befestige eine Seilgriff an einer hohen Rolle einer Kabelzugmaschine.",
+          "Stelle dich mit schulterbreit auseinander stehenden Füßen und leicht gebeugten Knien vor die Maschine.",
+          "Fasse das Seil im Obergriff, wobei die Handflächen einander zugewandt sind.",
+          "Halte deine Ellbogen während der gesamten Übung nah an deinen Seiten und deine Oberarme ruhig.",
+          "Atme aus und drücke das Seil nach unten, indem du deine Ellbogen streckst, bis deine Arme vollständig gestreckt sind.",
+          "Halte einen Moment inne, atme dann ein und kehre langsam in die Ausgangsposition zurück, indem du deine Ellbogen beugst.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0200-dU605di.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0200-dU605di.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71c3-728a-992b-1c64b6fe2eb3",
+      "source": {
+        "type": "github",
+        "id": "0212"
+      },
+      "names": {
+        "en": "Cable Seated Crunch",
+        "de": "Sitzender Crunch am Kabelzug"
+      },
+      "aliases": {
+        "en": [
+          "cable seated crunch"
+        ],
+        "de": []
+      },
+      "category": "waist",
+      "bodyPart": "waist",
+      "equipment": "cable",
+      "target": "abs",
+      "muscleGroup": "abs",
+      "synergistMuscle": "obliques",
+      "secondaryMuscles": [
+        "obliques"
+      ],
+      "instructions": {
+        "en": [
+          "Sit on a cable machine with your feet flat on the ground and your knees bent.",
+          "Hold the cable handle with both hands and position it behind your head.",
+          "Engage your abs and slowly curl your upper body forward, bringing your chest towards your knees.",
+          "Pause for a moment at the top, then slowly return to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Setze dich mit den Füßen flach auf den Boden und gebeugten Knien auf eine Kabelzugmaschine.",
+          "Halte den Kabelzuggriff mit beiden Händen und positioniere ihn hinter deinem Kopf.",
+          "Spanne deine Bauchmuskeln an und krümme deinen Oberkörper langsam nach vorne, wobei du deine Brust in Richtung deiner Knie bringst.",
+          "Halte oben kurz inne und kehre dann langsam in die Ausgangsposition zurück.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0212-8xUv4J7.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0212-8xUv4J7.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71c5-7399-b2ed-0e8474cd993c",
+      "source": {
+        "type": "github",
+        "id": "0213"
+      },
+      "names": {
+        "en": "cable seated high row (v-bar)",
+        "de": "Sitzendes hohes Rudern am Kabelzug mit V-Griff"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "back",
+      "bodyPart": "back",
+      "equipment": "cable",
+      "target": "lats",
+      "muscleGroup": "lats",
+      "synergistMuscle": "biceps",
+      "secondaryMuscles": [
+        "biceps",
+        "rhomboids",
+        "rear-deltoids"
+      ],
+      "instructions": {
+        "en": [
+          "Sit on the cable machine with your feet flat on the floor and your knees slightly bent.",
+          "Grasp the v-bar attachment with an overhand grip, palms facing each other, and your hands shoulder-width apart.",
+          "Keep your back straight and lean slightly forward from the hips.",
+          "Pull the v-bar towards your torso by retracting your shoulder blades and squeezing your back muscles.",
+          "Pause for a moment at the peak of the contraction, then slowly release the tension and return to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Setze dich mit flachen Füßen auf den Boden und leicht gebeugten Knien auf die Kabelmaschine.",
+          "Fasse den V-Griff mit einem Obergriff, die Handflächen einander zugewandt und deine Hände schulterbreit auseinander.",
+          "Halte deinen Rücken gerade und beuge sich von der Hüfte aus leicht nach vorne.",
+          "Ziehe die V-Stange in Richtung deines Oberkörpers, indem du deine Schulterblätter zurückziehst und deine Rückenmuskeln anspannst.",
+          "Halte auf dem Höhepunkt der Kontraktion einen Moment inne, löse dann langsam die Spannung und kehre in die Ausgangsposition zurück.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0213-pwt0pnM.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0213-pwt0pnM.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71c7-766c-a42f-fcb7b0190fb6",
+      "source": {
+        "type": "github",
+        "id": "0218"
+      },
+      "names": {
+        "en": "cable seated wide-grip row",
+        "de": "Sitzendes breites Rudern am Kabelzug"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "back",
+      "bodyPart": "back",
+      "equipment": "cable",
+      "target": "upper-back",
+      "muscleGroup": "middleBack",
+      "synergistMuscle": "biceps",
+      "secondaryMuscles": [
+        "biceps",
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Sit on the cable row machine with your feet flat on the footrests and your knees slightly bent.",
+          "Grasp the handle with a wide overhand grip, palms facing down.",
+          "Keep your back straight and lean slightly forward from the hips.",
+          "Pull the handle towards your lower chest, squeezing your shoulder blades together.",
+          "Pause for a moment at the peak of the contraction.",
+          "Slowly release the handle back to the starting position, fully extending your arms.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Setze dich mit den Füßen flach auf die Fußstützen und leicht gebeugten Knien auf das Kabelrudergerät.",
+          "Fasse den Griff mit einem breiten Obergriff und den Handflächen nach unten.",
+          "Halte deinen Rücken gerade und beuge sich von der Hüfte aus leicht nach vorne.",
+          "Ziehe den Griff in Richtung deiner unteren Brust und drücke dabei deine Schulterblätter zusammen.",
+          "Halte auf dem Höhepunkt der Kontraktion einen Moment inne.",
+          "Lass den Griff langsam los und bringe ihn zurück in die Ausgangsposition, wobei du deine Arme vollständig ausstreckst.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0218-qcY50ZD.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0218-qcY50ZD.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71c9-7225-9961-abc2b8790a84",
+      "source": {
+        "type": "github",
+        "id": "0874"
+      },
+      "names": {
+        "en": "cable standing crunch (with rope attachment)",
+        "de": "Stehender Crunch am Kabelzug mit Seil"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "waist",
+      "bodyPart": "waist",
+      "equipment": "cable",
+      "target": "abs",
+      "muscleGroup": "abs",
+      "synergistMuscle": "obliques",
+      "secondaryMuscles": [
+        "obliques"
+      ],
+      "instructions": {
+        "en": [
+          "Attach a rope to a cable machine at chest height.",
+          "Stand facing away from the machine with your feet shoulder-width apart.",
+          "Hold the rope with both hands and bring it behind your head, keeping your elbows bent.",
+          "Engage your abs and slowly crunch your torso forward, bringing your elbows towards your knees.",
+          "Pause for a moment at the top of the crunch, then slowly return to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Befestige ein Seil auf Brusthöhe an einer Kabelmaschine.",
+          "Stelle dich mit schulterbreit auseinander stehenden Füßen von der Maschine weg.",
+          "Halte das Seil mit beiden Händen und führe es hinter deinen Kopf, wobei du die Ellbogen gebeugt hältst.",
+          "Spanne deine Bauchmuskeln an und ziehe deinen Oberkörper langsam nach vorne, wobei du deine Ellbogen in Richtung deiner Knie bringst.",
+          "Halte am Höhepunkt des Crunchs einen Moment inne und kehre dann langsam in die Ausgangsposition zurück.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0874-XU3ePuv.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0874-XU3ePuv.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71cb-7677-b915-f03d97f29a23",
+      "source": {
+        "type": "github",
+        "id": "0201"
+      },
+      "names": {
+        "en": "Cable Triceps Pushdown",
+        "de": "Trizepsdrücken am Kabelzug"
+      },
+      "aliases": {
+        "en": [
+          "cable pushdown"
+        ],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "cable",
+      "target": "triceps",
+      "muscleGroup": "triceps",
+      "synergistMuscle": "forearms",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Attach a straight bar to a high pulley cable machine.",
+          "Stand facing the machine with your feet shoulder-width apart and a slight bend in your knees.",
+          "Grasp the bar with an overhand grip, hands shoulder-width apart.",
+          "Keep your elbows close to your sides and your upper arms stationary.",
+          "Exhale and push the bar down until your elbows are fully extended.",
+          "Pause for a moment, then inhale and slowly return the bar to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Befestige eine gerade Stange am oberen Kabelzug einer Kabelzugmaschine.",
+          "Stelle dich mit schulterbreit auseinander stehenden Füßen und leicht gebeugten Knien vor die Maschine.",
+          "Fasse die Stange im Obergriff, die Hände schulterbreit auseinander.",
+          "Halte deine Ellbogen nah an deinen Seiten und deine Oberarme ruhig.",
+          "Atme aus und drücke die Stange nach unten, bis deine Ellbogen vollständig gestreckt sind.",
+          "Halte einen Moment inne, atme dann ein und bringe die Stange langsam in die Ausgangsposition zurück.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0201-3ZflifB.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0201-3ZflifB.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71cd-7509-979d-020823715302",
+      "source": {
+        "type": "github",
+        "id": "0577"
+      },
+      "names": {
+        "en": "Chest Press Machine",
+        "de": "Brustpresse"
+      },
+      "aliases": {
+        "en": [
+          "lever chest press"
+        ],
+        "de": []
+      },
+      "category": "chest",
+      "bodyPart": "chest",
+      "equipment": "leverage-machine",
+      "target": "pectorals",
+      "muscleGroup": "chest",
+      "synergistMuscle": "triceps",
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat height and position yourself on the machine with your back flat against the pad.",
+          "Grasp the handles with an overhand grip and position your elbows at a 90-degree angle.",
+          "Push the handles forward until your arms are fully extended, exhaling during the movement.",
+          "Pause briefly at the end of the movement, then slowly return to the starting position, inhaling as you do so.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Passe die Sitzhöhe an und positioniere sich auf der Maschine mit dem Rücken flach gegen das Polster.",
+          "Fasse die Griffe im Obergriff und positioniere deine Ellenbogen im 90-Grad-Winkel.",
+          "Schiebe die Griffe nach vorne, bis deine Arme vollständig ausgestreckt sind, und atme während der Bewegung aus.",
+          "Halte am Ende der Bewegung kurz inne, kehre dann langsam in die Ausgangsposition zurück und atme dabei ein.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0577-T0yTjgW.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0577-T0yTjgW.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71cf-7234-917b-30195e3554dc",
+      "source": {
+        "type": "github",
+        "id": "0584"
+      },
+      "names": {
+        "en": "Chicken Wing",
+        "de": "Seitheben an der Maschine"
+      },
+      "aliases": {
+        "en": [
+          "lever lateral raise"
+        ],
+        "de": []
+      },
+      "category": "shoulders",
+      "bodyPart": "shoulders",
+      "equipment": "leverage-machine",
+      "target": "delts",
+      "muscleGroup": "shoulders",
+      "synergistMuscle": "traps",
+      "secondaryMuscles": [
+        "traps",
+        "upper-back"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat height and position yourself on the machine with your back against the pad.",
+          "Grasp the handles with an overhand grip and keep your arms straight.",
+          "Exhale and raise your arms out to the sides until they are parallel to the floor.",
+          "Pause for a moment at the top, then inhale and slowly lower your arms back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Sitzhöhe ein und positioniere sich auf der Maschine mit dem Rücken gegen das Polster.",
+          "Fasse die Griffe im Obergriff und halte die Arme gerade.",
+          "Atme aus und strecke deine Arme seitlich aus, bis sie parallel zum Boden sind.",
+          "Halte oben einen Moment inne, atme dann ein und senke deine Arme langsam zurück in die Ausgangsposition.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0584-dRTfGZT.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0584-dRTfGZT.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71dd-7422-bb7a-203b8d44f205",
+      "source": {
+        "type": "github",
+        "id": "0030"
+      },
+      "names": {
+        "en": "Close Grip Barbell Bench Press",
+        "de": "Enges Langhantel-Bankdrücken"
+      },
+      "aliases": {
+        "en": [
+          "barbell close-grip bench press"
+        ],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "barbell",
+      "target": "triceps",
+      "muscleGroup": "triceps",
+      "synergistMuscle": "chest",
+      "secondaryMuscles": [
+        "chest",
+        "shoulders"
+      ],
+      "instructions": {
+        "en": [
+          "Lie flat on a bench with your feet flat on the ground and your back pressed against the bench.",
+          "Grasp the barbell with a close grip, slightly narrower than shoulder-width apart.",
+          "Unrack the barbell and lower it slowly towards your chest, keeping your elbows close to your body.",
+          "Pause for a moment when the barbell touches your chest.",
+          "Push the barbell back up to the starting position, fully extending your arms.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Lege dich flach auf eine Bank, die Füße flach auf dem Boden und der Rücken gegen die Bank gedrückt.",
+          "Fasse die Langhantel mit festem Griff, etwas enger als schulterbreit auseinander.",
+          "Nimm die Langhantel ab und senke sie langsam in Richtung deiner Brust ab. Halte dabei deine Ellbogen nah am Körper.",
+          "Halte einen Moment inne, wenn die Langhantel deine Brust berührt.",
+          "Schiebe die Langhantel wieder nach oben in die Ausgangsposition und strecke dabei deine Arme vollständig aus.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0030-J6Dx1Mu.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0030-J6Dx1Mu.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71de-7521-b6d4-460090484579",
+      "source": {
+        "type": "github",
+        "id": "0198"
+      },
+      "names": {
+        "en": "Close Grip Lat Pulldown",
+        "de": "Enger Latzug"
+      },
+      "aliases": {
+        "en": [
+          "cable pulldown"
+        ],
+        "de": []
+      },
+      "category": "back",
+      "bodyPart": "back",
+      "equipment": "cable",
+      "target": "lats",
+      "muscleGroup": "lats",
+      "synergistMuscle": "biceps",
+      "secondaryMuscles": [
+        "biceps",
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the cable pulldown machine so that the seat is at a comfortable height and the knee pad is secured.",
+          "Sit on the seat with your back straight and your feet flat on the ground.",
+          "Grasp the cable bar with an overhand grip, slightly wider than shoulder-width apart.",
+          "Lean back slightly and engage your core.",
+          "Pull the cable bar down towards your chest, squeezing your shoulder blades together.",
+          "Pause for a moment at the bottom of the movement, then slowly release the bar back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Kabelzugmaschine so ein, dass sich der Sitz in einer bequemen Höhe befindet und das Kniepolster gesichert ist.",
+          "Setze dich mit geradem Rücken und flachen Füßen auf den Boden auf den Sitz.",
+          "Fasse die Kabelstange mit einem Obergriff an, der etwas breiter als schulterbreit ist.",
+          "Lehne dich leicht zurück und spanne deinen Rumpf an.",
+          "Ziehe die Kabelstange nach unten in Richtung Brust und drücke dabei deine Schulterblätter zusammen.",
+          "Halte am unteren Ende der Bewegung einen Moment inne und lass die Stange dann langsam wieder in die Ausgangsposition zurück.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0198-RVwzP10.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0198-RVwzP10.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71df-7256-81e3-27951b3822d5",
+      "source": {
+        "type": "github",
+        "id": "0033"
+      },
+      "names": {
+        "en": "Decline Barbell Bench Press",
+        "de": "Negatives Langhantel-Bankdrücken"
+      },
+      "aliases": {
+        "en": [
+          "barbell decline bench press"
+        ],
+        "de": []
+      },
+      "category": "chest",
+      "bodyPart": "chest",
+      "equipment": "barbell",
+      "target": "pectorals",
+      "muscleGroup": "chest",
+      "synergistMuscle": "triceps",
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": {
+        "en": [
+          "Lie on a decline bench with your feet secured and your head lower than your hips.",
+          "Grasp the barbell with an overhand grip slightly wider than shoulder-width apart.",
+          "Unrack the barbell and lower it slowly towards your chest, keeping your elbows tucked in.",
+          "Pause for a moment at the bottom, then push the barbell back up to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Lege dich auf eine Negativbank, die Füße gesichert und der Kopf tiefer als die Hüfte.",
+          "Fasse die Langhantel mit einem Obergriff an, der etwas weiter als schulterbreit auseinander liegt.",
+          "Nimm die Langhantel ab und senke sie langsam in Richtung deiner Brust ab. Halte dabei die Ellbogen angezogen.",
+          "Halte unten einen Moment inne und schiebe die Langhantel dann wieder nach oben in die Ausgangsposition.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0033-GrO65fd.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0033-GrO65fd.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71e0-7076-a535-613b4c9dc829",
+      "source": {
+        "type": "github",
+        "id": "1300"
+      },
+      "names": {
+        "en": "Decline Chest Press Machine",
+        "de": "Negative Brustpresse"
+      },
+      "aliases": {
+        "en": [
+          "lever decline chest press"
+        ],
+        "de": []
+      },
+      "category": "chest",
+      "bodyPart": "chest",
+      "equipment": "leverage-machine",
+      "target": "pectorals",
+      "muscleGroup": "chest",
+      "synergistMuscle": "triceps",
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat height and backrest of the leverage machine to a comfortable position.",
+          "Sit on the machine with your back against the backrest and your feet flat on the floor.",
+          "Grasp the handles with an overhand grip and position your hands slightly wider than shoulder-width apart.",
+          "Push the handles forward and away from your body until your arms are fully extended.",
+          "Slowly lower the handles back towards your chest, keeping your elbows slightly bent.",
+          "Pause for a moment at the bottom, then push the handles back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Sitzhöhe und die Rückenlehne der Hebelmaschine auf eine bequeme Position ein.",
+          "Setze dich mit dem Rücken an die Rückenlehne und die Füße flach auf den Boden auf die Maschine.",
+          "Fasse die Griffe im Obergriff und positioniere deine Hände etwas weiter als schulterbreit auseinander.",
+          "Schiebe die Griffe nach vorne und von deinem Körper weg, bis deine Arme vollständig ausgestreckt sind.",
+          "Senke die Griffe langsam zurück in Richtung Brust und halte dabei die Ellbogen leicht gebeugt.",
+          "Halte unten einen Moment inne und schiebe dann die Griffe zurück in die Ausgangsposition.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/1300-vsVoPHt.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/1300-vsVoPHt.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71e1-7156-a189-c22716170c45",
+      "source": {
+        "type": "github",
+        "id": "0277"
+      },
+      "names": {
+        "en": "Decline Crunch",
+        "de": "Negativer Crunch"
+      },
+      "aliases": {
+        "en": [
+          "decline crunch"
+        ],
+        "de": []
+      },
+      "category": "waist",
+      "bodyPart": "waist",
+      "equipment": "body-weight",
+      "target": "abs",
+      "muscleGroup": "abs",
+      "synergistMuscle": "hip-flexors",
+      "secondaryMuscles": [
+        "hip-flexors"
+      ],
+      "instructions": {
+        "en": [
+          "Lie on a decline bench with your feet secured and your knees bent at a 90-degree angle.",
+          "Place your hands behind your head or across your chest.",
+          "Engage your abs and lift your upper body towards your knees, curling your torso.",
+          "Pause for a moment at the top, then slowly lower your upper body back down to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Lege dich mit gesicherten Füßen und im 90-Grad-Winkel gebeugten Knien auf eine Negativbank.",
+          "Lege deine Hände hinter deinen Kopf oder über deine Brust.",
+          "Spanne deine Bauchmuskeln an und hebe deinen Oberkörper in Richtung Knie, wobei du deinen Oberkörper krümmst.",
+          "Halte oben kurz inne und senke dann deinen Oberkörper langsam wieder in die Ausgangsposition ab.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0277-9Ap7miY.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0277-9Ap7miY.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71e2-7483-9078-ca38223bb5c9",
+      "source": {
+        "type": "github",
+        "id": "0634"
+      },
+      "names": {
+        "en": "Decline Oblique Crunch",
+        "de": "Negativer seitlicher Crunch"
+      },
+      "aliases": {
+        "en": [
+          "negative crunch"
+        ],
+        "de": []
+      },
+      "category": "waist",
+      "bodyPart": "waist",
+      "equipment": "body-weight",
+      "target": "abs",
+      "muscleGroup": "abs",
+      "synergistMuscle": "hip-flexors",
+      "secondaryMuscles": [
+        "hip-flexors"
+      ],
+      "instructions": {
+        "en": [
+          "Lie flat on your back with your knees bent and feet flat on the ground.",
+          "Place your hands behind your head with your elbows pointing outwards.",
+          "Engaging your abs, slowly lift your upper body off the ground, curling forward until your torso is at a 45-degree angle.",
+          "Pause for a moment at the top, then slowly lower your upper body back down to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Lege dich flach auf den Rücken, die Knie sind gebeugt und die Füße stehen flach auf dem Boden.",
+          "Lege deine Hände hinter deinen Kopf, wobei die Ellbogen nach außen zeigen.",
+          "Spanne deine Bauchmuskeln an, hebe deinen Oberkörper langsam vom Boden ab und beuge sich nach vorne, bis sich dein Oberkörper in einem 45-Grad-Winkel befindet.",
+          "Halte oben kurz inne und senke dann deinen Oberkörper langsam wieder in die Ausgangsposition ab.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0634-szIn2UK.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0634-szIn2UK.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71e3-71be-b539-351309d2ea4e",
+      "source": {
+        "type": "github",
+        "id": "0289"
+      },
+      "names": {
+        "en": "Dumbbell Bench Press",
+        "de": "Kurzhantel-Bankdrücken"
+      },
+      "aliases": {
+        "en": [
+          "dumbbell bench press"
+        ],
+        "de": []
+      },
+      "category": "chest",
+      "bodyPart": "chest",
+      "equipment": "dumbbell",
+      "target": "pectorals",
+      "muscleGroup": "chest",
+      "synergistMuscle": "triceps",
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": {
+        "en": [
+          "Lie flat on a bench with your feet flat on the ground and your back pressed against the bench.",
+          "Hold a dumbbell in each hand, with your palms facing forward and your arms extended above your chest.",
+          "Lower the dumbbells slowly to the sides of your chest, keeping your elbows at a 90-degree angle.",
+          "Pause for a moment, then push the dumbbells back up to the starting position, fully extending your arms.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Lege dich flach auf eine Bank, die Füße flach auf dem Boden und der Rücken gegen die Bank gedrückt.",
+          "Halte in jeder Hand eine Kurzhantel, wobei deine Handflächen nach vorne zeigen und deine Arme über deiner Brust ausgestreckt sind.",
+          "Senke die Kurzhanteln langsam seitlich zu deiner Brust ab und halte deine Ellbogen in einem 90-Grad-Winkel.",
+          "Halte einen Moment inne und schiebe die Kurzhanteln dann wieder nach oben in die Ausgangsposition, wobei du deine Arme vollständig ausstreckst.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0289-SpYC0Kp.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0289-SpYC0Kp.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71e4-743b-9ee6-3e1851a647da",
+      "source": {
+        "type": "github",
+        "id": "1735"
+      },
+      "names": {
+        "en": "dumbbell lying single extension",
+        "de": "Einarmiges Trizepsstrecken im Liegen mit Kurzhantel"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "dumbbell",
+      "target": "triceps",
+      "muscleGroup": "triceps",
+      "synergistMuscle": "shoulders",
+      "secondaryMuscles": [
+        "shoulders"
+      ],
+      "instructions": {
+        "en": [
+          "Lie flat on a bench with a dumbbell in one hand and your arm fully extended above your chest.",
+          "Lower the dumbbell in a controlled manner towards your forehead, keeping your upper arm stationary.",
+          "Pause briefly at the bottom of the movement, then extend your arm back to the starting position.",
+          "Repeat for the desired number of repetitions, then switch arms."
+        ],
+        "de": [
+          "Lege dich flach auf eine Bank, mit einer Kurzhantel in einer Hand und ausgestrecktem Arm über der Brust.",
+          "Senke die Kurzhantel kontrolliert in Richtung Stirn und halte dabei deinen Oberarm ruhig.",
+          "Halte am Ende der Bewegung kurz inne und strecke dann deinen Arm zurück in die Ausgangsposition.",
+          "Wiederhole die Übung für die gewünschte Anzahl an Wiederholungen und wechsle dann die Arme."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/1735-6MfS53i.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/1735-6MfS53i.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71e4-743b-9ee6-432c6fc53289",
+      "source": {
+        "type": "github",
+        "id": "2186"
+      },
+      "names": {
+        "en": "EZ Bar Decline Triceps Extension",
+        "de": "Negatives Trizepsstrecken mit SZ-Hantel"
+      },
+      "aliases": {
+        "en": [
+          "ez barbell decline triceps extension"
+        ],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "ez-barbell",
+      "target": "triceps",
+      "muscleGroup": "triceps",
+      "synergistMuscle": "shoulders",
+      "secondaryMuscles": [
+        "shoulders"
+      ],
+      "instructions": {
+        "en": [
+          "Lie on a decline bench with your head lower than your feet and your feet secured.",
+          "Hold the ez barbell with an overhand grip, hands shoulder-width apart.",
+          "Extend your arms fully, keeping your elbows close to your head.",
+          "Lower the barbell slowly towards your forehead, bending your elbows.",
+          "Pause for a moment, then extend your arms back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Lege dich auf eine Negativbank, wobei dein Kopf tiefer als deine Füße liegt und deine Füße gesichert sind.",
+          "Halte die SZ-Stange im Obergriff, die Hände schulterbreit auseinander.",
+          "Strecke deine Arme vollständig aus und halte deine Ellbogen nah am Kopf.",
+          "Senke die Langhantel langsam in Richtung Stirn und beuge dabei die Ellbogen.",
+          "Halte einen Moment inne und strecke dann deine Arme zurück in die Ausgangsposition.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/2186-CQHoDm0.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/2186-CQHoDm0.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71e5-778f-8e43-71cdf33cb21d",
+      "source": {
+        "type": "github",
+        "id": "0620"
+      },
+      "names": {
+        "en": "Flat Bench Leg Raises",
+        "de": "Beinheben auf der Flachbank"
+      },
+      "aliases": {
+        "en": [
+          "lying leg raise flat bench"
+        ],
+        "de": []
+      },
+      "category": "waist",
+      "bodyPart": "waist",
+      "equipment": "body-weight",
+      "target": "abs",
+      "muscleGroup": "abs",
+      "synergistMuscle": "hip-flexors",
+      "secondaryMuscles": [
+        "hip-flexors"
+      ],
+      "instructions": {
+        "en": [
+          "Lie flat on a flat bench with your back pressed against it.",
+          "Place your hands under your glutes for support.",
+          "Keep your legs straight and together, and lift them up towards the ceiling.",
+          "Pause for a moment at the top, then slowly lower your legs back down to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Lege dich flach auf eine Flachbank und drücke den Rücken dagegen.",
+          "Lege deine Hände zur Unterstützung unter deine Gesäßmuskulatur.",
+          "Halte deine Beine gerade und zusammen und hebe sie zur Decke.",
+          "Halte oben einen Moment inne und senke dann deine Beine langsam wieder in die Ausgangsposition ab.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0620-WhuFnR7.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0620-WhuFnR7.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71e6-7526-9494-57ae46859a5e",
+      "source": {
+        "type": "github",
+        "id": "0743"
+      },
+      "names": {
+        "en": "Hack Squat Machine",
+        "de": "Hackenschmidt-Kniebeuge"
+      },
+      "aliases": {
+        "en": [
+          "sled hack squat"
+        ],
+        "de": []
+      },
+      "category": "upper-legs",
+      "bodyPart": "upper-legs",
+      "equipment": "sled-machine",
+      "target": "glutes",
+      "muscleGroup": "glutes",
+      "synergistMuscle": "quadriceps",
+      "secondaryMuscles": [
+        "quadriceps",
+        "hamstrings",
+        "calves"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the sled machine to a comfortable position for your height.",
+          "Stand with your feet shoulder-width apart on the platform, toes slightly pointed outwards.",
+          "Hold onto the handles or bars for stability.",
+          "Lower your body by bending your knees and hips, keeping your back straight and chest up.",
+          "Continue lowering until your thighs are parallel to the ground or slightly below.",
+          "Pause for a moment, then push through your heels to raise your body back up to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Schlittenmaschine auf eine bequeme Position für deine Körpergröße ein.",
+          "Stelle dich mit schulterbreit auseinander stehenden Füßen auf die Plattform, die Zehen zeigen leicht nach außen.",
+          "Halte sich für Stabilität an den Griffen oder Stangen fest.",
+          "Senke deinen Körper, indem du deine Knie und Hüften beugst und dabei deinen Rücken gerade und die Brust nach oben hältst.",
+          "Fahre mit dem Absenken fort, bis deine Oberschenkel parallel zum Boden oder leicht darunter sind.",
+          "Halte einen Moment inne und drücke dann durch die Fersen, um deinen Körper wieder in die Ausgangsposition zu heben.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0743-Qa55kX1.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0743-Qa55kX1.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71e7-7225-aad1-a9eacdf27359",
+      "source": {
+        "type": "github",
+        "id": "0472"
+      },
+      "names": {
+        "en": "Hanging Knee Raise",
+        "de": "Hängendes Knieheben"
+      },
+      "aliases": {
+        "en": [
+          "hanging leg raise"
+        ],
+        "de": []
+      },
+      "category": "waist",
+      "bodyPart": "waist",
+      "equipment": "body-weight",
+      "target": "abs",
+      "muscleGroup": "abs",
+      "synergistMuscle": "hip-flexors",
+      "secondaryMuscles": [
+        "hip-flexors"
+      ],
+      "instructions": {
+        "en": [
+          "Hang from a pull-up bar with your arms fully extended and your palms facing away from you.",
+          "Engage your core and lift your legs up in front of you, keeping them straight.",
+          "Continue lifting until your legs are parallel to the ground or as high as you can comfortably go.",
+          "Pause for a moment at the top, then slowly lower your legs back down to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Hänge dich mit vollständig ausgestreckten Armen und von Ihnen weg zeigenden Handflächen an eine Klimmzugstange.",
+          "Spanne deinen Rumpf an und hebe deine Beine vor sich an, wobei du sie gerade hältst.",
+          "Hebe weiter, bis deine Beine parallel zum Boden oder so hoch sind, wie es für dich angenehm ist.",
+          "Halte oben einen Moment inne und senke dann deine Beine langsam wieder in die Ausgangsposition ab.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0472-I3tsCnC.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0472-I3tsCnC.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71e8-76df-b635-4eb43b59c604",
+      "source": {
+        "type": "github",
+        "id": "0475"
+      },
+      "names": {
+        "en": "Hanging Leg Raise",
+        "de": "Hängendes gestrecktes Beinheben"
+      },
+      "aliases": {
+        "en": [
+          "hanging straight leg raise"
+        ],
+        "de": []
+      },
+      "category": "waist",
+      "bodyPart": "waist",
+      "equipment": "body-weight",
+      "target": "abs",
+      "muscleGroup": "abs",
+      "synergistMuscle": "hip-flexors",
+      "secondaryMuscles": [
+        "hip-flexors"
+      ],
+      "instructions": {
+        "en": [
+          "Hang from a pull-up bar with your arms fully extended and your palms facing away from you.",
+          "Engage your core and lift your legs up in front of you, keeping them straight.",
+          "Continue lifting until your legs are parallel to the ground or as high as you can comfortably go.",
+          "Pause for a moment at the top, then slowly lower your legs back down to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Hänge dich mit vollständig ausgestreckten Armen und von Ihnen weg zeigenden Handflächen an eine Klimmzugstange.",
+          "Spanne deinen Rumpf an und hebe deine Beine vor sich an, wobei du sie gerade hältst.",
+          "Hebe weiter, bis deine Beine parallel zum Boden oder so hoch sind, wie es für dich angenehm ist.",
+          "Halte oben einen Moment inne und senke dann deine Beine langsam wieder in die Ausgangsposition ab.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0475-4Ml7QFO.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0475-4Ml7QFO.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71e9-7462-8a8f-3e6cacacabc4",
+      "source": {
+        "type": "github",
+        "id": "0489"
+      },
+      "names": {
+        "en": "Hyperextensions",
+        "de": "Hyperextensions"
+      },
+      "aliases": {
+        "en": [
+          "hyperextension"
+        ],
+        "de": []
+      },
+      "category": "back",
+      "bodyPart": "back",
+      "equipment": "body-weight",
+      "target": "spine",
+      "muscleGroup": "lowerBack",
+      "synergistMuscle": "glutes",
+      "secondaryMuscles": [
+        "glutes",
+        "hamstrings"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the hyperextension bench so that your upper thighs are resting on the pad and your feet are secured.",
+          "Cross your arms over your chest or place your hands behind your head.",
+          "Lower your upper body towards the ground while keeping your back straight.",
+          "Pause for a moment at the bottom, then raise your upper body back up until it is in line with your legs.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Hyperextensionsbank so ein, dass deine Oberschenkel auf der Unterlage aufliegen und deine Füße gesichert sind.",
+          "Verschränke die Arme vor der Brust oder lege die Hände hinter den Kopf.",
+          "Senke deinen Oberkörper in Richtung Boden und halte dabei deinen Rücken gerade.",
+          "Halte unten einen Moment inne und hebe dann deinen Oberkörper wieder an, bis er auf einer Linie mit deinen Beinen ist.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0489-zhMwOwE.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0489-zhMwOwE.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71ea-75fe-8f31-96a0f125e6fa",
+      "source": {
+        "type": "github",
+        "id": "0047"
+      },
+      "names": {
+        "en": "Incline Barbell Bench Press",
+        "de": "Schrägbankdrücken mit Langhantel"
+      },
+      "aliases": {
+        "en": [
+          "barbell incline bench press"
+        ],
+        "de": []
+      },
+      "category": "chest",
+      "bodyPart": "chest",
+      "equipment": "barbell",
+      "target": "pectorals",
+      "muscleGroup": "chest",
+      "synergistMuscle": "shoulders",
+      "secondaryMuscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "instructions": {
+        "en": [
+          "Set up an incline bench at a 45-degree angle.",
+          "Lie down on the bench with your feet flat on the ground.",
+          "Grasp the barbell with an overhand grip, slightly wider than shoulder-width apart.",
+          "Unrack the barbell and lower it slowly towards your chest, keeping your elbows at a 45-degree angle.",
+          "Pause for a moment at the bottom, then push the barbell back up to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle eine Schrägbank im 45-Grad-Winkel auf.",
+          "Lege dich mit den Füßen flach auf den Boden auf die Bank.",
+          "Fasse die Langhantel im Obergriff, etwas weiter als schulterbreit auseinander.",
+          "Nimm die Langhantel ab und senke sie langsam in Richtung deiner Brust ab. Halte dabei deine Ellbogen in einem 45-Grad-Winkel.",
+          "Halte unten einen Moment inne und schiebe die Langhantel dann wieder nach oben in die Ausgangsposition.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0047-3TZduzM.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0047-3TZduzM.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71eb-77f4-b1f9-2d2811663e95",
+      "source": {
+        "type": "github",
+        "id": "0315"
+      },
+      "names": {
+        "en": "Incline Dumbbell Bicep Curls",
+        "de": "Kurzhantel-Bizepscurls auf der Schrägbank"
+      },
+      "aliases": {
+        "en": [
+          "dumbbell incline biceps curl"
+        ],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "dumbbell",
+      "target": "biceps",
+      "muscleGroup": "biceps",
+      "synergistMuscle": "forearms",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Sit on an incline bench with a dumbbell in each hand, palms facing forward, and arms fully extended.",
+          "Keeping your upper arms stationary, exhale and curl the weights while contracting your biceps.",
+          "Continue to raise the dumbbells until your biceps are fully contracted and the dumbbells are at shoulder level.",
+          "Hold the contracted position for a brief pause as you squeeze your biceps.",
+          "Inhale and slowly begin to lower the dumbbells back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Setze dich mit einer Kurzhantel in jeder Hand auf eine Schrägbank, die Handflächen zeigen nach vorne und die Arme sind vollständig ausgestreckt.",
+          "Halte deine Oberarme ruhig, atme aus und curle die Gewichte, während du deinen Bizeps anspannst.",
+          "Hebe die Kurzhanteln weiter an, bis dein Bizeps vollständig angespannt ist und die Kurzhanteln sich auf Schulterhöhe befinden.",
+          "Halte die angespannte Position für eine kurze Pause, während du deinen Bizeps anspannst.",
+          "Atme ein und beginne langsam, die Kurzhanteln zurück in die Ausgangsposition zu senken.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0315-F3xgbjF.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0315-F3xgbjF.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71ec-748e-a8fb-448e8d4a0332",
+      "source": {
+        "type": "github",
+        "id": "0319"
+      },
+      "names": {
+        "en": "Incline Dumbbell Fly",
+        "de": "Kurzhantel-Fliegende auf der Schrägbank"
+      },
+      "aliases": {
+        "en": [
+          "dumbbell incline fly"
+        ],
+        "de": []
+      },
+      "category": "chest",
+      "bodyPart": "chest",
+      "equipment": "dumbbell",
+      "target": "pectorals",
+      "muscleGroup": "chest",
+      "synergistMuscle": "shoulders",
+      "secondaryMuscles": [
+        "shoulders"
+      ],
+      "instructions": {
+        "en": [
+          "Set an incline bench to a 45-degree angle.",
+          "Sit on the bench with a dumbbell in each hand, palms facing each other.",
+          "Lie back on the bench and press the dumbbells up to the starting position, directly above your chest.",
+          "Lower the dumbbells out to the sides in a wide arc until you feel a stretch in your chest.",
+          "Pause for a moment, then squeeze your chest muscles to bring the dumbbells back up to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle eine Schrägbank auf einen 45-Grad-Winkel ein.",
+          "Setze dich mit einer Kurzhantel in jeder Hand und den Handflächen einander zugewandt auf die Bank.",
+          "Lege dich mit dem Rücken auf die Bank und drücke die Kurzhanteln in die Ausgangsposition, direkt über deiner Brust.",
+          "Senke die Kurzhanteln in einem weiten Bogen seitlich ab, bis du eine Dehnung in der Brust spürst.",
+          "Halte einen Moment inne und spanne dann deine Brustmuskeln an, um die Kurzhanteln wieder in die Ausgangsposition zu bringen.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0319-ESOd5Pl.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0319-ESOd5Pl.gif"
+      }
+    },
+    {
+      "id": "01a0c944-721e-766f-b285-aa6c10a32ae5",
+      "source": {
+        "type": "cardio",
+        "id": "inline-skating"
+      },
+      "names": {
+        "en": "Inline skating",
+        "de": "Inlineskaten"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "cardio",
+      "bodyPart": "full-body",
+      "equipment": "none",
+      "target": "cardio",
+      "muscleGroup": "cardio",
+      "synergistMuscle": "cardio",
+      "secondaryMuscles": [],
+      "instructions": {
+        "en": [
+          "Put on skates and appropriate protective equipment.",
+          "Bend your knees slightly and keep your weight centered.",
+          "Push diagonally to the side and glide on the opposite skate.",
+          "Control your speed and leave enough room to stop safely."
+        ],
+        "de": [
+          "Ziehe die Skates und geeignete Schutzausrüstung an.",
+          "Beuge die Knie leicht und halte dein Gewicht mittig.",
+          "Drücke dich schräg zur Seite ab und gleite auf dem anderen Skate.",
+          "Kontrolliere deine Geschwindigkeit und lasse genug Platz zum sicheren Bremsen."
+        ]
+      },
+      "media": {
+        "thumbnail": null,
+        "gif": null
+      }
+    },
+    {
+      "id": "01a0c944-721e-766f-b285-a65413b94ad2",
+      "source": {
+        "type": "cardio",
+        "id": "jogging"
+      },
+      "names": {
+        "en": "Jogging",
+        "de": "Joggen"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "cardio",
+      "bodyPart": "full-body",
+      "equipment": "none",
+      "target": "cardio",
+      "muscleGroup": "cardio",
+      "synergistMuscle": "cardio",
+      "secondaryMuscles": [],
+      "instructions": {
+        "en": [
+          "Begin with an easy warm-up walk.",
+          "Jog with an upright posture and relaxed shoulders.",
+          "Land softly beneath your body and maintain a sustainable pace.",
+          "Finish by slowing to a walk."
+        ],
+        "de": [
+          "Beginne mit lockerem Gehen zum Aufwärmen.",
+          "Jogge mit aufrechter Haltung und entspannten Schultern.",
+          "Setze die Füße weich unter deinem Körper auf und halte ein nachhaltiges Tempo.",
+          "Beende die Einheit, indem du zum Gehen verlangsamst."
+        ]
+      },
+      "media": {
+        "thumbnail": null,
+        "gif": null
+      }
+    },
+    {
+      "id": "01a0c944-71ec-748e-a8fb-493fcddfa9a1",
+      "source": {
+        "type": "github",
+        "id": "0179"
+      },
+      "names": {
+        "en": "Kabelzug (von unten)",
+        "de": "Fliegende am Kabelzug von unten"
+      },
+      "aliases": {
+        "en": [
+          "cable low fly"
+        ],
+        "de": []
+      },
+      "category": "chest",
+      "bodyPart": "chest",
+      "equipment": "cable",
+      "target": "pectorals",
+      "muscleGroup": "chest",
+      "synergistMuscle": "deltoids",
+      "secondaryMuscles": [
+        "deltoids",
+        "triceps"
+      ],
+      "instructions": {
+        "en": [
+          "Attach the handles to the low pulleys of a cable machine and select an appropriate weight.",
+          "Stand in the middle of the machine with your feet shoulder-width apart and a slight bend in your knees.",
+          "Grasp the handles with an overhand grip and extend your arms out to the sides, keeping a slight bend in your elbows.",
+          "Maintaining control, slowly bring your arms forward in a sweeping motion, crossing them in front of your body.",
+          "Pause for a moment at the peak of the movement, feeling the stretch in your chest muscles.",
+          "Reverse the motion and slowly return your arms to the starting position, keeping tension on your chest muscles throughout.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Befestige die Griffe an den unteren Rollen einer Kabelzugmaschine und wähle ein geeignetes Gewicht.",
+          "Stelle dich mit schulterbreit auseinander stehenden Füßen und leicht gebeugten Knien in die Mitte der Maschine.",
+          "Fasse die Griffe im Obergriff und strecke deine Arme seitlich aus, wobei du deine Ellbogen leicht beugst.",
+          "Behalte die Kontrolle und führe deine Arme langsam in einer schwungvollen Bewegung nach vorne und kreuze sie vor deinem Körper.",
+          "Halte am Höhepunkt der Bewegung einen Moment inne und spüre die Dehnung deiner Brustmuskulatur.",
+          "Kehre die Bewegung um und bringe deine Arme langsam in die Ausgangsposition zurück. Halte dabei die Spannung deiner Brustmuskeln die ganze Zeit über aufrecht.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0179-FVmZVhk.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0179-FVmZVhk.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71ee-71a9-86ae-c6513b3f3573",
+      "source": {
+        "type": "github",
+        "id": "1645"
+      },
+      "names": {
+        "en": "King Kong",
+        "de": "Beidarmiger Bizepscurl am Kabelzug auf der Schrägbank"
+      },
+      "aliases": {
+        "en": [
+          "cable two arm curl on incline bench"
+        ],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "cable",
+      "target": "biceps",
+      "muscleGroup": "biceps",
+      "synergistMuscle": "forearms",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Sit on an incline bench with your back against the pad and your feet flat on the ground.",
+          "Grasp the cable handles with an underhand grip, palms facing up, and your arms fully extended.",
+          "Keeping your upper arms stationary, exhale and curl the handles towards your shoulders while contracting your biceps.",
+          "Pause for a moment at the top of the movement, squeezing your biceps.",
+          "Inhale and slowly lower the handles back to the starting position, fully extending your arms.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Setze dich auf eine Schrägbank, mit dem Rücken gegen die Unterlage und mit den Füßen flach auf dem Boden.",
+          "Fasse die Kabelzuggriffe mit einem Untergriff, den Handflächen nach oben und deinen Armen vollständig ausgestreckt an.",
+          "Halte deine Oberarme ruhig, atme aus und curle die Griffe in Richtung deiner Schultern, während du deinen Bizeps anspannst.",
+          "Halte am Höhepunkt der Bewegung einen Moment inne und spanne deinen Bizeps an.",
+          "Atme ein und senke die Griffe langsam zurück in die Ausgangsposition, wobei du deine Arme vollständig ausstreckst.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/1645-H9y3Dkr.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/1645-H9y3Dkr.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71ee-71a9-86ae-cbc45a946df5",
+      "source": {
+        "type": "github",
+        "id": "0585"
+      },
+      "names": {
+        "en": "Leg Extensions",
+        "de": "Beinstrecken"
+      },
+      "aliases": {
+        "en": [
+          "lever leg extension"
+        ],
+        "de": []
+      },
+      "category": "upper-legs",
+      "bodyPart": "upper-legs",
+      "equipment": "leverage-machine",
+      "target": "quads",
+      "muscleGroup": "quadriceps",
+      "synergistMuscle": "hamstrings",
+      "secondaryMuscles": [
+        "hamstrings"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat height and backrest of the machine to fit your body.",
+          "Sit on the machine with your back against the backrest and your feet on the footpad.",
+          "Grasp the handles or sidebars for stability.",
+          "Extend your legs forward by straightening your knees, lifting the weight.",
+          "Pause for a moment at the top, then slowly lower the weight back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Passe die Sitzhöhe und die Rückenlehne der Maschine an deinen Körper an.",
+          "Setze dich mit dem Rücken an die Rückenlehne und die Füße auf das Fußpolster auf die Maschine.",
+          "Halte die Griffe oder Seitenstangen fest, um Stabilität zu gewährleisten.",
+          "Strecke deine Beine nach vorne, indem du deine Knie streckst und das Gewicht anhebst.",
+          "Halte oben kurz inne und senke das Gewicht dann langsam wieder in die Ausgangsposition ab.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0585-my33uHU.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0585-my33uHU.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71ef-7176-ab1f-537b0c5eab2e",
+      "source": {
+        "type": "github",
+        "id": "0739"
+      },
+      "names": {
+        "en": "Leg Press",
+        "de": "45-Grad-Beinpresse"
+      },
+      "aliases": {
+        "en": [
+          "sled 45в° leg press"
+        ],
+        "de": []
+      },
+      "category": "upper-legs",
+      "bodyPart": "upper-legs",
+      "equipment": "sled-machine",
+      "target": "glutes",
+      "muscleGroup": "glutes",
+      "synergistMuscle": "quadriceps",
+      "secondaryMuscles": [
+        "quadriceps",
+        "hamstrings",
+        "calves"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat and footplate of the sled machine to a comfortable position.",
+          "Sit on the sled machine with your back against the backrest and your feet shoulder-width apart on the footplate.",
+          "Grip the handles on the sides of the seat for stability.",
+          "Push the footplate away from your body by extending your legs, keeping your heels on the footplate.",
+          "Continue pushing until your legs are almost fully extended, but without locking your knees.",
+          "Pause for a moment at the top of the movement, then slowly lower the footplate back towards your body by bending your knees.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle den Sitz und die Fußplatte der Schlittenmaschine auf eine bequeme Position ein.",
+          "Setze dich mit dem Rücken an die Rückenlehne und die Füße schulterbreit auseinander auf die Fußplatte auf das Schlittengerät.",
+          "Halte die Griffe an den Seiten des Sitzes fest, um Stabilität zu gewährleisten.",
+          "Schiebe die Fußplatte vom Körper weg, indem du deine Beine ausstreckst und deine Fersen auf der Fußplatte lässt.",
+          "Drücke weiter, bis deine Beine fast vollständig gestreckt sind, ohne jedoch die Knie durchzudrücken.",
+          "Halte am oberen Ende der Bewegung einen Moment inne und senke dann die Fußplatte langsam wieder in Richtung deines Körpers ab, indem du die Knie beugst.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0739-10Z2DXU.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0739-10Z2DXU.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71f1-7422-baab-a76599145710",
+      "source": {
+        "type": "github",
+        "id": "0744"
+      },
+      "names": {
+        "en": "Leg Press (liegend)",
+        "de": "Liegende Beinpresse"
+      },
+      "aliases": {
+        "en": [
+          "sled lying squat"
+        ],
+        "de": []
+      },
+      "category": "upper-legs",
+      "bodyPart": "upper-legs",
+      "equipment": "sled-machine",
+      "target": "glutes",
+      "muscleGroup": "glutes",
+      "synergistMuscle": "quadriceps",
+      "secondaryMuscles": [
+        "quadriceps",
+        "hamstrings",
+        "calves"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the sled machine to a comfortable weight.",
+          "Lie on your back on the sled machine with your feet on the footplate.",
+          "Position your feet shoulder-width apart and slightly angled outwards.",
+          "Grip the handles of the sled machine for stability.",
+          "Engage your glutes and core muscles.",
+          "Push through your heels and extend your legs to lift the sled.",
+          "Lower the sled back down by bending your knees and hips.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Schlittenmaschine auf ein angenehmes Gewicht ein.",
+          "Lege dich mit dem Rücken auf die Schlittenmaschine und stelle deine Füße auf die Fußplatte.",
+          "Positioniere deine Füße schulterbreit auseinander und leicht nach außen geneigt.",
+          "Halte die Griffe der Schlittenmaschine fest, um Stabilität zu gewährleisten.",
+          "Beanspruche deine Gesäß- und Rumpfmuskulatur.",
+          "Drücke deine Fersen durch und strecke deine Beine aus, um den Schlitten anzuheben.",
+          "Senke den Schlitten wieder ab, indem du deine Knie und Hüften beugst.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0744-9n2149Z.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0744-9n2149Z.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71f2-72e4-8175-f5b42f1c94e3",
+      "source": {
+        "type": "github",
+        "id": "1615"
+      },
+      "names": {
+        "en": "lever hammer grip preacher curl",
+        "de": "Scott-Hammercurl an der Maschine"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "leverage-machine",
+      "target": "biceps",
+      "muscleGroup": "biceps",
+      "synergistMuscle": "forearms",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat height and position yourself on the leverage machine.",
+          "Place your upper arms on the preacher pad, ensuring your chest is pressed against it.",
+          "Grasp the handles with a hammer grip (palms facing each other).",
+          "Keeping your upper arms stationary, exhale and curl the handles towards your shoulders.",
+          "Pause for a moment at the top, squeezing your biceps.",
+          "Inhale and slowly lower the handles back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Passe die Sitzhöhe an und positioniere sich auf der Hebelmaschine.",
+          "Lege deine Oberarme auf das Scottbank-Polster und achte darauf, dass deine Brust dagegen gedrückt wird.",
+          "Fasse die Griffe mit einem Hammergriff (die Handflächen zeigen zueinander).",
+          "Halte deine Oberarme ruhig, atme aus und curle die Griffe in Richtung deiner Schultern.",
+          "Halte oben einen Moment inne und spanne deinen Bizeps an.",
+          "Atme ein und senke die Griffe langsam zurück in die Ausgangsposition.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/1615-OAguZoG.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/1615-OAguZoG.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71f3-7469-9062-543a1b7c9821",
+      "source": {
+        "type": "github",
+        "id": "0588"
+      },
+      "names": {
+        "en": "lever narrow grip seated row",
+        "de": "Sitzendes enges Rudern an der Maschine"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "back",
+      "bodyPart": "back",
+      "equipment": "leverage-machine",
+      "target": "upper-back",
+      "muscleGroup": "middleBack",
+      "synergistMuscle": "biceps",
+      "secondaryMuscles": [
+        "biceps",
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat height and footrests to ensure proper form.",
+          "Sit on the machine with your feet flat on the footrests and your knees slightly bent.",
+          "Grasp the handles with a narrow grip, palms facing each other.",
+          "Keep your back straight and lean slightly forward.",
+          "Pull the handles towards your torso, squeezing your shoulder blades together.",
+          "Pause for a moment at the peak of the movement.",
+          "Slowly release the handles and return to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Passe die Sitzhöhe und die Fußstützen an, um die richtige Form zu gewährleisten.",
+          "Setze dich mit den Füßen flach auf die Fußstützen und leicht gebeugten Knien auf die Maschine.",
+          "Fasse die Griffe mit schmalem Griff, wobei die Handflächen einander zugewandt sind.",
+          "Halte deinen Rücken gerade und lehne sich leicht nach vorne.",
+          "Ziehe die Griffe in Richtung deines Oberkörpers und drücke dabei deine Schulterblätter zusammen.",
+          "Halte auf dem Höhepunkt der Bewegung einen Moment inne.",
+          "Lass die Griffe langsam los und kehre in die Ausgangsposition zurück.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0588-IGjKj1v.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0588-IGjKj1v.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71f4-759e-89da-8a0bc5f31cc1",
+      "source": {
+        "type": "github",
+        "id": "0592"
+      },
+      "names": {
+        "en": "lever preacher curl",
+        "de": "Scottcurl an der Maschine"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "leverage-machine",
+      "target": "biceps",
+      "muscleGroup": "biceps",
+      "synergistMuscle": "forearms",
+      "secondaryMuscles": [
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat height and position yourself on the leverage machine.",
+          "Place your upper arms on the pad and grip the handles with an underhand grip.",
+          "Keep your back straight and your elbows positioned on the pad.",
+          "Exhale and curl your forearms towards your upper arms, contracting your biceps.",
+          "Pause for a moment at the top of the movement, squeezing your biceps.",
+          "Inhale and slowly lower the handles back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Passe die Sitzhöhe an und positioniere sich auf der Hebelmaschine.",
+          "Lege deine Oberarme auf das Polster und greife die Griffe mit dem Untergriff.",
+          "Halte deinen Rücken gerade und deine Ellbogen auf dem Polster positioniert.",
+          "Atme aus und beuge deine Unterarme in Richtung deiner Oberarme, wobei du deinen Bizeps anspannst.",
+          "Halte am Höhepunkt der Bewegung einen Moment inne und spanne deinen Bizeps an.",
+          "Atme ein und senke die Griffe langsam zurück in die Ausgangsposition.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0592-b6hQYMb.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0592-b6hQYMb.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71f6-7271-b3ca-1bef126d4c9a",
+      "source": {
+        "type": "github",
+        "id": "0586"
+      },
+      "names": {
+        "en": "Lying Leg Curl",
+        "de": "Liegender Beinbeuger"
+      },
+      "aliases": {
+        "en": [
+          "lever lying leg curl"
+        ],
+        "de": []
+      },
+      "category": "upper-legs",
+      "bodyPart": "upper-legs",
+      "equipment": "leverage-machine",
+      "target": "hamstrings",
+      "muscleGroup": "hamstrings",
+      "synergistMuscle": "calves",
+      "secondaryMuscles": [
+        "calves"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the machine to fit your body and select the desired weight.",
+          "Lie face down on the machine with your legs straight and your heels against the padded lever.",
+          "Grasp the handles or the sides of the machine for stability.",
+          "Keeping your upper body stationary, exhale and curl your legs up as far as possible without lifting your hips off the pad.",
+          "Hold the contracted position for a brief pause as you squeeze your hamstrings.",
+          "Inhale and slowly lower the lever back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Passe das Gerät an deinen Körper an und wähle das gewünschte Gewicht.",
+          "Lege dich mit ausgestreckten Beinen und den Fersen gegen den gepolsterten Hebel mit dem Gesicht nach unten auf die Maschine.",
+          "Fasse die Maschine an den Griffen oder an den Seiten an, um Stabilität zu gewährleisten.",
+          "Halte deinen Oberkörper ruhig, atme aus und beuge deine Beine so weit wie möglich nach oben, ohne deine Hüften vom Polster abzuheben.",
+          "Halte die angespannte Position für eine kurze Pause, während du deine Oberschenkelmuskulatur anspannst.",
+          "Atme ein und senke den Hebel langsam zurück in die Ausgangsposition.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0586-17lJ1kr.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0586-17lJ1kr.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71f7-7718-bb20-793e08571677",
+      "source": {
+        "type": "github",
+        "id": "1301"
+      },
+      "names": {
+        "en": "machine inner chest press",
+        "de": "Innere Brustpresse"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "chest",
+      "bodyPart": "chest",
+      "equipment": "leverage-machine",
+      "target": "pectorals",
+      "muscleGroup": "chest",
+      "synergistMuscle": "triceps",
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat height and position yourself on the machine with your back flat against the pad.",
+          "Grasp the handles with an overhand grip and position your elbows at a 90-degree angle.",
+          "Push the handles forward until your arms are fully extended, exhaling during the movement.",
+          "Pause for a moment at the end of the movement, then slowly return to the starting position, inhaling as you do so.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Passe die Sitzhöhe an und positioniere sich auf der Maschine mit dem Rücken flach gegen das Polster.",
+          "Fasse die Griffe im Obergriff und positioniere deine Ellenbogen im 90-Grad-Winkel.",
+          "Schiebe die Griffe nach vorne, bis deine Arme vollständig ausgestreckt sind, und atme während der Bewegung aus.",
+          "Halte am Ende der Bewegung einen Moment inne, kehre dann langsam in die Ausgangsposition zurück und atme dabei ein.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/1301-wDN97Ca.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/1301-wDN97Ca.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71f8-7631-9457-39419698506f",
+      "source": {
+        "type": "github",
+        "id": "0292"
+      },
+      "names": {
+        "en": "One Arm Dumbbell Row",
+        "de": "Einarmiges Kurzhantelrudern"
+      },
+      "aliases": {
+        "en": [
+          "dumbbell one arm bent-over row"
+        ],
+        "de": []
+      },
+      "category": "back",
+      "bodyPart": "back",
+      "equipment": "dumbbell",
+      "target": "upper-back",
+      "muscleGroup": "middleBack",
+      "synergistMuscle": "biceps",
+      "secondaryMuscles": [
+        "biceps",
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Stand with your feet shoulder-width apart, holding a dumbbell in one hand with your palm facing your body.",
+          "Bend your knees slightly and hinge forward at the hips, keeping your back straight and your core engaged.",
+          "Let the dumbbell hang straight down towards the floor, with your arm fully extended.",
+          "Pull the dumbbell up towards your chest, keeping your elbow close to your body and squeezing your shoulder blades together.",
+          "Pause for a moment at the top, then slowly lower the dumbbell back down to the starting position.",
+          "Repeat for the desired number of repetitions, then switch sides."
+        ],
+        "de": [
+          "Stehe mit schulterbreit auseinander stehenden Füßen und halte eine Kurzhantel in einer Hand, wobei deine Handfläche zum Körper zeigt.",
+          "Beuge deine Knie leicht und beuge die Hüften nach vorne, wobei du deinen Rücken gerade und deinen Rumpf angespannt hältst.",
+          "Lass die Kurzhantel mit vollständig ausgestrecktem Arm gerade nach unten zum Boden hängen.",
+          "Ziehe die Kurzhantel nach oben in Richtung Brust, halte dabei deinen Ellenbogen nah am Körper und drücke deine Schulterblätter zusammen.",
+          "Halte oben kurz inne und senke die Kurzhantel dann langsam wieder in die Ausgangsposition ab.",
+          "Wiederhole die Übung für die gewünschte Anzahl an Wiederholungen und wechsle dann die Seite."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0292-C0MA9bC.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0292-C0MA9bC.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71f9-76b9-8e29-20ee3f379a3f",
+      "source": {
+        "type": "github",
+        "id": "1722"
+      },
+      "names": {
+        "en": "Overhead Cable Triceps Extension",
+        "de": "Trizepsstrecken über Kopf am Kabelzug"
+      },
+      "aliases": {
+        "en": [
+          "cable high pulley overhead tricep extension"
+        ],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "cable",
+      "target": "triceps",
+      "muscleGroup": "triceps",
+      "synergistMuscle": "shoulders",
+      "secondaryMuscles": [
+        "shoulders"
+      ],
+      "instructions": {
+        "en": [
+          "Attach a rope to a high pulley and stand facing away from the machine.",
+          "Grasp the rope with both hands and extend your arms overhead.",
+          "Keep your elbows close to your head and your upper arms stationary.",
+          "Slowly lower the rope behind your head by bending your elbows.",
+          "Pause for a moment, then extend your arms back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Befestige ein Seil an einer hohen Rolle und stelle sich mit dem Gesicht von der Maschine weg.",
+          "Fasse das Seil mit beiden Händen und strecke deine Arme über den Kopf.",
+          "Halte deine Ellbogen nah am Kopf und deine Oberarme ruhig.",
+          "Senke das Seil langsam hinter deinen Kopf, indem du deine Ellbogen beugst.",
+          "Halte einen Moment inne und strecke dann deine Arme zurück in die Ausgangsposition.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/1722-1xHyxys.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/1722-1xHyxys.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71f9-76b9-8e29-254e03122831",
+      "source": {
+        "type": "github",
+        "id": "0602"
+      },
+      "names": {
+        "en": "Reverse Fly Machine",
+        "de": "Reverse Fly an der Maschine"
+      },
+      "aliases": {
+        "en": [
+          "lever seated reverse fly"
+        ],
+        "de": []
+      },
+      "category": "shoulders",
+      "bodyPart": "shoulders",
+      "equipment": "leverage-machine",
+      "target": "delts",
+      "muscleGroup": "shoulders",
+      "synergistMuscle": "trapezius",
+      "secondaryMuscles": [
+        "trapezius",
+        "rhomboids"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat height and position yourself on the machine with your chest against the pad and your feet flat on the floor.",
+          "Grasp the handles with an overhand grip and keep your arms slightly bent.",
+          "Exhale and squeeze your shoulder blades together as you pull the handles back and outward, away from your body.",
+          "Pause for a moment at the peak contraction, then inhale and slowly return to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Passe die Sitzhöhe an und positioniere sich auf der Maschine, wobei deine Brust an der Polsterung anliegt und deine Füße flach auf dem Boden stehen.",
+          "Fasse die Griffe im Obergriff und halte die Arme leicht gebeugt.",
+          "Atme aus und drücke deine Schulterblätter zusammen, während du die Griffe nach hinten und außen ziehst, von deinem Körper weg.",
+          "Halte beim Höhepunkt der Kontraktion einen Moment inne, atme dann ein und kehre langsam in die Ausgangsposition zurück.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0602-myfUsKf.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0602-myfUsKf.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71fb-713b-8a3e-73aab41868f9",
+      "source": {
+        "type": "github",
+        "id": "0088"
+      },
+      "names": {
+        "en": "Seated Barbell Calf Raise",
+        "de": "Sitzendes Wadenheben mit Langhantel"
+      },
+      "aliases": {
+        "en": [
+          "barbell seated calf raise"
+        ],
+        "de": []
+      },
+      "category": "lower-legs",
+      "bodyPart": "lower-legs",
+      "equipment": "barbell",
+      "target": "calves",
+      "muscleGroup": "calves",
+      "synergistMuscle": "hamstrings",
+      "secondaryMuscles": [
+        "hamstrings",
+        "quadriceps"
+      ],
+      "instructions": {
+        "en": [
+          "Sit on a bench with your feet flat on the floor and a barbell resting on your thighs.",
+          "Place the balls of your feet on a raised platform, such as a block or step.",
+          "Position the barbell across your thighs and hold it securely with your hands.",
+          "Keeping your back straight and your core engaged, lift your heels off the ground by extending your ankles.",
+          "Pause for a moment at the top, then slowly lower your heels back down to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Setze dich mit den Füßen flach auf den Boden und einer Langhantel auf deinen Oberschenkeln auf eine Bank.",
+          "Stelle deine Fußballen auf eine erhöhte Plattform, beispielsweise einen Block oder eine Stufe.",
+          "Positioniere die Langhantel über deinen Oberschenkeln und halte sie mit deinen Händen fest.",
+          "Halte deinen Rücken gerade und deinen Rumpf angespannt und hebe deine Fersen vom Boden ab, indem du deine Knöchel streckst.",
+          "Halte oben kurz inne und senke dann langsam deine Fersen wieder in die Ausgangsposition ab.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0088-ktsFQAZ.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0088-ktsFQAZ.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71fd-70cf-b565-ec8f8c770ee4",
+      "source": {
+        "type": "github",
+        "id": "0861"
+      },
+      "names": {
+        "en": "Seated Cable Rows",
+        "de": "Sitzendes Rudern am Kabelzug"
+      },
+      "aliases": {
+        "en": [
+          "cable seated row"
+        ],
+        "de": []
+      },
+      "category": "back",
+      "bodyPart": "back",
+      "equipment": "cable",
+      "target": "upper-back",
+      "muscleGroup": "middleBack",
+      "synergistMuscle": "biceps",
+      "secondaryMuscles": [
+        "biceps",
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Sit on the cable row machine with your feet flat on the footrests and your knees slightly bent.",
+          "Grasp the handles with an overhand grip, keeping your back straight and your shoulders relaxed.",
+          "Pull the handles towards your body, squeezing your shoulder blades together.",
+          "Pause for a moment at the peak of the movement, then slowly release the handles back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Setze dich mit den Füßen flach auf die Fußstützen und leicht gebeugten Knien auf das Kabelrudergerät.",
+          "Fasse die Griffe im Obergriff, halte dabei deinen Rücken gerade und deine Schultern entspannt.",
+          "Ziehe die Griffe zu deinem Körper und drücke dabei deine Schulterblätter zusammen.",
+          "Halte am Höhepunkt der Bewegung einen Moment inne und lass dann die Griffe langsam wieder in die Ausgangsposition zurück.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0861-fUBheHs.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0861-fUBheHs.gif"
+      }
+    },
+    {
+      "id": "01a0c944-71ff-7283-80a6-32acd40e5952",
+      "source": {
+        "type": "github",
+        "id": "0594"
+      },
+      "names": {
+        "en": "Seated Calf Raise Machine",
+        "de": "Sitzendes Wadenheben an der Maschine"
+      },
+      "aliases": {
+        "en": [
+          "lever seated calf raise"
+        ],
+        "de": []
+      },
+      "category": "lower-legs",
+      "bodyPart": "lower-legs",
+      "equipment": "leverage-machine",
+      "target": "calves",
+      "muscleGroup": "calves",
+      "synergistMuscle": "soleus",
+      "secondaryMuscles": [
+        "soleus",
+        "ankle-stabilizers"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat height so that your knees are slightly bent and your feet are flat on the footplate.",
+          "Place your toes on the footplate with your heels hanging off the edge.",
+          "Grasp the handles or the sides of the seat for stability.",
+          "Push through the balls of your feet to raise your heels as high as possible.",
+          "Pause for a moment at the top, then slowly lower your heels back down to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Sitzhöhe so ein, dass deine Knie leicht gebeugt sind und deine Füße flach auf der Fußplatte stehen.",
+          "Platziere deine Zehen auf der Fußplatte, wobei deine Fersen über die Kante hängen.",
+          "Fasse die Griffe oder die Seiten des Sitzes an, um Stabilität zu gewährleisten.",
+          "Drücke durch die Fußballen, um deine Fersen so hoch wie möglich zu heben.",
+          "Halte oben kurz inne und senke dann langsam deine Fersen wieder in die Ausgangsposition ab.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0594-bOOdeyc.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0594-bOOdeyc.gif"
+      }
+    },
+    {
+      "id": "01a0c944-7201-7383-921a-092e0ff04451",
+      "source": {
+        "type": "github",
+        "id": "0599"
+      },
+      "names": {
+        "en": "Seated Leg Curl",
+        "de": "Sitzender Beinbeuger"
+      },
+      "aliases": {
+        "en": [
+          "lever seated leg curl"
+        ],
+        "de": []
+      },
+      "category": "upper-legs",
+      "bodyPart": "upper-legs",
+      "equipment": "leverage-machine",
+      "target": "hamstrings",
+      "muscleGroup": "hamstrings",
+      "synergistMuscle": "calves",
+      "secondaryMuscles": [
+        "calves"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the machine to fit your body and sit on it with your back against the backrest.",
+          "Place your lower legs under the padded lever, just above your ankles.",
+          "Grasp the handles on the sides of the machine for support.",
+          "Keeping your upper legs stationary, exhale and curl your legs up as far as possible.",
+          "Hold the contracted position for a brief pause as you squeeze your hamstrings.",
+          "Inhale and slowly lower the lever back to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Passe die Maschine an deinen Körper an und setze sich mit dem Rücken an die Rückenlehne darauf.",
+          "Platziere deine Unterschenkel unter dem gepolsterten Hebel, direkt über deinen Knöcheln.",
+          "Halte sich an den Griffen an den Seiten der Maschine fest.",
+          "Halte deine Oberschenkel ruhig, atme aus und beuge deine Beine so weit wie möglich nach oben.",
+          "Halte die angespannte Position für eine kurze Pause, während du deine Oberschenkelmuskulatur anspannst.",
+          "Atme ein und senke den Hebel langsam zurück in die Ausgangsposition.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0599-Zg3XY7P.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0599-Zg3XY7P.gif"
+      }
+    },
+    {
+      "id": "01a0c944-7203-728a-a9dc-dc20d4056ad8",
+      "source": {
+        "type": "github",
+        "id": "1350"
+      },
+      "names": {
+        "en": "Seated Row Machine",
+        "de": "Sitzendes Rudern an der Maschine"
+      },
+      "aliases": {
+        "en": [
+          "lever seated row"
+        ],
+        "de": []
+      },
+      "category": "back",
+      "bodyPart": "back",
+      "equipment": "leverage-machine",
+      "target": "upper-back",
+      "muscleGroup": "middleBack",
+      "synergistMuscle": "biceps",
+      "secondaryMuscles": [
+        "biceps",
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat height and footrests to a comfortable position.",
+          "Sit on the machine with your chest against the pad and your feet on the footrests.",
+          "Grasp the handles with an overhand grip, shoulder-width apart.",
+          "Keep your back straight and your core engaged.",
+          "Pull the handles towards your body, squeezing your shoulder blades together.",
+          "Pause for a moment at the peak of the movement.",
+          "Slowly release the handles and return to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Sitzhöhe und die Fußstützen auf eine bequeme Position ein.",
+          "Setze dich mit der Brust gegen das Polster und den Füßen auf die Fußstützen auf die Maschine.",
+          "Fasse die Griffe schulterbreit auseinander im Obergriff.",
+          "Halte deinen Rücken gerade und deinen Rumpf angespannt.",
+          "Ziehe die Griffe zu deinem Körper und drücke dabei deine Schulterblätter zusammen.",
+          "Halte auf dem Höhepunkt der Bewegung einen Moment inne.",
+          "Lass die Griffe langsam los und kehre in die Ausgangsposition zurück.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/1350-7I6LNUG.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/1350-7I6LNUG.gif"
+      }
+    },
+    {
+      "id": "01a0c944-7205-76e7-912b-b84a8057089e",
+      "source": {
+        "type": "github",
+        "id": "2318"
+      },
+      "names": {
+        "en": "Seated Shoulder Press Machine",
+        "de": "Sitzende Schulterpresse"
+      },
+      "aliases": {
+        "en": [
+          "lever shoulder press v. 3"
+        ],
+        "de": []
+      },
+      "category": "shoulders",
+      "bodyPart": "shoulders",
+      "equipment": "leverage-machine",
+      "target": "delts",
+      "muscleGroup": "shoulders",
+      "synergistMuscle": "triceps",
+      "secondaryMuscles": [
+        "triceps",
+        "chest"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat height and backrest of the leverage machine to a comfortable position.",
+          "Sit on the machine with your back against the backrest and your feet flat on the floor.",
+          "Grasp the handles of the machine with an overhand grip, slightly wider than shoulder-width apart.",
+          "Push the handles upward and forward until your arms are fully extended, but not locked.",
+          "Pause for a moment at the top, then slowly lower the handles back down to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Sitzhöhe und die Rückenlehne der Hebelmaschine auf eine bequeme Position ein.",
+          "Setze dich mit dem Rücken an die Rückenlehne und die Füße flach auf den Boden auf die Maschine.",
+          "Fasse die Griffe der Maschine mit einem Obergriff an, der etwas weiter als schulterbreit auseinander liegt.",
+          "Drücke die Griffe nach oben und vorne, bis deine Arme vollständig ausgestreckt, aber nicht blockiert sind.",
+          "Halte oben einen Moment inne und senke dann die Griffe langsam wieder in die Ausgangsposition ab.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/2318-dNFYIU1.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/2318-dNFYIU1.gif"
+      }
+    },
+    {
+      "id": "01a0c944-7206-775a-916c-79d8b04aed95",
+      "source": {
+        "type": "github",
+        "id": "0748"
+      },
+      "names": {
+        "en": "Smith Machine Bench Press",
+        "de": "Bankdrücken an der Multipresse"
+      },
+      "aliases": {
+        "en": [
+          "smith bench press"
+        ],
+        "de": []
+      },
+      "category": "chest",
+      "bodyPart": "chest",
+      "equipment": "smith-machine",
+      "target": "pectorals",
+      "muscleGroup": "chest",
+      "synergistMuscle": "triceps",
+      "secondaryMuscles": [
+        "triceps",
+        "shoulders"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the height of the smith machine bar to chest level.",
+          "Lie flat on the bench with your feet firmly planted on the ground.",
+          "Grip the bar with an overhand grip slightly wider than shoulder-width apart.",
+          "Unrack the bar and lower it towards your chest, keeping your elbows tucked in.",
+          "Pause for a moment when the bar touches your chest.",
+          "Push the bar back up to the starting position, fully extending your arms.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Höhe der Smith-Maschinenstange auf Brusthöhe ein.",
+          "Lege dich flach auf die Bank und stelle deine Füße fest auf den Boden.",
+          "Fasse die Stange mit einem Obergriff an, der etwas weiter als schulterbreit auseinander liegt.",
+          "Nimm die Stange ab und senke sie in Richtung deiner Brust ab. Halte dabei die Ellbogen angezogen.",
+          "Halte einen Moment inne, wenn die Stange deine Brust berührt.",
+          "Schiebe die Stange zurück in die Ausgangsposition und strecke dabei deine Arme vollständig aus.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0748-trqKQv2.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0748-trqKQv2.gif"
+      }
+    },
+    {
+      "id": "01a0c944-7208-7798-8915-3b005a150a17",
+      "source": {
+        "type": "github",
+        "id": "0757"
+      },
+      "names": {
+        "en": "Smith Machine Incline Bench Press",
+        "de": "Schrägbankdrücken an der Multipresse"
+      },
+      "aliases": {
+        "en": [
+          "smith incline bench press"
+        ],
+        "de": []
+      },
+      "category": "chest",
+      "bodyPart": "chest",
+      "equipment": "smith-machine",
+      "target": "pectorals",
+      "muscleGroup": "chest",
+      "synergistMuscle": "shoulders",
+      "secondaryMuscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the bench to a 30-45 degree incline.",
+          "Sit on the bench with your back flat against the pad and feet firmly on the ground.",
+          "Grasp the barbell with an overhand grip slightly wider than shoulder-width apart.",
+          "Unrack the barbell and lower it slowly towards your upper chest, keeping your elbows slightly tucked in.",
+          "Pause for a moment at the bottom, then push the barbell back up to the starting position, fully extending your arms.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Bank auf eine Neigung von 30–45 Grad ein.",
+          "Setze dich auf die Bank, mit dem Rücken flach auf dem Polster und den Füßen fest auf dem Boden.",
+          "Fasse die Langhantel mit einem Obergriff an, der etwas weiter als schulterbreit auseinander liegt.",
+          "Nimm die Langhantel ab und senke sie langsam in Richtung deines oberen Brustkorbs ab. Halte dabei deine Ellbogen leicht angewinkelt.",
+          "Halte unten einen Moment inne und schiebe die Langhantel dann wieder nach oben in die Ausgangsposition, wobei du deine Arme vollständig ausstreckst.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0757-5v7KYld.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0757-5v7KYld.gif"
+      }
+    },
+    {
+      "id": "01a0c944-7211-7722-81fe-6a587018df1d",
+      "source": {
+        "type": "github",
+        "id": "0770"
+      },
+      "names": {
+        "en": "Smith Machine Squats",
+        "de": "Kniebeugen an der Multipresse"
+      },
+      "aliases": {
+        "en": [
+          "smith squat"
+        ],
+        "de": []
+      },
+      "category": "upper-legs",
+      "bodyPart": "upper-legs",
+      "equipment": "smith-machine",
+      "target": "glutes",
+      "muscleGroup": "glutes",
+      "synergistMuscle": "quadriceps",
+      "secondaryMuscles": [
+        "quadriceps",
+        "hamstrings",
+        "calves"
+      ],
+      "instructions": {
+        "en": [
+          "Set up the smith machine with the barbell at an appropriate height for your squat.",
+          "Stand with your feet shoulder-width apart, toes slightly turned out.",
+          "Position yourself under the barbell, resting it on your upper traps and shoulders.",
+          "Grip the barbell with a wide grip, slightly wider than shoulder-width apart.",
+          "Engage your core and unrack the barbell, stepping back to clear the rack.",
+          "Keeping your chest up and back straight, initiate the squat by bending at the hips and knees.",
+          "Lower your body until your thighs are parallel to the ground or slightly below.",
+          "Pause for a moment at the bottom, then drive through your heels to return to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Smith-Maschine so auf, dass sich die Langhantel in einer für deine Kniebeuge geeigneten Höhe befindet.",
+          "Stehe mit schulterbreit auseinander stehenden Füßen und leicht nach außen gerichteten Zehen.",
+          "Positioniere dich unter der Langhantel und lege sie auf deinen oberen Trapezmuskeln und Schultern ab.",
+          "Fasse die Langhantel mit einem breiten Griff an, etwas weiter als schulterbreit auseinander.",
+          "Spanne deinen Rumpf an, nimm die Langhantel ab und tritt zurück, um die Ablage zu verlassen.",
+          "Halte deine Brust und deinen Rücken gerade und beginne die Kniebeuge, indem du die Hüften und Knie beugst.",
+          "Senke deinen Körper, bis deine Oberschenkel parallel zum Boden oder leicht darunter sind.",
+          "Halte unten einen Moment inne und drücke sich dann über die Fersen ab, um in die Ausgangsposition zurückzukehren.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0770-jFtipLl.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0770-jFtipLl.gif"
+      }
+    },
+    {
+      "id": "01a0c944-721e-766f-b285-a2dcbf3ca628",
+      "source": {
+        "type": "cardio",
+        "id": "stairmaster"
+      },
+      "names": {
+        "en": "StairMaster",
+        "de": "StairMaster"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "cardio",
+      "bodyPart": "full-body",
+      "equipment": "cardio-machine",
+      "target": "cardio",
+      "muscleGroup": "cardio",
+      "synergistMuscle": "cardio",
+      "secondaryMuscles": [],
+      "instructions": {
+        "en": [
+          "Step onto the machine and select a low starting speed.",
+          "Keep your torso upright and place each foot fully on the step.",
+          "Climb at a steady pace without leaning heavily on the handles.",
+          "Slow the machine before stepping off."
+        ],
+        "de": [
+          "Steige auf das Gerät und wähle eine niedrige Startgeschwindigkeit.",
+          "Halte deinen Oberkörper aufrecht und setze jeden Fuß vollständig auf die Stufe.",
+          "Steige in gleichmäßigem Tempo, ohne dich stark auf den Griffen abzustützen.",
+          "Verlangsame das Gerät, bevor du absteigst."
+        ]
+      },
+      "media": {
+        "thumbnail": null,
+        "gif": null
+      }
+    },
+    {
+      "id": "01a0c944-7213-755d-b674-a783024f7486",
+      "source": {
+        "type": "github",
+        "id": "0225"
+      },
+      "names": {
+        "en": "Standing Cable Reverse Fly",
+        "de": "Stehender Reverse Fly am Kabelzug"
+      },
+      "aliases": {
+        "en": [
+          "cable standing cross-over high reverse fly"
+        ],
+        "de": []
+      },
+      "category": "shoulders",
+      "bodyPart": "shoulders",
+      "equipment": "cable",
+      "target": "delts",
+      "muscleGroup": "shoulders",
+      "synergistMuscle": "trapezius",
+      "secondaryMuscles": [
+        "trapezius",
+        "rhomboids",
+        "rear-deltoids"
+      ],
+      "instructions": {
+        "en": [
+          "Attach a D-handle to each side of a cable machine at shoulder height.",
+          "Stand in the middle of the cable machine with your feet shoulder-width apart.",
+          "Grasp the handles with an overhand grip and extend your arms out to the sides, palms facing forward.",
+          "Keep a slight bend in your elbows and maintain a straight back throughout the exercise.",
+          "Engage your shoulder muscles and squeeze your shoulder blades together as you pull the handles towards the front of your body.",
+          "Pause for a moment at the peak of the movement, then slowly return to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Befestige einen D-Griff an jeder Seite einer Kabelmaschine auf Schulterhöhe.",
+          "Stelle dich mit schulterbreit auseinander stehenden Füßen in die Mitte der Kabelmaschine.",
+          "Fasse die Griffe im Obergriff und strecke deine Arme seitlich aus, die Handflächen zeigen nach vorne.",
+          "Behalte während der gesamten Übung eine leichte Beugung der Ellenbogen bei und achte auf einen geraden Rücken.",
+          "Spanne deine Schultermuskeln an und drücke deine Schulterblätter zusammen, während du die Griffe zur Vorderseite deines Körpers ziehst.",
+          "Halte am Höhepunkt der Bewegung einen Moment inne und kehre dann langsam in die Ausgangsposition zurück.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0225-P5p0j8B.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0225-P5p0j8B.gif"
+      }
+    },
+    {
+      "id": "01a0c944-7215-75ad-bd11-602189162cc8",
+      "source": {
+        "type": "github",
+        "id": "0605"
+      },
+      "names": {
+        "en": "Standing Calf Raise Machine",
+        "de": "Stehendes Wadenheben an der Maschine"
+      },
+      "aliases": {
+        "en": [
+          "lever standing calf raise"
+        ],
+        "de": []
+      },
+      "category": "lower-legs",
+      "bodyPart": "lower-legs",
+      "equipment": "leverage-machine",
+      "target": "calves",
+      "muscleGroup": "calves",
+      "synergistMuscle": "soleus",
+      "secondaryMuscles": [
+        "soleus",
+        "ankle-stabilizers"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the machine to your height and stand with your feet shoulder-width apart.",
+          "Place your shoulders under the pads and hold onto the handles for stability.",
+          "Raise your heels as high as possible by extending your ankles.",
+          "Pause for a moment at the top, then slowly lower your heels back down to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Passe die Maschine an deine Körpergröße an und stelle sich mit schulterbreit auseinander stehenden Füßen hin.",
+          "Lege deine Schultern unter die Polster und halte sich für Stabilität an den Griffen fest.",
+          "Hebe deine Fersen so hoch wie möglich, indem du deine Knöchel streckst.",
+          "Halte oben kurz inne und senke dann langsam deine Fersen wieder in die Ausgangsposition ab.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0605-ykUOVze.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0605-ykUOVze.gif"
+      }
+    },
+    {
+      "id": "01a0c944-721e-766f-b285-af40d6feaf48",
+      "source": {
+        "type": "cardio",
+        "id": "swimming"
+      },
+      "names": {
+        "en": "Swimming",
+        "de": "Schwimmen"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "cardio",
+      "bodyPart": "full-body",
+      "equipment": "none",
+      "target": "cardio",
+      "muscleGroup": "cardio",
+      "synergistMuscle": "cardio",
+      "secondaryMuscles": [],
+      "instructions": {
+        "en": [
+          "Enter the water safely and choose a familiar stroke.",
+          "Keep a long body position and breathe in a controlled rhythm.",
+          "Move at a sustainable pace with smooth, coordinated strokes.",
+          "Slow down before leaving the water safely."
+        ],
+        "de": [
+          "Gehe sicher ins Wasser und wähle einen vertrauten Schwimmstil.",
+          "Halte eine gestreckte Körperposition und atme in kontrolliertem Rhythmus.",
+          "Schwimme in nachhaltigem Tempo mit ruhigen, koordinierten Zügen.",
+          "Verlangsame, bevor du das Wasser sicher verlässt."
+        ]
+      },
+      "media": {
+        "thumbnail": null,
+        "gif": null
+      }
+    },
+    {
+      "id": "01a0c944-7217-71d4-b228-ae8fb6da85bb",
+      "source": {
+        "type": "github",
+        "id": "0597"
+      },
+      "names": {
+        "en": "Thigh Abductor",
+        "de": "Abduktorenmaschine"
+      },
+      "aliases": {
+        "en": [
+          "lever seated hip abduction"
+        ],
+        "de": []
+      },
+      "category": "upper-legs",
+      "bodyPart": "upper-legs",
+      "equipment": "leverage-machine",
+      "target": "abductors",
+      "muscleGroup": "abductors",
+      "synergistMuscle": "glutes",
+      "secondaryMuscles": [
+        "glutes",
+        "hamstrings"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat height so that your knees are at a 90-degree angle.",
+          "Sit on the machine with your back against the backrest and your feet on the footrests.",
+          "Place your hands on the side handles for stability.",
+          "Engage your abductors and slowly push your legs apart, away from the midline of your body.",
+          "Pause for a moment at the end of the movement, then slowly bring your legs back together to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Sitzhöhe so ein, dass deine Knie einen 90-Grad-Winkel bilden.",
+          "Setze dich mit dem Rücken an die Rückenlehne und die Füße auf die Fußstützen auf die Maschine.",
+          "Lege deine Hände auf die Seitengriffe, um Stabilität zu gewährleisten.",
+          "Spanne deine Abduktoren an und drücke deine Beine langsam auseinander, weg von der Mittellinie deines Körpers.",
+          "Halte am Ende der Bewegung einen Moment inne und bringe dann deine Beine langsam wieder zusammen in die Ausgangsposition.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0597-CHpahtl.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0597-CHpahtl.gif"
+      }
+    },
+    {
+      "id": "01a0c944-7218-73e8-aedb-68c174d232ce",
+      "source": {
+        "type": "github",
+        "id": "0598"
+      },
+      "names": {
+        "en": "Thigh Adductor",
+        "de": "Adduktorenmaschine"
+      },
+      "aliases": {
+        "en": [
+          "lever seated hip adduction"
+        ],
+        "de": []
+      },
+      "category": "upper-legs",
+      "bodyPart": "upper-legs",
+      "equipment": "leverage-machine",
+      "target": "adductors",
+      "muscleGroup": "adductors",
+      "synergistMuscle": "hamstrings",
+      "secondaryMuscles": [
+        "hamstrings",
+        "glutes"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat height and position yourself on the machine with your back against the backrest.",
+          "Place your feet on the footrests and grasp the handles for stability.",
+          "Engage your adductor muscles and slowly bring your legs together, squeezing your inner thighs.",
+          "Pause for a moment at the peak contraction, then slowly return to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Sitzhöhe ein und positioniere sich mit dem Rücken an der Rückenlehne auf der Maschine.",
+          "Stelle deine Füße auf die Fußstützen und greife für Stabilität an den Griffen.",
+          "Spanne deine Adduktorenmuskeln an und führe deine Beine langsam zusammen, wobei du deine Innenseiten der Oberschenkel zusammendrückst.",
+          "Halte am Höhepunkt der Kontraktion einen Moment inne und kehre dann langsam in die Ausgangsposition zurück.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0598-oHsrypV.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0598-oHsrypV.gif"
+      }
+    },
+    {
+      "id": "01a0c944-7219-7172-8bb8-d5644cfd71c8",
+      "source": {
+        "type": "github",
+        "id": "0814"
+      },
+      "names": {
+        "en": "Triceps Dips",
+        "de": "Trizeps-Dips"
+      },
+      "aliases": {
+        "en": [
+          "triceps dip"
+        ],
+        "de": []
+      },
+      "category": "upper-arms",
+      "bodyPart": "upper-arms",
+      "equipment": "body-weight",
+      "target": "triceps",
+      "muscleGroup": "triceps",
+      "synergistMuscle": "chest",
+      "secondaryMuscles": [
+        "chest",
+        "shoulders"
+      ],
+      "instructions": {
+        "en": [
+          "Sit on the edge of a bench or chair with your hands gripping the edge, fingers pointing forward.",
+          "Slide your butt off the bench, supporting your weight with your hands.",
+          "Bend your elbows and lower your body towards the ground, keeping your back close to the bench.",
+          "Pause for a moment at the bottom, then push yourself back up to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Setze dich auf die Kante einer Bank oder eines Stuhls, wobei deine Hände die Kante umfassen und die Finger nach vorne zeigen.",
+          "Schiebe deinen Hintern von der Bank und stütze dein Gewicht mit deinen Händen.",
+          "Beuge deine Ellbogen und senke deinen Körper in Richtung Boden, wobei du deinen Rücken nahe an der Bank hältst.",
+          "Halte unten einen Moment inne und drücke sich dann wieder nach oben in die Ausgangsposition.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0814-X6C6i5Y.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0814-X6C6i5Y.gif"
+      }
+    },
+    {
+      "id": "01a0c944-721b-76bd-8e3d-51f1fa6344e2",
+      "source": {
+        "type": "github",
+        "id": "2616"
+      },
+      "names": {
+        "en": "V Bar Pulldown",
+        "de": "Latzug mit V-Griff"
+      },
+      "aliases": {
+        "en": [
+          "cable lateral pulldown with v-bar"
+        ],
+        "de": []
+      },
+      "category": "back",
+      "bodyPart": "back",
+      "equipment": "cable",
+      "target": "lats",
+      "muscleGroup": "lats",
+      "synergistMuscle": "biceps",
+      "secondaryMuscles": [
+        "biceps",
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Sit down on the cable pulldown machine and grab the v-bar attachment with an overhand grip.",
+          "Adjust the knee pad so that your thighs are secured under it.",
+          "Keep your back straight and lean back slightly.",
+          "Pull the v-bar down towards your upper chest while keeping your elbows close to your body.",
+          "Squeeze your back muscles at the bottom of the movement.",
+          "Slowly return the v-bar to the starting position and repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Setze dich auf die Kabelzugmaschine und greife mit dem Obergriff nach dem V-Griff.",
+          "Stelle das Kniepolster so ein, dass deine Oberschenkel darunter gesichert sind.",
+          "Halte deinen Rücken gerade und lehne sich leicht zurück.",
+          "Ziehe die V-Stange nach unten in Richtung deiner oberen Brust, während du deine Ellbogen nah am Körper hältst.",
+          "Spanne deine Rückenmuskeln am unteren Ende der Bewegung an.",
+          "Bringe die V-Stange langsam in die Ausgangsposition zurück und wiederhole den Vorgang für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/2616-4c9BhzB.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/2616-4c9BhzB.gif"
+      }
+    },
+    {
+      "id": "01a0c944-721e-766f-b285-9d457d0b9402",
+      "source": {
+        "type": "cardio",
+        "id": "walking-pad"
+      },
+      "names": {
+        "en": "Walking pad",
+        "de": "Walking Pad"
+      },
+      "aliases": {
+        "en": [],
+        "de": []
+      },
+      "category": "cardio",
+      "bodyPart": "full-body",
+      "equipment": "cardio-machine",
+      "target": "cardio",
+      "muscleGroup": "cardio",
+      "synergistMuscle": "cardio",
+      "secondaryMuscles": [],
+      "instructions": {
+        "en": [
+          "Step onto the walking pad and start at a low speed.",
+          "Walk upright with a relaxed stride and look forward.",
+          "Adjust the speed while maintaining a controlled pace.",
+          "Reduce the speed before stepping off."
+        ],
+        "de": [
+          "Steige auf das Walking Pad und starte mit niedriger Geschwindigkeit.",
+          "Gehe aufrecht mit lockerem Schritt und blicke nach vorn.",
+          "Passe die Geschwindigkeit an und behalte ein kontrolliertes Tempo bei.",
+          "Verringere die Geschwindigkeit, bevor du absteigst."
+        ]
+      },
+      "media": {
+        "thumbnail": null,
+        "gif": null
+      }
+    },
+    {
+      "id": "01a0c944-721c-7193-9ac0-e69c9ba75781",
+      "source": {
+        "type": "github",
+        "id": "0197"
+      },
+      "names": {
+        "en": "Wide Grip Lat Pull Down",
+        "de": "Breiter Latzug"
+      },
+      "aliases": {
+        "en": [
+          "cable pulldown (pro lat bar)"
+        ],
+        "de": []
+      },
+      "category": "back",
+      "bodyPart": "back",
+      "equipment": "cable",
+      "target": "lats",
+      "muscleGroup": "lats",
+      "synergistMuscle": "biceps",
+      "secondaryMuscles": [
+        "biceps",
+        "forearms"
+      ],
+      "instructions": {
+        "en": [
+          "Adjust the seat height so that your thighs are parallel to the ground and your feet are flat on the floor.",
+          "Grasp the lat bar with an overhand grip, slightly wider than shoulder-width apart.",
+          "Sit down and lean back slightly, keeping your chest up and your back straight.",
+          "Pull the bar down towards your chest, squeezing your shoulder blades together.",
+          "Pause for a moment at the bottom of the movement, then slowly release the bar back up to the starting position.",
+          "Repeat for the desired number of repetitions."
+        ],
+        "de": [
+          "Stelle die Sitzhöhe so ein, dass deine Oberschenkel parallel zum Boden sind und deine Füße flach auf dem Boden stehen.",
+          "Fasse die Latzugstange mit einem Obergriff, etwas weiter als schulterbreit auseinander.",
+          "Setze dich hin und lehne sich leicht zurück. Halte dabei die Brust hoch und den Rücken gerade.",
+          "Ziehe die Stange nach unten in Richtung Brust und drücke dabei deine Schulterblätter zusammen.",
+          "Halte am unteren Ende der Bewegung einen Moment inne und lass die Stange dann langsam wieder in die Ausgangsposition zurückkehren.",
+          "Wiederhole dies für die gewünschte Anzahl an Wiederholungen."
+        ]
+      },
+      "media": {
+        "thumbnail": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/0197-qdRxqCj.jpg",
+        "gif": "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/0197-qdRxqCj.gif"
+      }
+    }
+  ]
+}

@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { History, Plus, Trash2 } from 'lucide-react';
 import { v7 as uuidv7 } from 'uuid';
 import type { WorkoutExercise, WorkoutSet } from '@shared/commands';
-import type { CatalogExercise } from '@shared/exercises';
+import type { DisplayExercise } from '@/lib/exerciseCatalog';
 import { useDatabase } from '@/context/SessionContext';
 import { editWorkoutSets, applyOperation } from '@/db/operations';
 import { useLanguage } from '@/i18n/LanguageContext';
@@ -11,7 +11,7 @@ import { Modal } from '@/components/Modal';
 import { cn } from '@/lib/utils';
 
 export function WorkoutExerciseCard({ exercise, catalog, editable = true, initialSetType = 'working' }: {
-    exercise: WorkoutExercise; catalog?: CatalogExercise; editable?: boolean; initialSetType?: WorkoutSet['type'];
+    exercise: WorkoutExercise; catalog?: DisplayExercise; editable?: boolean; initialSetType?: WorkoutSet['type'];
 }) {
     const db = useDatabase();
     const { t, language } = useLanguage();

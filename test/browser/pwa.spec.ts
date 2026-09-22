@@ -69,7 +69,7 @@ test('cold starts offline, retains workout edits, and verifies identity before d
     await reopened.getByRole('link', { name: /Foundry District/ }).click();
     await reopened.getByRole('button', { name: 'Add Exercise', exact: true }).click();
     await reopened.getByRole('dialog').getByRole('textbox', { name: 'Search exercises…' }).fill('barbell bench press');
-    await reopened.getByRole('dialog').getByRole('button', { name: 'barbell bench press Chest', exact: true }).click();
+    await reopened.getByRole('dialog').getByRole('button', { name: 'Barbell Bench Press Chest', exact: true }).click();
     await reopened.getByRole('article').first().getByLabel('Weight (kg)', { exact: true }).fill('40');
     await reopened.getByRole('article').first().getByLabel('Reps', { exact: true }).fill('10');
     await reopened.getByRole('article').first().getByRole('button', { name: 'Add set', exact: true }).click();

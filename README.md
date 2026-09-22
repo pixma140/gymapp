@@ -17,9 +17,13 @@ start/end date-time fields use your local timezone; Save applies time changes.
 Active workouts allow adjusting the start without ending the session. Completed
 workouts require an end at or after their start.
 
-The bundled catalog is imported from a pinned `exercises-dataset` revision using
-`npm run exercises:import`; no runtime GitHub request is needed. See
-`THIRD_PARTY_NOTICES.md` for attribution. The workout flow uses compact headers,
+The curated bilingual catalog in `shared/exercises.json` is the source of truth.
+Run `npm run exercises:validate` after editing it. Exercise text and taxonomy work
+offline without a provider request. On the first online run, the app downloads the
+catalog's pinned thumbnails and GIFs from GitHub into a revisioned browser cache;
+Settings shows progress, storage use, retry, and clear controls. Five local cardio
+entries intentionally have no media. See `THIRD_PARTY_NOTICES.md` for attribution
+and the upstream media terms. The workout flow uses compact headers,
 bordered exercise cards, warmup badges, and modal selection inspired by the demo
 screenshots. Gym management remains restricted to administrators.
 
@@ -66,6 +70,10 @@ assume a fresh database. Update the initial SQLite DDL and single Dexie
 version increments, or compatibility/cleanup paths for previous schemas.
 Recreate development databases after schema changes; ordinary restarts preserve
 data for the current schema.
+
+The curated-catalog release replaces legacy string exercise references with UUID
+v7 references and removes the previous full catalog. Existing server and browser
+databases must be reset; legacy workout references are intentionally not migrated.
 
 Stop the API first (Ctrl-C, or `docker compose stop gymapp`), then run:
 
@@ -226,8 +234,10 @@ on the next launch, before any new login. An explicit login is required to reope
 the retained account after logout. Reconnection verifies identity before sending
 offline work, including account/installation changes and conflict checks.
 
-The service worker caches only app resources, including lazy-loaded screens;
-account data stays in IndexedDB and API responses are never service-worker cached.
+The service worker caches app resources, including lazy-loaded screens, and pinned
+exercise media from `raw.githubusercontent.com`. The app proactively fills that
+media cache in the background. Account data stays in IndexedDB and API responses
+are never service-worker cached.
 Updates wait for **Update app** confirmation, which reloads open app tabs while
 retaining saved data and pending changes. Complete unsaved form edits first.
 Sync runs while the app is open; closed-app background delivery is not promised.
@@ -237,8 +247,9 @@ storage writes fail, the current document stays locally locked and still attempt
 server logout, but persistence across browser restarts cannot be guaranteed.
 Breaking alpha schema releases still require the documented database reset.
 
-Express serves a same-origin Content Security Policy for scripts, connections,
-workers, and app resources; inline styles remain allowed for theme variables and
+Express serves a same-origin Content Security Policy for scripts, workers, and app
+resources, with a narrow image/connection exception for pinned exercise media on
+`raw.githubusercontent.com`; inline styles remain allowed for theme variables and
 charts. API responses use `Cache-Control: no-store`. JSON bodies are limited to
 1 MB, with JSON error responses for malformed or oversized requests.
 

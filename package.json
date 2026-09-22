@@ -34,7 +34,7 @@
     "db:reset:seed": "node server/reset.js --seed",
     "test:browser": "playwright test",
     "test:browser:install": "playwright install chromium",
-    "exercises:import": "node scripts/import-exercises.mjs"
+    "exercises:validate": "node scripts/validate-exercises.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

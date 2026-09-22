@@ -1,19 +1,19 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Plus } from 'lucide-react';
-import { EXERCISES } from '@shared/exercises';
 import { useDatabase } from '@/context/SessionContext';
 import { useLanguage } from '@/i18n/LanguageContext';
+import { getExerciseCatalog } from '@/lib/exerciseCatalog';
 import { ExerciseSelector } from '@/components/ExerciseSelector';
 import { WorkoutExerciseCard } from '@/components/WorkoutExerciseCard';
 
 export function WorkoutExercises({ workoutId, editable = true, active = false }: { workoutId: string; editable?: boolean; active?: boolean }) {
     const db = useDatabase();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [selecting, setSelecting] = useState(false);
     const uses = useLiveQuery(() => db.workoutExercises.where('workoutId').equals(workoutId).sortBy('id'), [db, workoutId]);
     const custom = useLiveQuery(() => db.customExercises.toArray(), [db]);
-    const catalog = new Map([...EXERCISES, ...(custom ?? []).map(exercise => ({ ...exercise, equipment: '' }))].map(exercise => [exercise.id, exercise]));
+    const catalog = new Map(getExerciseCatalog(language, custom ?? []).map(exercise => [exercise.id, exercise]));
     return <div className="space-y-5">
         {uses?.map((use, index) => <WorkoutExerciseCard
             key={use.id}

@@ -54,7 +54,7 @@ export async function initializeSchema(tx, { seedDevData = false, fixtureCredent
     await tx.runSql('CREATE INDEX IF NOT EXISTS idx_customExercises_userId ON customExercises(userId)');
     await tx.runSql(`CREATE TABLE IF NOT EXISTS workoutExercises (
         id TEXT PRIMARY KEY NOT NULL CHECK (${uuidCheck('id')}), userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        workoutId TEXT NOT NULL REFERENCES workouts(id) ON DELETE CASCADE, exerciseId TEXT NOT NULL CHECK (length(exerciseId) BETWEEN 1 AND 100),
+        workoutId TEXT NOT NULL REFERENCES workouts(id) ON DELETE CASCADE, exerciseId TEXT NOT NULL CHECK (${uuidCheck('exerciseId')}),
         sets TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(sets) AND json_type(sets) = 'array'),
         revision INTEGER NOT NULL DEFAULT 1 CHECK (revision > 0), UNIQUE (workoutId, exerciseId)
     )`);

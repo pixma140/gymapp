@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { APP_COMMIT, APP_COMMIT_URL, APP_RELEASE_TAG, APP_RELEASE_URL } from '@/lib/constants';
 import { useSession } from '@/context/SessionContext';
 import { SyncStatus } from '@/components/SyncStatus';
+import { ExerciseMediaSettings } from '@/components/ExerciseMediaSettings';
 
 export function SettingsPage() {
     const db = useDatabase();
@@ -51,6 +52,7 @@ export function SettingsPage() {
             </header>
 
             <SyncStatus />
+            <ExerciseMediaSettings />
 
             <div className="space-y-4">
                 <div className="bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">

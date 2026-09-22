@@ -40,6 +40,8 @@ built frontend and APIs; Vite proxies API requests during development.
 | `src/auth/tabs.ts` | Session locks, session-change notifications, and stale-sender epoch checks |
 | `src/auth/localSession.ts` | Last prepared account reference, durable local logout lock, deferred server logout |
 | `src/components/AppUpdate.tsx`, `vite.config.ts` | Prompted service-worker updates and static app-resource precaching |
+| `shared/exercises.json`, `src/lib/exerciseCatalog.ts` | Curated bilingual exercise source of truth, localization, bilingual search, usage ranking |
+| `src/lib/exerciseMediaCache.ts` | Revisioned first-run thumbnail/GIF caching, progress, retry, and stale-cache removal |
 
 Providers are ordered session → language → theme. Domain routes mount only
 with a ready account cache. Preference providers use that account's profile
@@ -82,11 +84,18 @@ an immutable prepared envelope once its server revision is known, dependency,
 attempt count, state, error, and next retry time. Each prepared envelope carries
 the account/installation binding checked by the server.
 
-The read-only exercise catalog is generated into `shared/exercises.js` from a pinned
-`exercises-dataset` revision. Runtime exercise selection is offline; only private
-workout-to-catalog usage rows are persisted and synchronized. Licensed media is not imported.
-Private `customExercises` add account-owned UUID v7 catalog entries. Workout exercise
-rows reference either a bundled source ID or an owned custom exercise. Each row
+The read-only exercise source of truth is `shared/exercises.json`: 75 curated records
+from pinned `exercises-dataset` revisions plus five local cardio records. Every exercise
+has an app-owned UUID v7 and separate provenance (`github`, `cardio`, or runtime `user`).
+English/German names and instruction steps are complete; shared taxonomy dictionaries
+localize categories, body parts, equipment, and muscles without repeated labels.
+Runtime exercise selection and text work offline; only private workout-to-catalog usage
+rows are persisted and synchronized. Pinned third-party thumbnails/GIFs are fetched
+directly from the narrowly CSP-allowed GitHub raw host and stored in a revisioned Workbox
+cache. Five local cardio records explicitly have no media. Settings reports cache state
+and mandatory Gym Visual attribution appears with media and in Settings.
+Private `customExercises` add account-owned UUID v7 catalog entries with `user` provenance. Workout exercise
+rows reference either a bundled UUID or an owned custom exercise UUID. Each row
 contains an ordered `sets` array (UUID v7, weight, reps, warmup/working type), stored
 as validated JSON in SQLite and as an array in Dexie. Set edits replace the array
 under the exercise row's revision; local read-modify-write is transactional to avoid
@@ -180,7 +189,8 @@ row as a regression, not a preference.
 | Server reset with a cached browser session | Installation mismatch prevents replay into reset accounts. |
 | Two devices, same account | New record IDs are distinct; competing active sessions or stale edits return conflicts; reviewed reapplication works. |
 | Refresh with pending/failed work | No silent data replacement; failure and resolution are visible. |
-| Exercise selection | The pinned catalog works offline; selections are private, synchronized, deduplicated per workout, and ranked by historical use. |
+| Exercise selection | The curated catalog uses UUID v7 identity, localized display/sort, bilingual search, source provenance, details/instructions, private synchronized selections, per-workout deduplication, and historical-use ranking. |
+| Exercise media | Available pinned thumbnails/GIFs download in the background to a revisioned cache; Settings exposes progress/retry/clear and details retain attribution. Text and explicit no-media cardio records remain usable without assets. |
 | Surviving UX | Start/resume/finish/cancel, history deletion, profile/measurements, language/theme, logout, and keyboard/mobile navigation work. |
 | Release checks | Test, lint, build, browser workflows, and the multi-architecture image build pass; publishing is gated on them. |
 
@@ -192,14 +202,16 @@ continuous pull, or automatic merging is promised. Gym catalog operations share 
 service's authorization, revisions, and receipt transaction rather than a
 separate gym service. These are the final module placements.
 
-Workbox precaches the built application and lazy chunks. API requests, including
-auth redirects and bootstrap, are network-only. Worker activation waits for user
+Workbox precaches the built application and lazy chunks and uses CacheFirst only for
+the catalog's pinned GitHub media host/cache. API requests, including auth redirects
+and bootstrap, are network-only. Worker activation waits for user
 confirmation while tabs are open; controller changes reload tabs. IndexedDB and
 outboxes are independent of worker caches. Browser tests exercise actual workers,
 offline cold starts, reconnection, logout, account switching, and waiting updates.
 
-Exercise catalog updates are explicit build-time imports through `npm run exercises:import`.
-There is no runtime provider request or credential.
+Exercise catalog updates edit `shared/exercises.json` and must pass
+`npm run exercises:validate`. Text has no runtime provider request or credential;
+only pinned media is fetched and cached at runtime.
 
 GitHub Actions runs only on release tags and manual dispatch: tests, lint, the
 production build, and the Chromium workflows gate the amd64/arm64 image build

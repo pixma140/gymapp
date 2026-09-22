@@ -56,7 +56,7 @@ export function validateCommand(command) {
         if (key === 'theme' && !['light', 'dark', 'oled', 'system'].includes(value)) return 'invalid_payload';
         if (key === 'gymId' && !isUuid(value)) return 'invalid_payload';
         if (key === 'workoutId' && !isUuid(value)) return 'invalid_payload';
-        if (key === 'exerciseId' && (typeof value !== 'string' || !value || value.length > 100)) return 'invalid_payload';
+        if (key === 'exerciseId' && !isUuid(value)) return 'invalid_payload';
         if (key === 'archived' && typeof value !== 'boolean') return 'invalid_payload';
     }
     return null;

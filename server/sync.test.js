@@ -38,6 +38,8 @@ describe('replacement sync contract', () => {
     it('serves a restrictive CSP and JSON errors for malformed and oversized API bodies', async () => {
         const response = await fetch(`${baseUrl}/api/bootstrap`);
         expect(response.headers.get('content-security-policy')).toContain("script-src 'self'");
+        expect(response.headers.get('content-security-policy')).toContain('img-src \'self\' data: https://raw.githubusercontent.com');
+        expect(response.headers.get('content-security-policy')).toContain('connect-src \'self\' https://raw.githubusercontent.com');
         expect(response.headers.get('content-security-policy')).toContain("frame-ancestors 'none'");
         expect(response.headers.get('cache-control')).toBe('no-store');
         for (const [body, status, error] of [['{', 400, 'invalid_json'], [JSON.stringify({ value: 'x'.repeat(1024 * 1024) }), 413, 'payload_too_large']]) {
@@ -174,7 +176,7 @@ describe('replacement sync contract', () => {
     });
     it('records catalog exercise uses for only the active workout owner', async () => {
         const use = command('workoutExercise.create', { workoutId, exerciseId: EXERCISES[0].id });
-        expect((await send({ ...use, payload: { workoutId, exerciseId: 'missing' } })).body.error).toBe('exercise_unavailable');
+        expect((await send({ ...use, payload: { workoutId, exerciseId: uuidv7() } })).body.error).toBe('exercise_unavailable');
         expect((await send({ ...use, accountId: adminId }, adminCookie)).body.error).toBe('workout_unavailable');
         expect((await send(use)).status).toBe(200);
         expect((await send(command('workoutExercise.create', use.payload))).body.error).toBe('exercise_already_selected');

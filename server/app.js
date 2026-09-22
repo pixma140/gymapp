@@ -50,7 +50,7 @@ export function createApp({ database, config: serverConfig = readServerConfig(),
     app.set('trust proxy', 1);
     app.disable('x-powered-by');
     app.use((req, res, next) => {
-        res.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'");
+        res.set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://raw.githubusercontent.com; font-src 'self'; connect-src 'self' https://raw.githubusercontent.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'");
         res.set('X-Content-Type-Options', 'nosniff');
         res.set('Referrer-Policy', 'same-origin');
         if (req.path === '/api' || req.path.startsWith('/api/')) res.set('Cache-Control', 'no-store');

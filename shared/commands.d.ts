@@ -43,7 +43,7 @@ export interface Workout {
 export interface WorkoutExercise {
     id: UUID;
     workoutId: UUID;
-    exerciseId: string;
+    exerciseId: UUID;
     revision: Revision;
     sets: WorkoutSet[];
 }
@@ -77,7 +77,7 @@ export interface CommandPayloads {
     'workout.finish': { endTime: number };
     'workout.update': { startTime: number; endTime?: number };
     'workout.delete': Record<string, never>;
-    'workoutExercise.create': { workoutId: UUID; exerciseId: string };
+    'workoutExercise.create': { workoutId: UUID; exerciseId: UUID };
     'workoutExercise.update': { sets: WorkoutSet[] };
     'workoutExercise.delete': Record<string, never>;
     'customExercise.create': { name: string; muscleGroup: import('./exercises').MuscleGroup };

@@ -5,7 +5,7 @@ import { Calendar, Clock, ChevronRight, Trash2 } from 'lucide-react';
 import { useDatabase } from '@/context/SessionContext';
 import { applyOperation } from '@/db/operations';
 import { useLanguage } from '@/i18n/LanguageContext';
-import { EXERCISES } from '@shared/exercises';
+import { getExerciseCatalog } from '@/lib/exerciseCatalog';
 import { formatDuration } from '@/lib/workoutDisplay';
 
 export function WorkoutHistoryList() {
@@ -17,7 +17,7 @@ export function WorkoutHistoryList() {
         const allWorkouts = await db.workouts.orderBy('startTime').reverse().filter(workout => workout.endTime !== null).toArray();
         const uses = await db.workoutExercises.toArray();
         const custom = await db.customExercises.toArray();
-        const names = new Map([...EXERCISES, ...custom].map(exercise => [exercise.id, exercise.name]));
+        const names = new Map(getExerciseCatalog(language, custom).map(exercise => [exercise.id, exercise.name]));
         // Enrich with gym name
         const gymIds = [...new Set(allWorkouts.map(w => w.gymId))];
         const gyms = await db.gyms.where('id').anyOf(gymIds).toArray();
@@ -28,7 +28,7 @@ export function WorkoutHistoryList() {
             gymName: gymMap.get(w.gymId),
             exercises: uses.filter(use => use.workoutId === w.id).map(use => ({ name: names.get(use.exerciseId), sets: use.sets.length })),
         }));
-    }, [db]);
+    }, [db, language]);
 
     if (!workouts) return <div className="text-[var(--muted-foreground)] text-center py-8">{t('history.loading')}</div>;
 

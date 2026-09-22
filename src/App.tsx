@@ -23,6 +23,7 @@ import { LanguageProvider } from '@/i18n/LanguageContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { SessionProvider } from '@/context/SessionContext';
 import { AppUpdate } from '@/components/AppUpdate';
+import { ExerciseMediaCache } from '@/components/ExerciseMediaCache';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
     <LanguageProvider>
       <ThemeProvider>
         <AppUpdate />
+        <ExerciseMediaCache />
 
         <Suspense fallback={null}>
         <Routes>
