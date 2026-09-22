@@ -93,6 +93,18 @@ For client-only schema changes, delete the app's account IndexedDB databases
 through browser developer tools before reloading, or reset the server to create
 a new installation identity and fresh account caches.
 
+To stop a running Compose container, reset the configured database, rebuild the
+image, and start the stack in one step, run:
+
+```bash
+./scripts/reset-compose.sh          # fresh empty installation; asks for confirmation
+./scripts/reset-compose.sh --seed   # recreate development fixtures
+./scripts/reset-compose.sh --yes    # skip the prompt for automation
+```
+
+The script uses the same scoped reset commands above; it removes only GymApp's
+SQLite database, WAL, and shared-memory files under the configured `DATA_DIR`.
+
 Account caches survive ordinary startup/logout. Settings offers an explicitly
 confirmed discard of pending local changes followed by a server reload; export
 first if you need to retain pending intent.
