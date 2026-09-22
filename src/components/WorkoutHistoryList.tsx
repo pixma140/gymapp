@@ -17,7 +17,7 @@ export function WorkoutHistoryList() {
         const allWorkouts = await db.workouts.orderBy('startTime').reverse().filter(workout => workout.endTime !== null).toArray();
         const uses = await db.workoutExercises.toArray();
         const custom = await db.customExercises.toArray();
-        const names = new Map(getExerciseCatalog(language, custom).map(exercise => [exercise.id, exercise.name]));
+        const catalog = new Map(getExerciseCatalog(language, custom).map(exercise => [exercise.id, exercise]));
         // Enrich with gym name
         const gymIds = [...new Set(allWorkouts.map(w => w.gymId))];
         const gyms = await db.gyms.where('id').anyOf(gymIds).toArray();
@@ -26,7 +26,8 @@ export function WorkoutHistoryList() {
         return allWorkouts.map(w => ({
             ...w,
             gymName: gymMap.get(w.gymId),
-            exercises: uses.filter(use => use.workoutId === w.id).map(use => ({ name: names.get(use.exerciseId), sets: use.sets.length })),
+            exercises: uses.filter(use => use.workoutId === w.id).map(use => ({ name: catalog.get(use.exerciseId)?.name,
+                sets: use.sets.length, cardio: Boolean(use.cardio) })),
         }));
     }, [db, language]);
 
@@ -46,7 +47,7 @@ export function WorkoutHistoryList() {
                             <h3 className="font-semibold text-[var(--foreground)]">{workout.gymName || t('common.unknownGym')}</h3>
                             {workout.endTime !== null && <p className="font-mono text-sm text-[var(--muted-foreground)]">{formatDuration(workout.endTime - workout.startTime)}</p>}
                             <ul className="mt-2 space-y-1 text-sm text-[var(--muted-foreground)]">
-                                {workout.exercises.map((exercise, index) => <li key={index}>{exercise.name ?? t('exercise.unknown')} · {exercise.sets} {t('sets.title')}</li>)}
+                                {workout.exercises.map((exercise, index) => <li key={index}>{exercise.name ?? t('exercise.unknown')} · {exercise.cardio ? t('cardio.activity') : `${exercise.sets} ${t('sets.title')}`}</li>)}
                             </ul>
                             <div className="flex items-center gap-3 text-sm text-[var(--muted-foreground)] mt-1">
                                 <div className="flex items-center gap-1">

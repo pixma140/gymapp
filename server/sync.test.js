@@ -206,7 +206,7 @@ describe('replacement sync contract', () => {
         expect((await send(command('workout.finish', { endTime: 40 }, { targetId: workoutId, expectedRevision: 2 }))).status).toBe(404);
         expect((await snapshot(userCookie)).body.workoutExercises).toEqual([]);
     });
-    it('creates private custom exercises and validates revisioned sets in completed workouts', async () => {
+    it('creates private custom exercises and validates revisioned strength and cardio tracking in completed workouts', async () => {
         const custom = command('customExercise.create', { name: 'My press', muscleGroup: 'chest' });
         expect((await send(command('customExercise.create', { name: 'Bad', muscleGroup: 'unknown' }))).body.error).toBe('invalid_payload');
         expect((await send(custom)).status).toBe(200);
@@ -230,12 +230,31 @@ describe('replacement sync contract', () => {
         expect((await send(update)).body).toEqual(result.body);
         expect((await send({ ...update, mutationId: uuidv7() })).body.error).toBe('revision_conflict');
         expect((await snapshot(userCookie)).body.workoutExercises).toEqual([expect.objectContaining({ sets })]);
+        const cardioActivities = [
+            { kind: 'swimming', durationSeconds: 1800, laps: 40 },
+            { kind: 'jogging', durationSeconds: 2400, distanceKm: 5 },
+            { kind: 'inline-skating', durationSeconds: 3600, distanceKm: 15 },
+            { kind: 'stairmaster', durationSeconds: 900, speed: 8 },
+            { kind: 'walking-pad', durationSeconds: 1200, speed: 4.5, inclination: 3 },
+        ];
+        const cardioUses = [];
+        for (const cardio of cardioActivities) {
+            const exerciseId = EXERCISES.find(exercise => exercise.source.type === 'cardio' && exercise.source.id === cardio.kind).id;
+            const cardioUse = command('workoutExercise.create', { workoutId: start.targetId, exerciseId });
+            expect((await send(cardioUse)).status).toBe(200);
+            expect((await send(command('workoutExercise.update', { cardio }, { targetId: cardioUse.targetId, expectedRevision: 1 }))).status).toBe(200);
+            expect((await snapshot(userCookie)).body.workoutExercises).toContainEqual(expect.objectContaining({ cardio, sets: [] }));
+            cardioUses.push(cardioUse);
+        }
+        expect((await send(command('workoutExercise.update', { cardio: { ...cardioActivities[0], kind: 'jogging' } }, { targetId: cardioUses[0].targetId, expectedRevision: 2 }))).body.error).toBe('exercise_tracking_mismatch');
+        expect((await send(command('workoutExercise.update', { sets }, { targetId: cardioUses[0].targetId, expectedRevision: 2 }))).body.error).toBe('exercise_tracking_mismatch');
         const adminGym = command('gym.create', { name: 'Admin set test gym', location: '' }, { accountId: adminId });
         await send(adminGym, adminCookie);
         const adminStart = command('workout.start', { gymId: adminGym.targetId, startTime: 100 }, { accountId: adminId });
         await send(adminStart, adminCookie);
         expect((await send(command('workoutExercise.create', { workoutId: adminStart.targetId, exerciseId: custom.targetId }, { accountId: adminId }), adminCookie)).body.error).toBe('exercise_unavailable');
         expect((await send(command('workoutExercise.delete', {}, { targetId: use.targetId, expectedRevision: 2 }))).status).toBe(200);
+        for (const cardioUse of cardioUses) expect((await send(command('workoutExercise.delete', {}, { targetId: cardioUse.targetId, expectedRevision: 2 }))).status).toBe(200);
         expect((await snapshot(userCookie)).body.workoutExercises).toEqual([]);
     });
     it('rejects invalid values and privilege changes without advancing generations', async () => {

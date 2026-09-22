@@ -56,6 +56,7 @@ export async function initializeSchema(tx, { seedDevData = false, fixtureCredent
         id TEXT PRIMARY KEY NOT NULL CHECK (${uuidCheck('id')}), userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         workoutId TEXT NOT NULL REFERENCES workouts(id) ON DELETE CASCADE, exerciseId TEXT NOT NULL CHECK (${uuidCheck('exerciseId')}),
         sets TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(sets) AND json_type(sets) = 'array'),
+        cardio TEXT CHECK (cardio IS NULL OR (json_valid(cardio) AND json_type(cardio) = 'object')),
         revision INTEGER NOT NULL DEFAULT 1 CHECK (revision > 0), UNIQUE (workoutId, exerciseId)
     )`);
     await tx.runSql('CREATE INDEX IF NOT EXISTS idx_workoutExercises_userId ON workoutExercises(userId)');
@@ -76,7 +77,7 @@ export async function initializeSchema(tx, { seedDevData = false, fixtureCredent
     await tx.runSql(`CREATE TRIGGER IF NOT EXISTS profile_revision AFTER UPDATE OF ${profileColumns} ON users BEGIN
         UPDATE users SET revision = OLD.revision + 1, dataGeneration = OLD.dataGeneration + 1 WHERE id = NEW.id;
     END`);
-    for (const [table, columns] of [['workouts', 'gymId, startTime, endTime'], ['workoutExercises', 'workoutId, exerciseId, sets'], ['customExercises', 'name, muscleGroup'], ['userMeasurements', 'weight, bodyFat, timestamp']]) {
+    for (const [table, columns] of [['workouts', 'gymId, startTime, endTime'], ['workoutExercises', 'workoutId, exerciseId, sets, cardio'], ['customExercises', 'name, muscleGroup'], ['userMeasurements', 'weight, bodyFat, timestamp']]) {
         await tx.runSql(`CREATE TRIGGER IF NOT EXISTS ${table}_revision AFTER UPDATE OF ${columns} ON ${table} BEGIN
             UPDATE ${table} SET revision = OLD.revision + 1 WHERE id = NEW.id;
             UPDATE users SET dataGeneration = dataGeneration + 1 WHERE id = NEW.userId;

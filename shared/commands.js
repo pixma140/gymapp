@@ -9,7 +9,7 @@ export const COMMAND_FIELDS = Object.freeze({
     'workout.update': ['startTime', 'endTime'],
     'workout.delete': [],
     'workoutExercise.create': ['workoutId', 'exerciseId'],
-    'workoutExercise.update': ['sets'],
+    'workoutExercise.update': ['sets', 'cardio'],
     'workoutExercise.delete': [],
     'customExercise.create': ['name', 'muscleGroup'],
     'gym.create': ['name', 'location'],
@@ -33,6 +33,7 @@ export function validateCommand(command) {
     if (!command.operation.endsWith('.delete') && Object.keys(payload).length === 0) return 'invalid_payload';
     const required = create || ['workout.finish', 'gym.archive'].includes(command.operation) ? COMMAND_FIELDS[command.operation] : [];
     if (required.some(key => !Object.hasOwn(payload, key))) return 'invalid_payload';
+    if (command.operation === 'workoutExercise.update' && Object.keys(payload).length !== 1) return 'invalid_payload';
     if (command.operation === 'workout.update' && (!Object.hasOwn(payload, 'startTime')
         || (Object.hasOwn(payload, 'endTime') && payload.endTime < payload.startTime))) return 'invalid_payload';
     for (const [key, value] of Object.entries(payload)) {
@@ -40,7 +41,8 @@ export function validateCommand(command) {
         if (key === 'sets' && (!Array.isArray(value) || value.length > 200 || new Set(value.map(set => set?.id)).size !== value.length
             || !value.every(set => object(set) && Object.keys(set).sort().join(',') === 'id,reps,type,weight' && isUuid(set.id)
                 && typeof set.weight === 'number' && Number.isFinite(set.weight) && set.weight >= 0 && set.weight <= 10000
-                && Number.isSafeInteger(set.reps) && set.reps > 0 && set.reps <= 10000 && ['warmup', 'working'].includes(set.type)))) return 'invalid_payload';
+                 && Number.isSafeInteger(set.reps) && set.reps > 0 && set.reps <= 10000 && ['warmup', 'working'].includes(set.type)))) return 'invalid_payload';
+        if (key === 'cardio' && !validCardio(value)) return 'invalid_payload';
         if (['weight', 'height'].includes(key) && value !== null && (typeof value !== 'number' || !Number.isFinite(value) || value <= 0)) return 'invalid_payload';
         if (key === 'bodyFat' && value !== null && (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100)) return 'invalid_payload';
         if (key === 'age' && value !== null && (!Number.isSafeInteger(value) || value <= 0)) return 'invalid_payload';
@@ -60,4 +62,22 @@ export function validateCommand(command) {
         if (key === 'archived' && typeof value !== 'boolean') return 'invalid_payload';
     }
     return null;
+}
+
+function validCardio(value) {
+    if (!object(value) || !['swimming', 'jogging', 'inline-skating', 'stairmaster', 'walking-pad'].includes(value.kind)
+        || !Number.isSafeInteger(value.durationSeconds) || value.durationSeconds <= 0 || value.durationSeconds > 604800) return false;
+    const keys = Object.keys(value).sort().join(',');
+    if (['swimming', 'jogging'].includes(value.kind)) {
+        if (keys === 'distanceKm,durationSeconds,kind') return positiveNumber(value.distanceKm, 10000);
+        return keys === 'durationSeconds,kind,laps' && Number.isSafeInteger(value.laps) && value.laps > 0 && value.laps <= 100000;
+    }
+    if (value.kind === 'inline-skating') return keys === 'distanceKm,durationSeconds,kind' && positiveNumber(value.distanceKm, 10000);
+    if (value.kind === 'stairmaster') return keys === 'durationSeconds,kind,speed' && positiveNumber(value.speed, 10000);
+    return (keys === 'durationSeconds,kind,speed' || keys === 'durationSeconds,inclination,kind,speed')
+        && positiveNumber(value.speed, 1000) && (value.inclination === undefined || positiveNumber(value.inclination, 100, true));
+}
+
+function positiveNumber(value, maximum, allowZero = false) {
+    return typeof value === 'number' && Number.isFinite(value) && (allowZero ? value >= 0 : value > 0) && value <= maximum;
 }

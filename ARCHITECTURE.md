@@ -93,14 +93,18 @@ has an app-owned UUID v7 and separate provenance (`github`, `cardio`, or runtime
 English/German names and instruction steps are complete; shared taxonomy dictionaries
 localize categories, body parts, equipment, and muscles without repeated labels.
 Runtime exercise selection and text work offline; only private workout-to-catalog usage
-rows are persisted and synchronized. Pinned third-party thumbnails/GIFs are fetched
+rows are persisted and synchronized. Cardio workout rows store one activity instead
+of strength sets: swimming and jogging track time plus either distance or laps,
+inline skating tracks time and distance, StairMaster tracks time and speed, and
+walking pad tracks time and speed with optional inclination. Pinned third-party thumbnails/GIFs are fetched
 directly from the narrowly CSP-allowed GitHub raw host and stored in a revisioned Workbox
 cache. Five local cardio records explicitly have no media. Settings reports cache state
 and mandatory Gym Visual attribution appears with media and in Settings.
 Private `customExercises` add account-owned UUID v7 catalog entries with `user` provenance. Workout exercise
 rows reference either a bundled UUID or an owned custom exercise UUID. Each row
-contains an ordered `sets` array (UUID v7, weight, reps, warmup/working type), stored
-as validated JSON in SQLite and as an array in Dexie. Set edits replace the array
+contains either an ordered `sets` array (UUID v7, weight, reps, warmup/working type)
+or a typed `cardio` activity, stored as validated JSON in SQLite and as structured data
+in Dexie. Set and cardio edits replace the relevant value
 under the exercise row's revision; local read-modify-write is transactional to avoid
 lost additions across tabs. Workout deletion cascades its exercise rows and sets,
 while custom catalog entries remain reusable. Completed workouts support the same

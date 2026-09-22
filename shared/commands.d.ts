@@ -46,6 +46,7 @@ export interface WorkoutExercise {
     exerciseId: UUID;
     revision: Revision;
     sets: WorkoutSet[];
+    cardio: CardioActivity | null;
 }
 export interface WorkoutSet {
     id: UUID;
@@ -53,6 +54,12 @@ export interface WorkoutSet {
     reps: number;
     type: 'warmup' | 'working';
 }
+export type CardioActivity =
+    | { kind: 'swimming' | 'jogging'; durationSeconds: number; distanceKm: number; laps?: never }
+    | { kind: 'swimming' | 'jogging'; durationSeconds: number; laps: number; distanceKm?: never }
+    | { kind: 'inline-skating'; durationSeconds: number; distanceKm: number }
+    | { kind: 'stairmaster'; durationSeconds: number; speed: number }
+    | { kind: 'walking-pad'; durationSeconds: number; speed: number; inclination?: number };
 export interface CustomExercise {
     id: UUID;
     name: string;
@@ -78,7 +85,7 @@ export interface CommandPayloads {
     'workout.update': { startTime: number; endTime?: number };
     'workout.delete': Record<string, never>;
     'workoutExercise.create': { workoutId: UUID; exerciseId: UUID };
-    'workoutExercise.update': { sets: WorkoutSet[] };
+    'workoutExercise.update': { sets: WorkoutSet[] } | { cardio: CardioActivity };
     'workoutExercise.delete': Record<string, never>;
     'customExercise.create': { name: string; muscleGroup: import('./exercises').MuscleGroup };
     'gym.create': GymFields;

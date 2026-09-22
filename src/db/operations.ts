@@ -1,5 +1,5 @@
 import { v7 as uuidv7 } from 'uuid';
-import type { Command, CommandPayloads, Operation, ProfileFields, ValidationError, WorkoutSet } from '@shared/commands';
+import type { CardioActivity, Command, CommandPayloads, Operation, ProfileFields, ValidationError, WorkoutSet } from '@shared/commands';
 import { validateCommand } from '@shared/commands';
 import { EXERCISE_IDS } from '@shared/exercises';
 import type { AccountDatabase, MutationIntent } from './db';
@@ -98,7 +98,7 @@ export async function applyIntent(db: AccountDatabase, intent: MutationIntent): 
             await db.table(table.name).delete(id);
         }
         else await db.table(table.name).put({ ...(create ? { id, revision: 0,
-            ...(domain === 'workout' ? { endTime: null } : {}), ...(domain === 'workoutExercise' ? { sets: [] } : {}),
+            ...(domain === 'workout' ? { endTime: null } : {}), ...(domain === 'workoutExercise' ? { sets: [], cardio: null } : {}),
             ...(domain === 'gym' ? { archived: false } : {}) } : current), ...payload });
         await db.outbox.add({ intent, command, dependency: previous?.sequence ?? referencedGym?.sequence ?? referencedWorkout?.sequence ?? referencedExercise?.sequence,
             revisionDependency: Boolean(previous), attempts: 0, state: 'pending' });
@@ -129,4 +129,8 @@ export async function editWorkoutSets(db: AccountDatabase, id: string, edit: (se
         if (!exercise) throw new OperationError('record_not_found');
         await applyOperation(db, 'workoutExercise.update', id, { sets: edit(exercise.sets) });
     });
+}
+
+export async function editCardioActivity(db: AccountDatabase, id: string, cardio: CardioActivity) {
+    await applyOperation(db, 'workoutExercise.update', id, { cardio });
 }

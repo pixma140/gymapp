@@ -1,8 +1,10 @@
 import { PROFILE_COLUMNS, validateCommand } from '../../shared/commands.js';
-import { EXERCISE_IDS } from '../../shared/exercises.js';
+import { EXERCISES, EXERCISE_IDS } from '../../shared/exercises.js';
 
 const failure = (status, error) => ({ status, error });
 const tables = Object.freeze({ profile: 'users', measurement: 'userMeasurements', workout: 'workouts', workoutExercise: 'workoutExercises', customExercise: 'customExercises', gym: 'gyms' });
+const cardioKinds = new Map(EXERCISES.filter(exercise => exercise.source.type === 'cardio')
+    .map(exercise => [exercise.id, exercise.source.id]));
 const canonical = value => JSON.stringify(value, (_key, entry) => entry && typeof entry === 'object' && !Array.isArray(entry)
     ? Object.fromEntries(Object.keys(entry).sort().map(key => [key, entry[key]])) : entry);
 
@@ -54,8 +56,13 @@ export function createSyncService(database) {
                     return failure(409, 'exercise_already_selected');
                 }
             }
+            if (domain === 'workoutExercise' && operation === 'update') {
+                const cardioKind = cardioKinds.get(current.exerciseId) ?? null;
+                if ((payload.cardio && payload.cardio.kind !== cardioKind) || (payload.sets && cardioKind)) return failure(409, 'exercise_tracking_mismatch');
+            }
             if (typeof payload.archived === 'boolean') payload.archived = Number(payload.archived);
             if (payload.sets) payload.sets = JSON.stringify(payload.sets);
+            if (payload.cardio) payload.cardio = JSON.stringify(payload.cardio);
             if (create) {
                 const columns = ['id', ...(privateRecord ? ['userId'] : []), ...Object.keys(payload)];
                 const values = [id, ...(privateRecord ? [accountId] : []), ...Object.values(payload)];
@@ -91,8 +98,8 @@ export async function readSnapshot(tx, accountId) {
         profile,
         gyms: (await tx.allSql('SELECT id, name, location, archived, revision FROM gyms WHERE userId = ? ORDER BY name, id', [accountId])).map(gym => ({ ...gym, archived: Boolean(gym.archived) })),
         workouts: await tx.allSql('SELECT id, gymId, startTime, endTime, revision FROM workouts WHERE userId = ?', [accountId]),
-        workoutExercises: (await tx.allSql('SELECT id, workoutId, exerciseId, sets, revision FROM workoutExercises WHERE userId = ?', [accountId]))
-            .map(row => ({ ...row, sets: JSON.parse(row.sets) })),
+        workoutExercises: (await tx.allSql('SELECT id, workoutId, exerciseId, sets, cardio, revision FROM workoutExercises WHERE userId = ?', [accountId]))
+            .map(row => ({ ...row, sets: JSON.parse(row.sets), cardio: row.cardio === null ? null : JSON.parse(row.cardio) })),
         customExercises: await tx.allSql('SELECT id, name, muscleGroup, revision FROM customExercises WHERE userId = ?', [accountId]),
         measurements: await tx.allSql('SELECT id, weight, bodyFat, timestamp, revision FROM userMeasurements WHERE userId = ?', [accountId]),
     };

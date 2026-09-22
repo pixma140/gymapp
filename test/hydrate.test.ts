@@ -107,7 +107,7 @@ describe('account caches and transactional intent', () => {
         const workoutId = uuidv7(), exerciseId = uuidv7();
         snapshot.workouts = [{ id: workoutId, gymId: snapshot.gyms[0].id, startTime: 10, endTime: 20, revision: 1 }];
         snapshot.customExercises = [{ id: exerciseId, name: 'Custom press', muscleGroup: 'chest', revision: 1 }];
-        snapshot.workoutExercises = [{ id: uuidv7(), workoutId, exerciseId, revision: 1, sets: [{ id: uuidv7(), weight: 20, reps: 12, type: 'warmup' }] }];
+        snapshot.workoutExercises = [{ id: uuidv7(), workoutId, exerciseId, revision: 1, sets: [{ id: uuidv7(), weight: 20, reps: 12, type: 'warmup' }], cardio: null }];
         await hydrateFromServer(db, snapshot);
         expect(await db.workoutExercises.toArray()).toEqual(snapshot.workoutExercises);
         await expect(hydrateFromServer(db, { ...snapshot, customExercises: [] })).rejects.toThrow('invalid_snapshot');

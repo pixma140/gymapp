@@ -1,13 +1,15 @@
 import { v7 as uuidv7 } from 'uuid';
 import { isUuid, PROFILE_COLUMNS, validateCommand } from '@shared/commands';
 import { ApiError, isObject } from '@/lib/api';
-import { EXERCISE_IDS } from '@shared/exercises';
+import { EXERCISES, EXERCISE_IDS } from '@shared/exercises';
 import type { Snapshot } from '@shared/commands';
 import type { AccountDatabase, MutationIntent, PendingMutation } from './db';
 import { applyIntent } from './operations';
 
 const revision = (value: unknown) => Number.isSafeInteger(value) && Number(value) >= 1;
 const generation = (value: unknown) => Number.isSafeInteger(value) && Number(value) >= 0;
+const cardioKinds = new Map(EXERCISES.filter(exercise => exercise.source.type === 'cardio')
+    .map(exercise => [exercise.id, exercise.source.id]));
 const validPayload = (operation: string, payload: unknown) => validateCommand({
     mutationId: '00000000-0000-7000-8000-000000000001', installationId: '00000000-0000-7000-8000-000000000001',
     accountId: '00000000-0000-7000-8000-000000000001', operation, targetId: operation === 'profile.update' ? null : '00000000-0000-7000-8000-000000000001',
@@ -38,7 +40,10 @@ export function isSnapshot(value: unknown): value is Snapshot {
     if (!value.workoutExercises.every(row => {
         if (!isObject(row) || !isUuid(row.id) || !revision(row.revision) || !workouts.has(row.workoutId)
             || typeof row.exerciseId !== 'string' || (!EXERCISE_IDS.has(row.exerciseId) && !customIds.has(row.exerciseId))
-            || !validPayload('workoutExercise.update', { sets: row.sets })) return false;
+            || !Array.isArray(row.sets) || !validPayload('workoutExercise.update', { sets: row.sets })
+            || (row.cardio !== null && (!isObject(row.cardio) || !validPayload('workoutExercise.update', { cardio: row.cardio })))) return false;
+        const cardioKind = cardioKinds.get(row.exerciseId);
+        if (cardioKind ? row.sets.length > 0 || !isObject(row.cardio) || row.cardio.kind !== cardioKind : row.cardio !== null) return false;
         const key = `${row.workoutId}:${row.exerciseId}`;
         if (uses.has(key)) return false;
         uses.add(key);

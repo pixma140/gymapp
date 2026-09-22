@@ -35,7 +35,7 @@ describe('exercise catalog', () => {
         const chest = getExerciseCatalog('en').filter(exercise => exercise.muscleGroup === 'chest').slice(0, 3);
         const use = (exerciseId: string, index: number): WorkoutExercise => ({
             id: `00000000-0000-7000-8000-${String(index).padStart(12, '0')}`,
-            workoutId: '00000000-0000-7000-8000-000000000099', exerciseId, revision: 1, sets: [],
+            workoutId: '00000000-0000-7000-8000-000000000099', exerciseId, revision: 1, sets: [], cardio: null,
         });
         const ranked = rankExercises([use(chest[1].id, 1), use(chest[1].id, 2), use(chest[0].id, 3)], 'en', 'chest');
         expect(ranked.slice(0, 2).map(exercise => exercise.id)).toEqual([chest[1].id, chest[0].id]);
@@ -43,7 +43,7 @@ describe('exercise catalog', () => {
     });
     it('searches custom exercises alongside the bundled catalog without losing usage order', () => {
         const custom = { id: uuidv7(), name: 'My Bench Press', muscleGroup: 'chest' as const, revision: 1 };
-        const ranked = rankExercises([{ id: uuidv7(), workoutId: uuidv7(), exerciseId: custom.id, revision: 1, sets: [] }], 'en', 'chest', [custom], ' BENCH ');
+        const ranked = rankExercises([{ id: uuidv7(), workoutId: uuidv7(), exerciseId: custom.id, revision: 1, sets: [], cardio: null }], 'en', 'chest', [custom], ' BENCH ');
         expect(ranked[0]).toMatchObject({ id: custom.id, name: custom.name, source: { type: 'user' } });
         expect(ranked.every(exercise => exercise.name.toLowerCase().includes('bench'))).toBe(true);
         expect(rankExercises([], 'en', 'calves', [custom], 'My Bench')).toEqual([]);
