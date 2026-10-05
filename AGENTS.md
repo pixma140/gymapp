@@ -140,6 +140,16 @@ Three documents lead; keep each within its role and update the one that owns a f
 - Deployment usernames, fixture passwords, and OIDC client credentials come only from the server environment. Tests generate disposable credentials.
 - Configuration APIs use explicit non-secret allowlists. Environment-managed fields are read-only in the admin UI and enforced by the API; unset OIDC fields remain editable.
 
+## Worktree Workflow
+- Use one linked Git worktree per task; keep the primary checkout on `main` for integration and releases. Do not switch the primary checkout between task branches.
+- Before editing, inspect `git status --short --branch` and `git worktree list`. If already in the worktree for this task, continue there. Preserve unrelated changes in every checkout; do not stash, reset, or move them automatically.
+- For a new task, create a worktree outside the repository directory with a descriptive backing branch, for example `git worktree add -b fix/sync-retry ../gymapp-sync-retry main`. Choose a writable location and an appropriate current base; do not assume local `main` matches `origin/main`.
+- Run all edits, installs, checks, and commits from the task worktree using an explicit working directory. Separate concurrent tasks into separate worktrees; Git does not allow the same branch to be checked out in two worktrees.
+- Install dependencies in each worktree. Ignored `.env`, `db/`, and `demo/` files are not transferred automatically. Follow README development setup, use a separate database and ports for each running instance, and serialize browser suites because Playwright uses port 4173.
+- Complete and commit work in its task worktree. Report the worktree path, backing branch, commit, and checks so the result can be reviewed and integrated.
+- When integration is in scope, run it from the clean primary `main` checkout. Prefer `git merge --ff-only <task-branch>`; if it cannot fast-forward, reconcile with current `main` in the task worktree and rerun relevant checks. Never overwrite unrelated work to make integration succeed.
+- After integration, stop task processes and inspect both tracked and ignored files for anything that must be retained. Remove the worktree with `git worktree remove <path>` and delete its merged branch with `git branch -d <task-branch>` only when no longer needed. Do not force removal or delete an unmerged branch; retain unfinished worktrees for follow-up.
+
 ## Completion and Commits
 - After completing each feature, fix, refactor, documentation update, or other change, run the relevant checks and create a Git commit before reporting completion, unless the user explicitly asks otherwise.
 - Review the diff and stage only files belonging to the completed work; keep secrets and unrelated user changes out of the commit.
@@ -151,6 +161,10 @@ Three documents lead; keep each within its role and update the one that owns a f
 
 ## Release Procedure
 Use this procedure only after the user explicitly requests a tag or release.
+
+Prepare release changes in a dedicated release worktree based on the intended
+`main` release contents, following the workflow above. Integrate completed tasks
+before selecting the release range; unrelated task worktrees may remain open.
 
 1. Inspect `git status`, `git log --oneline -10`, local tags, and
    `gh release list`. Treat the newest GitHub release as authoritative because a
@@ -171,7 +185,12 @@ Use this procedure only after the user explicitly requests a tag or release.
 5. Review the release diff and commit only the release-note/version files with
    `chore(release): prepare <tag>`. Confirm the worktree is clean and the release
    commit contains the intended files.
-6. Publish `main` before the tag with `git push origin main`. The repository's
+6. Integrate the release worktree commit into the clean primary `main`
+   checkout with `git merge --ff-only <release-branch>`. Run publication commands
+   from that checkout and confirm `HEAD` is the verified release commit. If
+   `main` advanced, reconcile in the release worktree and repeat the release
+   review and checks before publishing. Publish `main` before the tag with
+   `git push origin main`. The repository's
    `origin` uses HTTPS because outbound SSH on port 22 may be unavailable; `gh
    auth setup-git` configures Git to use the active GitHub CLI credentials.
 7. Create an annotated tag on the release commit with

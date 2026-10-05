@@ -30,6 +30,24 @@ screenshots. Every account manages its own private gyms.
 
 ## Development
 
+Use a separate Git worktree for each task. Keep the primary checkout on `main`
+for integration and releases, and open each task's directory in its own editor
+or agent session. Each worktree has its own files and a backing branch while
+sharing the repository's Git history.
+
+From the primary checkout, create a task worktree from local `main`:
+
+```bash
+git worktree list
+git worktree add -b feat/workout-summary ../gymapp-workout-summary main
+cd ../gymapp-workout-summary
+```
+
+Replace the task name and branch prefix as appropriate (`feat/`, `fix/`, `docs/`).
+Use an up-to-date base for the task; fetching remote refs does not advance local
+`main`. If a task already has a worktree, continue in that directory. Run setup,
+development commands, checks, and commits from the task worktree:
+
 ```bash
 npm install
 # Copy env.example to .env and set your local configuration and credentials.
@@ -37,6 +55,25 @@ npm run dev:server
 # In a second terminal:
 npm run dev
 ```
+
+Each worktree needs its own dependencies and local configuration. Ignored files
+such as `.env`, `db/`, and `demo/` are not copied by Git. Configure a separate
+database using worktree-local `DATA_DIR=./db`. For simultaneous dev servers, use
+distinct API `PORT` values, match each `VITE_API_TARGET`, and select a distinct
+frontend port with `npm run dev -- --port 5174 --strictPort`. Separate browser
+profiles also isolate login cookies between local instances. Run Playwright
+suites one at a time: their server uses the fixed port 4173.
+
+After checking and committing the task, integrate its commits from the primary
+checkout. For a task based on the current `main`, use
+`git merge --ff-only feat/workout-summary` there. If `main` has advanced, reconcile
+the changes in the task worktree and rerun relevant checks before integrating.
+Keep the worktree until integration and any needed local-data export are complete;
+then stop its servers and use `git worktree remove ../gymapp-workout-summary`
+from the primary checkout, followed by `git branch -d feat/workout-summary`.
+Inspect ignored files before removal, and do not force removal to bypass Git's
+protection of uncommitted or untracked work. Agent conventions and release steps
+are in [AGENTS.md](AGENTS.md).
 
 The development API restarts on imported source changes using Node's watch mode.
 The API and reset commands load `.env` using Node's built-in environment loader.
@@ -348,6 +385,8 @@ The Git `latest` tag tracks the most recently published release, including alpha
 releases, alongside the Docker `:latest` image. Automation updates it using
 `GITHUB_TOKEN`, so that tag update does not trigger another workflow run.
 
-To verify a branch without tagging it, start the workflow manually from the
-Actions tab (`gh workflow run Release --ref <branch>`); the `publish-image` and
-`create-release` jobs stay skipped unless the selected ref is a tag.
+To verify a task worktree's committed code remotely, its backing branch must
+first be pushed. Start the workflow manually from the Actions tab
+(`gh workflow run Release --ref <task-branch>`); the `publish-image` and
+`create-release` jobs stay skipped unless the selected ref is a tag. GitHub
+Actions cannot read an unpushed local worktree.
